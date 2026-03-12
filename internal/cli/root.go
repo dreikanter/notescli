@@ -8,7 +8,10 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var notesPath string
+var (
+	notesPath string
+	Version   = "dev"
+)
 
 var rootCmd = &cobra.Command{
 	Use:          "notes",
@@ -18,6 +21,7 @@ var rootCmd = &cobra.Command{
 }
 
 func init() {
+	rootCmd.Version = Version
 	rootCmd.PersistentFlags().StringVar(&notesPath, "path", "", "path to notes archive (overrides NOTES_PATH env var)")
 }
 
