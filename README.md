@@ -1,4 +1,4 @@
-# surat
+# notescli
 
 A CLI tool for interacting with a date-based notes archive.
 
@@ -10,8 +10,8 @@ A CLI tool for interacting with a date-based notes archive.
 ## Setup
 
 ```sh
-git clone https://github.com/dreikanter/surat.git
-cd surat
+git clone https://github.com/dreikanter/notescli.git
+cd notescli
 go mod download
 ```
 
@@ -24,16 +24,27 @@ make build       # produces ./notes binary
 Or directly:
 
 ```sh
-go build -o notes .
+go build -o notes ./cmd/notes
 ```
 
 ## Install
 
-Install to `$GOPATH/bin` (or `$HOME/go/bin`):
+Install from the repo (no local clone needed):
 
 ```sh
-make install
+go install github.com/dreikanter/notescli/cmd/notes@latest
 ```
+
+This places the `notes` binary in `$GOPATH/bin` (default `~/go/bin`).
+
+Make sure `~/go/bin` is on your `PATH`:
+
+```sh
+# Add to ~/.zshrc or ~/.bashrc
+export PATH="$HOME/go/bin:$PATH"
+```
+
+To update, re-run the `go install` command.
 
 ## Usage
 
@@ -86,18 +97,18 @@ go test ./note/ -run TestParseFilename -v
 ## Project structure
 
 ```
-main.go          # entrypoint
-cmd/             # cobra command definitions
-  root.go        # root command, --path flag, path resolution
-  read.go        # notes read
-  filter.go      # notes filter
-  ls.go          # notes ls
-note/            # domain logic (parsing, scanning, matching)
-  note.go        # Note struct, ParseFilename
-  archive.go     # Scan, Resolve, Filter, FilterBySlug
-  note_test.go   # unit tests for parsing
-  archive_test.go # tests for scanning and matching
-testdata/        # fixture notes for tests
+cmd/notes/main.go    # binary entrypoint → produces "notes"
+internal/cli/        # cobra command definitions
+  root.go            # root command, --path flag, path resolution
+  read.go            # notes read
+  filter.go          # notes filter
+  ls.go              # notes ls
+note/                # domain logic (parsing, scanning, matching)
+  note.go            # Note struct, ParseFilename
+  archive.go         # Scan, Resolve, Filter, FilterBySlug
+  note_test.go       # unit tests for parsing
+  archive_test.go    # tests for scanning and matching
+testdata/            # fixture notes for tests
 ```
 
 ## License

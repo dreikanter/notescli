@@ -1,4 +1,4 @@
-module github.com/dreikanter/surat
+module github.com/dreikanter/notescli
 
 go 1.25.7
 

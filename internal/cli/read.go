@@ -1,11 +1,11 @@
-package cmd
+package cli
 
 import (
 	"fmt"
 	"os"
 	"path/filepath"
 
-	"github.com/dreikanter/surat/note"
+	"github.com/dreikanter/notescli/note"
 	"github.com/spf13/cobra"
 )
 

@@ -3,7 +3,7 @@
 BINARY := notes
 
 build:
-	go build -o $(BINARY) .
+	go build -o $(BINARY) ./cmd/notes
 
 test:
 	go test ./...
@@ -15,4 +15,4 @@ clean:
 	rm -f $(BINARY)
 
 install:
-	go install .
+	go install ./cmd/notes

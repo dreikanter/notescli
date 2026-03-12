@@ -1,9 +1,9 @@
-package cmd
+package cli
 
 import (
 	"fmt"
 
-	"github.com/dreikanter/surat/note"
+	"github.com/dreikanter/notescli/note"
 	"github.com/spf13/cobra"
 )
 
