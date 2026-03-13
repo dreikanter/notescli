@@ -92,6 +92,36 @@ func TestStripFrontmatter(t *testing.T) {
 			want:  "# Hello\n\n---\n\nFooter.\n",
 		},
 		{
+			name:  "preserves multiple blank lines after frontmatter",
+			input: "---\nslug: todo\n---\n\n\n\nContent\n",
+			want:  "\n\nContent\n",
+		},
+		{
+			name:  "opening delimiter only no newline",
+			input: "---",
+			want:  "---",
+		},
+		{
+			name:  "opening delimiter only with newline",
+			input: "---\nstuff\n",
+			want:  "---\nstuff\n",
+		},
+		{
+			name:  "empty frontmatter block",
+			input: "---\n---\n\nBody\n",
+			want:  "Body\n",
+		},
+		{
+			name:  "malformed yaml in frontmatter",
+			input: "---\n[bad: yaml\n---\n\nBody\n",
+			want:  "Body\n",
+		},
+		{
+			name:  "multiple closing delimiters",
+			input: "---\na\n---\nb\n---\n\nBody\n",
+			want:  "b\n---\n\nBody\n",
+		},
+		{
 			name:  "roundtrip with BuildFrontmatter",
 			input: BuildFrontmatter("todo", []string{"journal"}, "A note") + "# Content\n",
 			want:  "# Content\n",

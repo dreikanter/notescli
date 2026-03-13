@@ -51,8 +51,12 @@ func StripFrontmatter(data []byte) []byte {
 	for {
 		line, after, found := bytes.Cut(rest, []byte("\n"))
 		if bytes.Equal(bytes.TrimRight(line, "\r"), frontmatterDelim) {
-			// Trim one leading blank line if present.
-			after = bytes.TrimLeft(after, "\r\n")
+			// Trim exactly one leading blank line if present.
+			if len(after) > 0 && after[0] == '\n' {
+				after = after[1:]
+			} else if len(after) > 1 && after[0] == '\r' && after[1] == '\n' {
+				after = after[2:]
+			}
 			return after
 		}
 		if !found {
