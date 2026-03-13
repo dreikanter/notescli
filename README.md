@@ -2,28 +2,10 @@
 
 A CLI tool for interacting with a date-based notes archive.
 
-## Prerequisites
-
-- Go 1.21+
-- [golangci-lint](https://golangci-lint.run/welcome/install/) (for linting)
-
-## Setup
-
-```sh
-git clone https://github.com/dreikanter/notescli.git
-cd notescli
-go mod download
-```
-
-## Build
+## Build & Install
 
 ```sh
 make build       # produces ./notes binary
-```
-
-## Install
-
-```sh
 make install     # installs to ~/go/bin/notes
 ```
 
@@ -34,13 +16,10 @@ Make sure `~/go/bin` is on your `PATH`:
 export PATH="$HOME/go/bin:$PATH"
 ```
 
-The version is derived from git tags at build time via `git describe`. Without
-tags, the binary reports the short commit hash as its version.
-
 ## Versioning
 
-The minor version is auto-incremented by GitHub Actions on each PR merge to
-`main` (e.g. `v0.5.0` → `v0.6.0`). After merging, pull and reinstall locally:
+The patch version is auto-incremented by GitHub Actions on each PR merge to
+`main` (e.g. `v0.1.0` → `v0.1.1`). After merging, pull and reinstall locally:
 
 ```sh
 git pull --tags
@@ -94,23 +73,6 @@ Run a single test:
 
 ```sh
 go test ./note/ -run TestParseFilename -v
-```
-
-## Project structure
-
-```
-cmd/notes/main.go    # binary entrypoint → produces "notes"
-internal/cli/        # cobra command definitions
-  root.go            # root command, --path flag, path resolution
-  read.go            # notes read
-  filter.go          # notes filter
-  ls.go              # notes ls
-note/                # domain logic (parsing, scanning, matching)
-  note.go            # Note struct, ParseFilename
-  archive.go         # Scan, Resolve, Filter, FilterBySlug
-  note_test.go       # unit tests for parsing
-  archive_test.go    # tests for scanning and matching
-testdata/            # fixture notes for tests
 ```
 
 ## License
