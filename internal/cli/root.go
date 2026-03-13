@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"runtime/debug"
 
 	"github.com/spf13/cobra"
 )
@@ -21,6 +22,11 @@ var rootCmd = &cobra.Command{
 }
 
 func init() {
+	if Version == "dev" {
+		if info, ok := debug.ReadBuildInfo(); ok && info.Main.Version != "(devel)" {
+			Version = info.Main.Version
+		}
+	}
 	rootCmd.Version = Version
 	rootCmd.PersistentFlags().StringVar(&notesPath, "path", "", "path to notes archive (overrides NOTES_PATH env var)")
 }
