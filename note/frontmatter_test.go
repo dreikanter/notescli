@@ -97,6 +97,11 @@ func TestStripFrontmatter(t *testing.T) {
 			want:  "\n\nContent\n",
 		},
 		{
+			name:  "opening delimiter with trailing text",
+			input: "---extra\nslug: x\n---\n\nBody\n",
+			want:  "---extra\nslug: x\n---\n\nBody\n",
+		},
+		{
 			name:  "opening delimiter only no newline",
 			input: "---",
 			want:  "---",

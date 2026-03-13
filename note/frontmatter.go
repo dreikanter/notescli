@@ -41,9 +41,12 @@ func StripFrontmatter(data []byte) []byte {
 
 	// Find closing "---" on its own line after the opening one.
 	rest := data[len(frontmatterDelim):]
-	// Skip to end of the opening delimiter line.
+	// Opening delimiter must be exactly "---" on its own line.
 	idx := bytes.IndexByte(rest, '\n')
 	if idx < 0 {
+		return data
+	}
+	if len(bytes.TrimRight(rest[:idx], "\r")) > 0 {
 		return data
 	}
 	rest = rest[idx+1:]
