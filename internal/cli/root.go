@@ -10,7 +10,7 @@ import (
 
 var (
 	notesPath string
-	Version   = "dev"
+	Version   = "0.4.0"
 )
 
 var rootCmd = &cobra.Command{
