@@ -21,7 +21,6 @@ After merging a PR to `main`:
 
 ```sh
 git checkout main && git pull
-git tag v0.X.0          # X = merged PR number
-git push origin v0.X.0
+make tag V=0.X.0        # X = merged PR number (tags + pushes to origin)
 make install
 ```

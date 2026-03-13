@@ -41,16 +41,10 @@ tags, the binary reports the short commit hash as its version.
 
 Versions follow `v0.{PR_number}.0` format (e.g. PR #5 → `v0.5.0`).
 
-After merging a PR to `main`, tag and push:
+After merging a PR to `main`, tag, push, and reinstall:
 
 ```sh
-git tag v0.X.0    # where X is the merged PR number
-git push origin v0.X.0
-```
-
-Then reinstall to pick up the new version:
-
-```sh
+make tag V=0.X.0    # where X is the merged PR number
 make install
 notes --version
 ```
