@@ -30,11 +30,17 @@ var readCmd = &cobra.Command{
 			return err
 		}
 
+		noFrontmatter, _ := cmd.Flags().GetBool("no-frontmatter")
+		if noFrontmatter {
+			data = note.StripFrontmatter(data)
+		}
+
 		_, err = os.Stdout.Write(data)
 		return err
 	},
 }
 
 func init() {
+	readCmd.Flags().BoolP("no-frontmatter", "F", false, "exclude YAML frontmatter from output")
 	rootCmd.AddCommand(readCmd)
 }
