@@ -57,6 +57,12 @@ func mustNotesPath() string {
 		os.Exit(1)
 	}
 
+	p, err = filepath.Abs(p)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		os.Exit(1)
+	}
+
 	info, err := os.Stat(p)
 	if err != nil || !info.IsDir() {
 		fmt.Fprintf(os.Stderr, "notes path does not exist or is not a directory: %s\n", p)
