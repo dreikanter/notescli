@@ -30,7 +30,7 @@ var latestCmd = &cobra.Command{
 			return fmt.Errorf("no notes found")
 		}
 
-		cmd.Println(filepath.Join(root, notes[0].RelPath))
+		fmt.Fprintln(cmd.OutOrStdout(), filepath.Join(root, notes[0].RelPath))
 		return nil
 	},
 }
