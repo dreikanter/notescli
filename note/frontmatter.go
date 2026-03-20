@@ -8,7 +8,6 @@ import (
 // FrontmatterFields holds optional fields for note frontmatter.
 type FrontmatterFields struct {
 	Title       string
-	Slug        string
 	Tags        []string
 	Description string
 }
@@ -20,9 +19,6 @@ func BuildFrontmatter(f FrontmatterFields) string {
 
 	if f.Title != "" {
 		lines = append(lines, "title: "+f.Title)
-	}
-	if f.Slug != "" {
-		lines = append(lines, "slug: "+f.Slug)
 	}
 	if len(f.Tags) > 0 {
 		lines = append(lines, "tags: ["+strings.Join(f.Tags, ", ")+"]")

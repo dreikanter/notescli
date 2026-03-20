@@ -177,8 +177,8 @@ func TestFormatTodoContent(t *testing.T) {
 
 	content := FormatTodoContent(tasks)
 
-	if !strings.HasPrefix(content, "---\nslug: todo\n---\n\n") {
-		t.Errorf("missing frontmatter, got:\n%s", content)
+	if strings.HasPrefix(content, "---") {
+		t.Errorf("unexpected frontmatter, got:\n%s", content)
 	}
 	if !strings.Contains(content, "[ ] Task one") {
 		t.Error("expected Task one with reset marker")
@@ -194,9 +194,8 @@ func TestFormatTodoContent(t *testing.T) {
 
 func TestFormatTodoContentEmpty(t *testing.T) {
 	content := FormatTodoContent(nil)
-	want := "---\nslug: todo\n---\n\n"
-	if content != want {
-		t.Errorf("got:\n%q\nwant:\n%q", content, want)
+	if content != "" {
+		t.Errorf("got:\n%q\nwant empty string", content)
 	}
 }
 

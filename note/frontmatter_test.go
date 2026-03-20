@@ -15,11 +15,6 @@ func TestBuildFrontmatter(t *testing.T) {
 			want: "",
 		},
 		{
-			name:   "slug only",
-			fields: FrontmatterFields{Slug: "todo"},
-			want:   "---\nslug: todo\n---\n\n",
-		},
-		{
 			name:   "tags only",
 			fields: FrontmatterFields{Tags: []string{"journal", "idea"}},
 			want:   "---\ntags: [journal, idea]\n---\n\n",
@@ -33,11 +28,10 @@ func TestBuildFrontmatter(t *testing.T) {
 			name: "all fields",
 			fields: FrontmatterFields{
 				Title:       "Weekly Review",
-				Slug:        "weekly",
 				Tags:        []string{"review"},
 				Description: "Week 10",
 			},
-			want: "---\ntitle: Weekly Review\nslug: weekly\ntags: [review]\ndescription: Week 10\n---\n\n",
+			want: "---\ntitle: Weekly Review\ntags: [review]\ndescription: Week 10\n---\n\n",
 		},
 		{
 			name:   "single tag",
@@ -134,7 +128,7 @@ func TestStripFrontmatter(t *testing.T) {
 		},
 		{
 			name:  "roundtrip with BuildFrontmatter",
-			input: BuildFrontmatter(FrontmatterFields{Slug: "todo", Tags: []string{"journal"}, Description: "A note"}) + "# Content\n",
+			input: BuildFrontmatter(FrontmatterFields{Tags: []string{"journal"}, Description: "A note"}) + "# Content\n",
 			want:  "# Content\n",
 		},
 	}
