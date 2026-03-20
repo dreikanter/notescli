@@ -17,7 +17,6 @@ var (
 var rootCmd = &cobra.Command{
 	Use:          "notes",
 	Short:        "Interact with a notes archive",
-	Long:         "A command-line Markdown notes manager.",
 	SilenceUsage: true,
 }
 
