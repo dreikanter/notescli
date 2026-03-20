@@ -47,7 +47,7 @@ func resolveNotesPath() (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("cannot determine home directory: %w", err)
 	}
-	return filepath.Join(home, "Dropbox", "Notes"), nil
+	return filepath.Join(home, "notes"), nil
 }
 
 func mustNotesPath() string {

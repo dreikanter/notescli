@@ -32,6 +32,13 @@ notes read todo
 # Read a note by filename
 notes read 20260106_8823.md
 
+# Create a new note
+notes new
+notes new --title "Meeting notes" --slug meeting --tag work
+
+# Create today's todo from the previous todo
+notes new-todo
+
 # Filter notes by fragment
 notes filter todo
 notes filter 2026
@@ -41,6 +48,16 @@ notes ls
 notes ls --limit 10
 notes ls --type todo
 
+# Search note contents
+notes grep "search pattern"
+
+# Print path to most recent note
+notes latest
+notes latest --type todo
+
+# Print the notes archive path
+notes path
+
 # Override notes archive path
 notes --path /path/to/notes read 8823
 ```
@@ -49,7 +66,7 @@ The notes archive path is resolved in this order:
 
 1. `--path` flag
 2. `NOTES_PATH` environment variable
-3. `~/Dropbox/Notes` (default)
+3. `~/notes` (default)
 
 ## Development
 
