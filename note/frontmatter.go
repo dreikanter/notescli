@@ -7,9 +7,12 @@ import (
 
 // BuildFrontmatter generates YAML frontmatter from the given fields.
 // Returns empty string if no fields are provided.
-func BuildFrontmatter(slug string, tags []string, description string) string {
+func BuildFrontmatter(slug string, tags []string, description string, title string) string {
 	var lines []string
 
+	if title != "" {
+		lines = append(lines, "title: "+title)
+	}
 	if slug != "" {
 		lines = append(lines, "slug: "+slug)
 	}

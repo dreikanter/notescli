@@ -10,6 +10,7 @@ func TestBuildFrontmatter(t *testing.T) {
 		slug        string
 		tags        []string
 		description string
+		title       string
 		want        string
 	}{
 		{
@@ -36,20 +37,26 @@ func TestBuildFrontmatter(t *testing.T) {
 			slug:        "weekly",
 			tags:        []string{"review"},
 			description: "Week 10",
-			want:        "---\nslug: weekly\ntags: [review]\ndescription: Week 10\n---\n\n",
+			title:       "Weekly Review",
+			want:        "---\ntitle: Weekly Review\nslug: weekly\ntags: [review]\ndescription: Week 10\n---\n\n",
 		},
 		{
 			name: "single tag",
 			tags: []string{"journal"},
 			want: "---\ntags: [journal]\n---\n\n",
 		},
+		{
+			name:  "title only",
+			title: "My Note",
+			want:  "---\ntitle: My Note\n---\n\n",
+		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := BuildFrontmatter(tt.slug, tt.tags, tt.description)
+			got := BuildFrontmatter(tt.slug, tt.tags, tt.description, tt.title)
 			if got != tt.want {
-				t.Errorf("BuildFrontmatter(%q, %v, %q) =\n%q\nwant:\n%q", tt.slug, tt.tags, tt.description, got, tt.want)
+				t.Errorf("BuildFrontmatter(%q, %v, %q, %q) =\n%q\nwant:\n%q", tt.slug, tt.tags, tt.description, tt.title, got, tt.want)
 			}
 		})
 	}
@@ -128,7 +135,7 @@ func TestStripFrontmatter(t *testing.T) {
 		},
 		{
 			name:  "roundtrip with BuildFrontmatter",
-			input: BuildFrontmatter("todo", []string{"journal"}, "A note") + "# Content\n",
+			input: BuildFrontmatter("todo", []string{"journal"}, "A note", "") + "# Content\n",
 			want:  "# Content\n",
 		},
 	}
