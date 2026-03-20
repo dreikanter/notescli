@@ -105,7 +105,7 @@ func RolloverTasks(prevLines []string, force bool) RolloverResult {
 
 // FormatTodoContent formats carried tasks into the new todo file content.
 func FormatTodoContent(tasks []Task) string {
-	fm := BuildFrontmatter("todo", nil, "")
+	fm := BuildFrontmatter(FrontmatterFields{})
 
 	if len(tasks) == 0 {
 		return fm

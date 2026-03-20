@@ -15,6 +15,7 @@ var (
 	newSlug        string
 	newTags        []string
 	newDescription string
+	newTitle       string
 )
 
 var newCmd = &cobra.Command{
@@ -39,11 +40,11 @@ var newCmd = &cobra.Command{
 
 		fullPath := filepath.Join(dir, filename)
 
-		var content string
-
-		// Build frontmatter if tags or description provided
-		fm := note.BuildFrontmatter("", newTags, newDescription)
-		content = fm
+		content := note.BuildFrontmatter(note.FrontmatterFields{
+			Title:       newTitle,
+			Tags:        newTags,
+			Description: newDescription,
+		})
 
 		// Read from stdin if piped
 		if !isTerminal(os.Stdin) {
@@ -75,5 +76,6 @@ func init() {
 	newCmd.Flags().StringVar(&newSlug, "slug", "", "slug appended to filename")
 	newCmd.Flags().StringArrayVar(&newTags, "tag", nil, "tag for frontmatter (repeatable)")
 	newCmd.Flags().StringVar(&newDescription, "description", "", "description for frontmatter")
+	newCmd.Flags().StringVar(&newTitle, "title", "", "title for frontmatter")
 	rootCmd.AddCommand(newCmd)
 }
