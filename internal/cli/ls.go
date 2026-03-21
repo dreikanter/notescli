@@ -10,6 +10,7 @@ import (
 var (
 	lsLimit int
 	lsType  string
+	lsTags  []string
 )
 
 var lsCmd = &cobra.Command{
@@ -27,12 +28,19 @@ var lsCmd = &cobra.Command{
 			notes = note.FilterBySlug(notes, lsType)
 		}
 
+		if len(lsTags) > 0 {
+			notes, err = note.FilterByTags(notes, root, lsTags)
+			if err != nil {
+				return err
+			}
+		}
+
 		if lsLimit > 0 && len(notes) > lsLimit {
 			notes = notes[:lsLimit]
 		}
 
 		for _, n := range notes {
-			fmt.Println(n.RelPath)
+			fmt.Fprintln(cmd.OutOrStdout(), n.RelPath)
 		}
 		return nil
 	},
@@ -41,5 +49,6 @@ var lsCmd = &cobra.Command{
 func init() {
 	lsCmd.Flags().IntVar(&lsLimit, "limit", 20, "maximum number of notes to list")
 	lsCmd.Flags().StringVar(&lsType, "type", "", "filter by note type (slug), e.g. todo, backlog, weekly")
+	lsCmd.Flags().StringSliceVar(&lsTags, "tag", nil, "filter by frontmatter tag (repeatable, AND logic)")
 	rootCmd.AddCommand(lsCmd)
 }

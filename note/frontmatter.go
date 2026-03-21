@@ -34,6 +34,52 @@ func BuildFrontmatter(f FrontmatterFields) string {
 	return "---\n" + strings.Join(lines, "\n") + "\n---\n\n"
 }
 
+// ParseTags extracts tags from YAML frontmatter in data.
+// Returns nil if no tags are found.
+func ParseTags(data []byte) []string {
+	// Must start with "---"
+	if !bytes.HasPrefix(data, frontmatterDelim) {
+		return nil
+	}
+
+	rest := data[len(frontmatterDelim):]
+	idx := bytes.IndexByte(rest, '\n')
+	if idx < 0 {
+		return nil
+	}
+	if len(bytes.TrimRight(rest[:idx], "\r")) > 0 {
+		return nil
+	}
+	rest = rest[idx+1:]
+
+	var tagsLine []byte
+	for {
+		line, after, found := bytes.Cut(rest, []byte("\n"))
+		trimmed := bytes.TrimRight(line, "\r")
+
+		if bytes.Equal(trimmed, frontmatterDelim) {
+			// Found closing delimiter — return any tags we collected.
+			if tagsLine == nil {
+				return nil
+			}
+			inner := tagsLine[len("tags: [") : len(tagsLine)-1]
+			if len(inner) == 0 {
+				return nil
+			}
+			return strings.Split(string(inner), ", ")
+		}
+
+		if bytes.HasPrefix(trimmed, []byte("tags: [")) && bytes.HasSuffix(trimmed, []byte("]")) {
+			tagsLine = trimmed
+		}
+
+		if !found {
+			return nil
+		}
+		rest = after
+	}
+}
+
 var frontmatterDelim = []byte("---")
 
 // StripFrontmatter removes YAML frontmatter from the beginning of data.
