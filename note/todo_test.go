@@ -260,7 +260,7 @@ func TestFindTodayTodo(t *testing.T) {
 		{Date: "20260311", Slug: "todo", RelPath: "2026/03/20260311_99_todo.md"},
 	}
 
-	got := FindTodayTodo("/archive", notes, "20260312")
+	got := FindTodayTodo(notes, "20260312")
 	if got == nil {
 		t.Fatal("expected to find today's todo")
 	}
@@ -268,7 +268,7 @@ func TestFindTodayTodo(t *testing.T) {
 		t.Errorf("got date %s, want 20260312", got.Date)
 	}
 
-	got = FindTodayTodo("/archive", notes, "20260313")
+	got = FindTodayTodo(notes, "20260313")
 	if got != nil {
 		t.Error("expected nil for future date")
 	}

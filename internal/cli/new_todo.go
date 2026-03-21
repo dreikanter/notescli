@@ -28,7 +28,7 @@ var newTodoCmd = &cobra.Command{
 
 		// Check if today's todo already exists
 		if !newTodoForce {
-			if existing := note.FindTodayTodo(root, notes, today); existing != nil {
+			if existing := note.FindTodayTodo(notes, today); existing != nil {
 				fmt.Println(filepath.Join(root, existing.RelPath))
 				return nil
 			}
