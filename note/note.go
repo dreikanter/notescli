@@ -22,7 +22,7 @@ func IsKnownType(s string) bool {
 // Note represents a single note file in the store.
 type Note struct {
 	RelPath  string // relative path from store root, e.g. "2026/01/20260106_8823.md"
-	Date     string // "20260106"
+	Date     string // date as Y...YMMDD, e.g. "20260106"
 	ID       string // "8823"
 	Slug     string // descriptive slug, e.g. "api-redesign", or ""
 	Type     string // known type from file extension, e.g. "todo", "backlog", or ""
@@ -30,7 +30,7 @@ type Note struct {
 }
 
 // ParseFilename parses a note base filename (without .md extension) into its components.
-// Expected format: YYYYMMDD_ID[_slug][.TYPE]
+// Expected format: Y...YMMDD_ID[_slug][.TYPE], where MM and DD are zero-padded.
 // If the base name ends with a known type suffix (e.g. ".todo"), it is extracted as the Type.
 func ParseFilename(baseName string) (Note, error) {
 	noteType := ""
@@ -51,7 +51,7 @@ func ParseFilename(baseName string) (Note, error) {
 	}
 
 	date := parts[0]
-	if len(date) != 8 || !isDigits(date) {
+	if len(date) < 5 || !isDigits(date) {
 		return Note{}, fmt.Errorf("invalid date in filename: %s", baseName)
 	}
 
@@ -87,10 +87,11 @@ func NoteFilename(date string, id int, slug, noteType string) string {
 	return base + ".md"
 }
 
-// NoteDirPath returns the YYYY/MM directory path for a given date string (YYYYMMDD).
+// NoteDirPath returns the year/month directory path for a given date string (Y...YMMDD),
+// where MM and DD are zero-padded.
 func NoteDirPath(root, date string) string {
-	year := date[:4]
-	month := date[4:6]
+	year := date[:len(date)-4]
+	month := date[len(date)-4 : len(date)-2]
 	return filepath.Join(root, year, month)
 }
 
