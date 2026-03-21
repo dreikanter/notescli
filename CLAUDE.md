@@ -24,3 +24,12 @@ After merging a PR, reinstall locally:
 git checkout main && git pull --tags
 make install
 ```
+
+## Workflow
+
+Run `make lint` before committing or creating a PR to catch issues early.
+
+## Commits
+
+- One logical change per commit (atomic commits)
+- Commit message: one short line, no body
