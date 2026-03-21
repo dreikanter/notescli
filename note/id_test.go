@@ -8,7 +8,9 @@ import (
 
 func TestReadID(t *testing.T) {
 	dir := t.TempDir()
-	os.WriteFile(filepath.Join(dir, "id.json"), []byte(`{"last_id": 9218}`), 0o644)
+	if err := os.WriteFile(filepath.Join(dir, "id.json"), []byte(`{"last_id": 9218}`), 0o644); err != nil {
+		t.Fatal(err)
+	}
 
 	idf, err := ReadID(dir)
 	if err != nil {
@@ -29,7 +31,9 @@ func TestReadIDMissing(t *testing.T) {
 
 func TestReadIDInvalid(t *testing.T) {
 	dir := t.TempDir()
-	os.WriteFile(filepath.Join(dir, "id.json"), []byte(`not json`), 0o644)
+	if err := os.WriteFile(filepath.Join(dir, "id.json"), []byte(`not json`), 0o644); err != nil {
+		t.Fatal(err)
+	}
 
 	_, err := ReadID(dir)
 	if err == nil {
@@ -39,7 +43,9 @@ func TestReadIDInvalid(t *testing.T) {
 
 func TestNextID(t *testing.T) {
 	dir := t.TempDir()
-	os.WriteFile(filepath.Join(dir, "id.json"), []byte(`{"last_id": 9218}`), 0o644)
+	if err := os.WriteFile(filepath.Join(dir, "id.json"), []byte(`{"last_id": 9218}`), 0o644); err != nil {
+		t.Fatal(err)
+	}
 
 	id, err := NextID(dir)
 	if err != nil {
@@ -61,7 +67,9 @@ func TestNextID(t *testing.T) {
 
 func TestNextIDConsecutive(t *testing.T) {
 	dir := t.TempDir()
-	os.WriteFile(filepath.Join(dir, "id.json"), []byte(`{"last_id": 100}`), 0o644)
+	if err := os.WriteFile(filepath.Join(dir, "id.json"), []byte(`{"last_id": 100}`), 0o644); err != nil {
+		t.Fatal(err)
+	}
 
 	id1, _ := NextID(dir)
 	id2, _ := NextID(dir)
@@ -76,7 +84,9 @@ func TestNextIDConsecutive(t *testing.T) {
 
 func TestWriteIDAtomic(t *testing.T) {
 	dir := t.TempDir()
-	os.WriteFile(filepath.Join(dir, "id.json"), []byte(`{"last_id": 0}`), 0o644)
+	if err := os.WriteFile(filepath.Join(dir, "id.json"), []byte(`{"last_id": 0}`), 0o644); err != nil {
+		t.Fatal(err)
+	}
 
 	err := WriteID(dir, IDFile{LastID: 42})
 	if err != nil {

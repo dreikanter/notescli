@@ -57,9 +57,9 @@ func TestBuildFrontmatter(t *testing.T) {
 
 func TestParseTags(t *testing.T) {
 	tests := []struct {
-		name string
+		name  string
 		input string
-		want []string
+		want  []string
 	}{
 		{
 			name:  "multiple tags",
