@@ -8,7 +8,7 @@ import (
 
 var pathCmd = &cobra.Command{
 	Use:   "path",
-	Short: "Print the notes archive path",
+	Short: "Print the notes store path",
 	Args:  cobra.NoArgs,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		fmt.Fprintln(cmd.OutOrStdout(), mustNotesPath())

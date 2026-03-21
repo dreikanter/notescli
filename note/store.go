@@ -8,7 +8,7 @@ import (
 	"strings"
 )
 
-// Scan walks the archive directory and returns all valid notes, sorted newest first.
+// Scan walks the store directory and returns all valid notes, sorted newest first.
 func Scan(root string) ([]Note, error) {
 	var notes []Note
 

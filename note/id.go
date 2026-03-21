@@ -12,7 +12,7 @@ type IDFile struct {
 	LastID int `json:"last_id"`
 }
 
-// ReadID reads the current last_id from id.json in the archive root.
+// ReadID reads the current last_id from id.json in the store root.
 func ReadID(root string) (IDFile, error) {
 	data, err := os.ReadFile(filepath.Join(root, "id.json"))
 	if err != nil {

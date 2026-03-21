@@ -16,7 +16,7 @@ var (
 
 var rootCmd = &cobra.Command{
 	Use:          "notes",
-	Short:        "Interact with a notes archive",
+	Short:        "Interact with a notes store",
 	SilenceUsage: true,
 }
 
@@ -27,7 +27,7 @@ func init() {
 		}
 	}
 	rootCmd.Version = Version
-	rootCmd.PersistentFlags().StringVar(&notesPath, "path", "", "path to notes archive (overrides NOTES_PATH env var)")
+	rootCmd.PersistentFlags().StringVar(&notesPath, "path", "", "path to notes store (overrides NOTES_PATH env var)")
 }
 
 func Execute() {

@@ -58,14 +58,14 @@ notes grep "search pattern"
 notes latest
 notes latest --type todo
 
-# Print the notes archive path
+# Print the notes store path
 notes path
 
-# Override notes archive path
+# Override notes store path
 notes --path /path/to/notes read 8823
 ```
 
-The notes archive path is resolved in this order:
+The notes store path is resolved in this order:
 
 1. `--path` flag
 2. `NOTES_PATH` environment variable

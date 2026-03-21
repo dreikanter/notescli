@@ -19,9 +19,9 @@ func IsKnownType(s string) bool {
 	return false
 }
 
-// Note represents a single note file in the archive.
+// Note represents a single note file in the store.
 type Note struct {
-	RelPath  string // relative path from archive root, e.g. "2026/01/20260106_8823.md"
+	RelPath  string // relative path from store root, e.g. "2026/01/20260106_8823.md"
 	Date     string // "20260106"
 	ID       string // "8823"
 	Slug     string // descriptive slug, e.g. "api-redesign", or ""
