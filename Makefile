@@ -11,7 +11,7 @@ test:
 	go test ./...
 
 lint:
-	golangci-lint run
+	go tool golangci-lint run
 
 clean:
 	rm -f $(BINARY)
