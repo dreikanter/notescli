@@ -51,7 +51,7 @@ notes ls --tag work
 notes ls --tag work --tag meeting
 notes ls --tag work --type todo
 
-# Search note contents
+# Search note contents (only .md files, .git excluded)
 notes grep "search pattern"
 
 # Print path to most recent note

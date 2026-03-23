@@ -56,6 +56,13 @@ func TestGrepNoMatch(t *testing.T) {
 	}
 }
 
+func TestGrepExcludesNonMarkdown(t *testing.T) {
+	out, err := runGrep(t, "-rl", "skipped")
+	if err == nil {
+		t.Fatalf("expected no matches, got output: %q", out)
+	}
+}
+
 func TestGrepCaseInsensitive(t *testing.T) {
 	out, err := runGrep(t, "-ril", "todo")
 	if err != nil {
