@@ -1,5 +1,11 @@
 # Changelog
 
+## [Unreleased]
+
+### Added
+
+- Add `rg` command for searching note contents using ripgrep ([#27])
+
 ## [0.1.19] - 2026-03-23
 
 ### Fixed
@@ -115,3 +121,4 @@
 [#23]: https://github.com/dreikanter/notescli/pull/23
 [#24]: https://github.com/dreikanter/notescli/pull/24
 [#25]: https://github.com/dreikanter/notescli/pull/25
+[#27]: https://github.com/dreikanter/notescli/pull/27
