@@ -130,9 +130,15 @@ func hasAllTags(noteTags []string, required []string) bool {
 
 // FilterBySlug returns notes with an exact slug match.
 func FilterBySlug(notes []Note, slug string) []Note {
+	return FilterBySlugs(notes, []string{slug})
+}
+
+// FilterBySlugs returns notes whose slug matches any of the given values.
+func FilterBySlugs(notes []Note, slugs []string) []Note {
+	set := toSet(slugs)
 	var results []Note
 	for _, n := range notes {
-		if n.Slug == slug {
+		if _, ok := set[n.Slug]; ok {
 			results = append(results, n)
 		}
 	}
@@ -141,11 +147,25 @@ func FilterBySlug(notes []Note, slug string) []Note {
 
 // FilterByType returns notes with an exact type match.
 func FilterByType(notes []Note, noteType string) []Note {
+	return FilterByTypes(notes, []string{noteType})
+}
+
+// FilterByTypes returns notes whose type matches any of the given values.
+func FilterByTypes(notes []Note, types []string) []Note {
+	set := toSet(types)
 	var results []Note
 	for _, n := range notes {
-		if n.Type == noteType {
+		if _, ok := set[n.Type]; ok {
 			results = append(results, n)
 		}
 	}
 	return results
+}
+
+func toSet(vals []string) map[string]struct{} {
+	m := make(map[string]struct{}, len(vals))
+	for _, v := range vals {
+		m[v] = struct{}{}
+	}
+	return m
 }
