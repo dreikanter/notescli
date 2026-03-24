@@ -14,40 +14,51 @@ var latestCmd = &cobra.Command{
 	Args:  cobra.NoArgs,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		root := mustNotesPath()
-		notes, err := note.Scan(root)
+		n, err := scanAndFilter(cmd, root)
 		if err != nil {
 			return err
 		}
 
-		types, _ := cmd.Flags().GetStringSlice("type")
-		slugs, _ := cmd.Flags().GetStringSlice("slug")
-		tags, _ := cmd.Flags().GetStringSlice("tag")
-
-		if len(types) > 0 {
-			notes = note.FilterByTypes(notes, types)
-		}
-
-		if len(slugs) > 0 {
-			notes = note.FilterBySlugs(notes, slugs)
-		}
-
-		if len(tags) > 0 {
-			notes, err = note.FilterByTags(notes, root, tags)
-			if err != nil {
-				return err
-			}
-		}
-
-		if len(notes) == 0 {
-			if len(types) > 0 || len(slugs) > 0 || len(tags) > 0 {
-				return fmt.Errorf("no notes found matching the given criteria")
-			}
-			return fmt.Errorf("no notes found")
-		}
-
-		fmt.Fprintln(cmd.OutOrStdout(), filepath.Join(root, notes[0].RelPath))
+		fmt.Fprintln(cmd.OutOrStdout(), filepath.Join(root, n.RelPath))
 		return nil
 	},
+}
+
+// scanAndFilter scans notes and applies --type, --slug, --tag filter flags,
+// returning the most recent match.
+func scanAndFilter(cmd *cobra.Command, root string) (*note.Note, error) {
+	notes, err := note.Scan(root)
+	if err != nil {
+		return nil, err
+	}
+
+	types, _ := cmd.Flags().GetStringSlice("type")
+	slugs, _ := cmd.Flags().GetStringSlice("slug")
+	tags, _ := cmd.Flags().GetStringSlice("tag")
+
+	if len(types) > 0 {
+		notes = note.FilterByTypes(notes, types)
+	}
+
+	if len(slugs) > 0 {
+		notes = note.FilterBySlugs(notes, slugs)
+	}
+
+	if len(tags) > 0 {
+		notes, err = note.FilterByTags(notes, root, tags)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	if len(notes) == 0 {
+		if len(types) > 0 || len(slugs) > 0 || len(tags) > 0 {
+			return nil, fmt.Errorf("no notes found matching the given criteria")
+		}
+		return nil, fmt.Errorf("no notes found")
+	}
+
+	return &notes[0], nil
 }
 
 func init() {

@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+### Added
+
+- Add `append` command for appending stdin text to existing notes ([#30])
+
 ## [0.1.23] - 2026-03-24
 
 ### Added
@@ -131,3 +135,4 @@
 [#25]: https://github.com/dreikanter/notescli/pull/25
 [#27]: https://github.com/dreikanter/notescli/pull/27
 [#28]: https://github.com/dreikanter/notescli/pull/28
+[#30]: https://github.com/dreikanter/notescli/pull/30
