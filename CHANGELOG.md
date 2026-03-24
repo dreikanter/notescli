@@ -5,6 +5,7 @@
 ### Added
 
 - Add `rg` command for searching note contents using ripgrep ([#27])
+- Add default options for `rg` and `grep` subcommands ([#28])
 
 ## [0.1.19] - 2026-03-23
 
@@ -122,3 +123,4 @@
 [#24]: https://github.com/dreikanter/notescli/pull/24
 [#25]: https://github.com/dreikanter/notescli/pull/25
 [#27]: https://github.com/dreikanter/notescli/pull/27
+[#28]: https://github.com/dreikanter/notescli/pull/28
