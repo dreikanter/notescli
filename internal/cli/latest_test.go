@@ -75,6 +75,32 @@ func TestLatestWithSlug(t *testing.T) {
 	}
 }
 
+func TestLatestWithTag(t *testing.T) {
+	out, err := runLatest(t, "--tag", "meeting")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	root := testdataPath(t)
+	want := filepath.Join(root, "2026/01/20260104_8818_meeting.md")
+	if out != want {
+		t.Errorf("got %q, want %q", out, want)
+	}
+}
+
+func TestLatestCombinedFilters(t *testing.T) {
+	out, err := runLatest(t, "--tag", "work", "--type", "todo")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	root := testdataPath(t)
+	want := filepath.Join(root, "2026/01/20260102_8814.todo.md")
+	if out != want {
+		t.Errorf("got %q, want %q", out, want)
+	}
+}
+
 func TestLatestSlugNotFound(t *testing.T) {
 	_, err := runLatest(t, "--slug", "nonexistent")
 	if err == nil {
