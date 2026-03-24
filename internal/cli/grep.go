@@ -15,7 +15,7 @@ var grepCmd = &cobra.Command{
 	SilenceErrors:      true,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		root := mustNotesPath()
-		grepArgs := append([]string{"-r", "--include=*.md", "--exclude-dir=.git"}, args...)
+		grepArgs := append([]string{"-r", "-i", "--include=*.md", "--exclude-dir=.git"}, args...)
 		grepArgs = append(grepArgs, root)
 
 		grep := exec.Command("grep", grepArgs...)

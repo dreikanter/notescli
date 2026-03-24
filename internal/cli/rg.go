@@ -20,7 +20,13 @@ var rgCmd = &cobra.Command{
 		}
 
 		root := mustNotesPath()
-		rgArgs := append([]string{"--glob", "*.md"}, args...)
+		rgArgs := append([]string{
+			"--glob", "*.md",
+			"--sortr", "path",
+			"--heading",
+			"--no-line-number",
+			"--ignore-case",
+		}, args...)
 		rgArgs = append(rgArgs, root)
 
 		rg := exec.Command("rg", rgArgs...)
