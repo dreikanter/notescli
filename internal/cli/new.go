@@ -4,9 +4,7 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"path/filepath"
 	"strings"
-	"time"
 
 	"github.com/dreikanter/notescli/note"
 	"github.com/spf13/cobra"
@@ -30,39 +28,27 @@ var newCmd = &cobra.Command{
 		}
 
 		root := mustNotesPath()
-		today := time.Now().Format("20060102")
 
-		id, err := note.NextID(root)
-		if err != nil {
-			return err
-		}
-
-		filename := note.NoteFilename(today, id, newSlug, newType)
-		dir := note.NoteDirPath(root, today)
-
-		if err := os.MkdirAll(dir, 0o755); err != nil {
-			return fmt.Errorf("cannot create directory %s: %w", dir, err)
-		}
-
-		fullPath := filepath.Join(dir, filename)
-
-		content := note.BuildFrontmatter(note.FrontmatterFields{
-			Title:       newTitle,
-			Tags:        newTags,
-			Description: newDescription,
-		})
-
-		// Read from stdin if piped
+		var body string
 		if !isTerminal(os.Stdin) {
 			data, err := io.ReadAll(os.Stdin)
 			if err != nil {
 				return fmt.Errorf("cannot read stdin: %w", err)
 			}
-			content += string(data)
+			body = string(data)
 		}
 
-		if err := os.WriteFile(fullPath, []byte(content), 0o644); err != nil {
-			return fmt.Errorf("cannot write note: %w", err)
+		fullPath, err := createNote(createNoteParams{
+			Root:        root,
+			Slug:        newSlug,
+			Type:        newType,
+			Tags:        newTags,
+			Title:       newTitle,
+			Description: newDescription,
+			Body:        body,
+		})
+		if err != nil {
+			return err
 		}
 
 		fmt.Println(fullPath)

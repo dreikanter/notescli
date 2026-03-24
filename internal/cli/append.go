@@ -13,7 +13,7 @@ import (
 
 var appendCmd = &cobra.Command{
 	Use:   "append [<id|slug|filename|path>]",
-	Short: "Append text from stdin to an existing note",
+	Short: "Append text from stdin to a note, optionally creating it",
 	Args:  cobra.MaximumNArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		root := mustNotesPath()
@@ -33,10 +33,31 @@ var appendCmd = &cobra.Command{
 			return nil
 		}
 
-		types, _ := cmd.Flags().GetStringSlice("type")
-		slugs, _ := cmd.Flags().GetStringSlice("slug")
+		noteType, _ := cmd.Flags().GetString("type")
+		slug, _ := cmd.Flags().GetString("slug")
 		tags, _ := cmd.Flags().GetStringSlice("tag")
-		hasFilters := len(types) > 0 || len(slugs) > 0 || len(tags) > 0
+		create, _ := cmd.Flags().GetBool("create")
+		title, _ := cmd.Flags().GetString("title")
+		description, _ := cmd.Flags().GetString("description")
+
+		hasFilters := noteType != "" || slug != "" || len(tags) > 0
+
+		if !create {
+			if title != "" {
+				return fmt.Errorf("--title requires --create")
+			}
+			if description != "" {
+				return fmt.Errorf("--description requires --create")
+			}
+		}
+
+		if create && len(args) == 1 {
+			return fmt.Errorf("--create cannot be combined with positional argument")
+		}
+
+		if noteType != "" && !note.IsKnownType(noteType) {
+			return fmt.Errorf("unknown note type %q (valid types: %s)", noteType, strings.Join(note.KnownTypes, ", "))
+		}
 
 		var targetPath string
 
@@ -46,13 +67,11 @@ var appendCmd = &cobra.Command{
 			}
 
 			if strings.Contains(args[0], "/") {
-				// Treat as file path
 				targetPath, err = resolveFilePath(args[0], root)
 				if err != nil {
 					return err
 				}
 			} else {
-				// Resolve by ID/slug/filename
 				notes, scanErr := note.Scan(root)
 				if scanErr != nil {
 					return scanErr
@@ -64,16 +83,48 @@ var appendCmd = &cobra.Command{
 				targetPath = filepath.Join(root, n.RelPath)
 			}
 		} else if hasFilters {
-			n, filterErr := scanAndFilter(cmd, root)
-			if filterErr != nil {
-				return filterErr
+			notes, scanErr := note.Scan(root)
+			if scanErr != nil {
+				return scanErr
 			}
-			targetPath = filepath.Join(root, n.RelPath)
+
+			if noteType != "" {
+				notes = note.FilterByTypes(notes, []string{noteType})
+			}
+			if slug != "" {
+				notes = note.FilterBySlugs(notes, []string{slug})
+			}
+			if len(tags) > 0 {
+				notes, err = note.FilterByTags(notes, root, tags)
+				if err != nil {
+					return err
+				}
+			}
+
+			if len(notes) > 0 {
+				targetPath = filepath.Join(root, notes[0].RelPath)
+			} else if create {
+				targetPath, err = createNote(createNoteParams{
+					Root:        root,
+					Slug:        slug,
+					Type:        noteType,
+					Tags:        tags,
+					Title:       title,
+					Description: description,
+				})
+				if err != nil {
+					return err
+				}
+			} else {
+				return fmt.Errorf("no notes found matching the given criteria")
+			}
+		} else if create {
+			return fmt.Errorf("--create requires filter flags (--type, --slug, --tag)")
 		} else {
 			return fmt.Errorf("specify a note by positional argument or filter flags (--type, --slug, --tag)")
 		}
 
-		// Read existing file
+		// Read existing file (may be newly created)
 		existing, err := os.ReadFile(targetPath)
 		if err != nil {
 			return fmt.Errorf("cannot read note: %w", err)
@@ -118,8 +169,11 @@ func resolveFilePath(arg, root string) (string, error) {
 }
 
 func init() {
-	appendCmd.Flags().StringSlice("type", nil, "filter by note type (repeatable)")
-	appendCmd.Flags().StringSlice("slug", nil, "filter by slug (repeatable)")
+	appendCmd.Flags().String("type", "", "filter by note type")
+	appendCmd.Flags().String("slug", "", "filter by slug")
 	appendCmd.Flags().StringSlice("tag", nil, "filter by tag (repeatable, all must match)")
+	appendCmd.Flags().Bool("create", false, "create note if no match found")
+	appendCmd.Flags().String("title", "", "title for frontmatter (requires --create)")
+	appendCmd.Flags().String("description", "", "description for frontmatter (requires --create)")
 	rootCmd.AddCommand(appendCmd)
 }
