@@ -41,9 +41,12 @@ func runAppend(t *testing.T, root string, stdin string, args ...string) (string,
 	t.Helper()
 
 	appendCmd.ResetFlags()
-	appendCmd.Flags().StringSlice("type", nil, "filter by note type (repeatable)")
-	appendCmd.Flags().StringSlice("slug", nil, "filter by slug (repeatable)")
+	appendCmd.Flags().String("type", "", "filter by note type")
+	appendCmd.Flags().String("slug", "", "filter by slug")
 	appendCmd.Flags().StringSlice("tag", nil, "filter by tag (repeatable, all must match)")
+	appendCmd.Flags().Bool("create", false, "create note if no match found")
+	appendCmd.Flags().String("title", "", "title for frontmatter (requires --create)")
+	appendCmd.Flags().String("description", "", "description for frontmatter (requires --create)")
 
 	buf := new(bytes.Buffer)
 	rootCmd.SetOut(buf)
@@ -266,5 +269,156 @@ func TestAppendNoTargetErrors(t *testing.T) {
 	_, err := runAppend(t, root, "text")
 	if err == nil {
 		t.Fatal("expected error when no target specified, got nil")
+	}
+}
+
+func TestAppendCreateNewNote(t *testing.T) {
+	root := copyTestdata(t)
+	out, err := runAppend(t, root, "created content", "--type", "weekly", "--create")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if out == "" {
+		t.Fatal("expected output path, got empty")
+	}
+
+	// Verify file was created and contains the appended content
+	data, err := os.ReadFile(out)
+	if err != nil {
+		t.Fatalf("cannot read created file: %v", err)
+	}
+	if !strings.Contains(string(data), "created content") {
+		t.Error("appended content not found in created file")
+	}
+
+	// Verify filename contains .weekly.
+	if !strings.Contains(filepath.Base(out), ".weekly.md") {
+		t.Errorf("expected .weekly.md extension, got %s", filepath.Base(out))
+	}
+}
+
+func TestAppendCreateWithSlug(t *testing.T) {
+	root := copyTestdata(t)
+	out, err := runAppend(t, root, "slugged", "--slug", "standup", "--create")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	base := filepath.Base(out)
+	if !strings.Contains(base, "_standup") {
+		t.Errorf("expected slug in filename, got %s", base)
+	}
+
+	data, _ := os.ReadFile(out)
+	if !strings.Contains(string(data), "slugged") {
+		t.Error("appended content not found in created file")
+	}
+}
+
+func TestAppendCreateWithTags(t *testing.T) {
+	root := copyTestdata(t)
+	out, err := runAppend(t, root, "tagged content", "--tag", "work", "--tag", "daily", "--create")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	data, _ := os.ReadFile(out)
+	content := string(data)
+
+	if !strings.Contains(content, "tags: [work, daily]") {
+		t.Errorf("expected tags in frontmatter, got:\n%s", content)
+	}
+	if !strings.Contains(content, "tagged content") {
+		t.Error("appended content not found in created file")
+	}
+}
+
+func TestAppendCreateWithTitleAndDescription(t *testing.T) {
+	root := copyTestdata(t)
+	out, err := runAppend(t, root, "body text", "--type", "backlog", "--create",
+		"--title", "Daily TODO", "--description", "auto-generated")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	data, _ := os.ReadFile(out)
+	content := string(data)
+
+	if !strings.Contains(content, "title: Daily TODO") {
+		t.Errorf("expected title in frontmatter, got:\n%s", content)
+	}
+	if !strings.Contains(content, "description: auto-generated") {
+		t.Errorf("expected description in frontmatter, got:\n%s", content)
+	}
+	if !strings.Contains(content, "body text") {
+		t.Error("appended content not found")
+	}
+}
+
+func TestAppendCreateAppendsToExistingMatch(t *testing.T) {
+	root := copyTestdata(t)
+
+	// There's already a todo note: 20260102_8814.todo.md
+	target := filepath.Join(root, "2026/01/20260102_8814.todo.md")
+	before, _ := os.ReadFile(target)
+
+	out, err := runAppend(t, root, "extra text", "--type", "todo", "--create")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if out != target {
+		t.Errorf("expected to append to existing %q, got %q", target, out)
+	}
+
+	after, _ := os.ReadFile(target)
+	if !strings.Contains(string(after), "extra text") {
+		t.Error("appended text not found in existing file")
+	}
+
+	// Verify original content is preserved
+	if !strings.Contains(string(after), string(before[:len(before)-1])) {
+		t.Error("original content was not preserved")
+	}
+}
+
+func TestAppendCreateWithPositionalArgErrors(t *testing.T) {
+	root := copyTestdata(t)
+	_, err := runAppend(t, root, "text", "8823", "--create")
+	if err == nil {
+		t.Fatal("expected error when combining --create with positional arg, got nil")
+	}
+}
+
+func TestAppendTitleWithoutCreateErrors(t *testing.T) {
+	root := copyTestdata(t)
+	_, err := runAppend(t, root, "text", "--type", "todo", "--title", "Oops")
+	if err == nil {
+		t.Fatal("expected error when using --title without --create, got nil")
+	}
+}
+
+func TestAppendDescriptionWithoutCreateErrors(t *testing.T) {
+	root := copyTestdata(t)
+	_, err := runAppend(t, root, "text", "--type", "todo", "--description", "Oops")
+	if err == nil {
+		t.Fatal("expected error when using --description without --create, got nil")
+	}
+}
+
+func TestAppendCreateWithoutFiltersErrors(t *testing.T) {
+	root := copyTestdata(t)
+	_, err := runAppend(t, root, "text", "--create")
+	if err == nil {
+		t.Fatal("expected error when using --create without filter flags, got nil")
+	}
+}
+
+func TestAppendCreateUnknownTypeErrors(t *testing.T) {
+	root := copyTestdata(t)
+	_, err := runAppend(t, root, "text", "--type", "invalid", "--create")
+	if err == nil {
+		t.Fatal("expected error for unknown note type, got nil")
 	}
 }
