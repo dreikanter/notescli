@@ -10,21 +10,19 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var (
-	newSlug        string
-	newType        string
-	newTags        []string
-	newDescription string
-	newTitle       string
-)
-
 var newCmd = &cobra.Command{
 	Use:   "new",
 	Short: "Create a new note",
 	Args:  cobra.NoArgs,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		if newType != "" && !note.IsKnownType(newType) {
-			return fmt.Errorf("unknown note type %q (valid types: %s)", newType, strings.Join(note.KnownTypes, ", "))
+		slug, _ := cmd.Flags().GetString("slug")
+		noteType, _ := cmd.Flags().GetString("type")
+		tags, _ := cmd.Flags().GetStringArray("tag")
+		description, _ := cmd.Flags().GetString("description")
+		title, _ := cmd.Flags().GetString("title")
+
+		if noteType != "" && !note.IsKnownType(noteType) {
+			return fmt.Errorf("unknown note type %q (valid types: %s)", noteType, strings.Join(note.KnownTypes, ", "))
 		}
 
 		root := mustNotesPath()
@@ -40,11 +38,11 @@ var newCmd = &cobra.Command{
 
 		fullPath, err := createNote(createNoteParams{
 			Root:        root,
-			Slug:        newSlug,
-			Type:        newType,
-			Tags:        newTags,
-			Title:       newTitle,
-			Description: newDescription,
+			Slug:        slug,
+			Type:        noteType,
+			Tags:        tags,
+			Title:       title,
+			Description: description,
 			Body:        body,
 		})
 		if err != nil {
@@ -65,10 +63,10 @@ func isTerminal(f *os.File) bool {
 }
 
 func init() {
-	newCmd.Flags().StringVar(&newSlug, "slug", "", "descriptive slug appended to filename")
-	newCmd.Flags().StringVar(&newType, "type", "", "note type (todo, backlog, weekly)")
-	newCmd.Flags().StringArrayVar(&newTags, "tag", nil, "tag for frontmatter (repeatable)")
-	newCmd.Flags().StringVar(&newDescription, "description", "", "description for frontmatter")
-	newCmd.Flags().StringVar(&newTitle, "title", "", "title for frontmatter")
+	newCmd.Flags().String("slug", "", "descriptive slug appended to filename")
+	newCmd.Flags().String("type", "", "note type (todo, backlog, weekly)")
+	newCmd.Flags().StringArray("tag", nil, "tag for frontmatter (repeatable)")
+	newCmd.Flags().String("description", "", "description for frontmatter")
+	newCmd.Flags().String("title", "", "title for frontmatter")
 	rootCmd.AddCommand(newCmd)
 }
