@@ -17,7 +17,7 @@ var newCmd = &cobra.Command{
 	RunE: func(cmd *cobra.Command, args []string) error {
 		slug, _ := cmd.Flags().GetString("slug")
 		noteType, _ := cmd.Flags().GetString("type")
-		tags, _ := cmd.Flags().GetStringArray("tag")
+		tags, _ := cmd.Flags().GetStringSlice("tag")
 		description, _ := cmd.Flags().GetString("description")
 		title, _ := cmd.Flags().GetString("title")
 
@@ -49,7 +49,7 @@ var newCmd = &cobra.Command{
 			return err
 		}
 
-		fmt.Println(fullPath)
+		fmt.Fprintln(cmd.OutOrStdout(), fullPath)
 		return nil
 	},
 }
@@ -65,7 +65,7 @@ func isTerminal(f *os.File) bool {
 func init() {
 	newCmd.Flags().String("slug", "", "descriptive slug appended to filename")
 	newCmd.Flags().String("type", "", "note type (todo, backlog, weekly)")
-	newCmd.Flags().StringArray("tag", nil, "tag for frontmatter (repeatable)")
+	newCmd.Flags().StringSlice("tag", nil, "tag for frontmatter (repeatable)")
 	newCmd.Flags().String("description", "", "description for frontmatter")
 	newCmd.Flags().String("title", "", "title for frontmatter")
 	rootCmd.AddCommand(newCmd)
