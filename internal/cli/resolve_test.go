@@ -2,7 +2,6 @@ package cli
 
 import (
 	"bytes"
-	"os"
 	"path/filepath"
 	"strings"
 	"testing"
@@ -75,14 +74,7 @@ func TestResolveByAbsolutePath(t *testing.T) {
 func TestResolveByRelativePath(t *testing.T) {
 	root := testdataPath(t)
 
-	oldWd, err := os.Getwd()
-	if err != nil {
-		t.Fatalf("cannot get working directory: %v", err)
-	}
-	if err := os.Chdir(root); err != nil {
-		t.Fatalf("cannot chdir: %v", err)
-	}
-	t.Cleanup(func() { _ = os.Chdir(oldWd) })
+	t.Chdir(root)
 
 	out, err := runResolve(t, root, "2026/01/20260106_8823.md")
 	if err != nil {
