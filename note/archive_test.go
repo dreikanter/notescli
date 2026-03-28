@@ -62,47 +62,6 @@ func TestScanSkipsInvalidFiles(t *testing.T) {
 	}
 }
 
-func TestResolve(t *testing.T) {
-	notes := []Note{
-		{RelPath: "2026/01/20260106_8823.md", ID: "8823", Slug: "", Type: "", BaseName: "20260106_8823"},
-		{RelPath: "2026/01/20260102_8814.todo.md", ID: "8814", Slug: "", Type: "todo", BaseName: "20260102_8814"},
-		{RelPath: "2024/12/20241203_6973_disable-letter_opener.md", ID: "6973", Slug: "disable-letter_opener", Type: "", BaseName: "20241203_6973_disable-letter_opener"},
-	}
-
-	tests := []struct {
-		name   string
-		query  string
-		wantID string
-	}{
-		{"by id", "8823", "8823"},
-		{"by id second", "6973", "6973"},
-		{"by slug with special chars", "disable-letter_opener", "6973"},
-		{"by type", "todo", "8814"},
-		{"by basename", "20260106_8823", "8823"},
-		{"by basename with md", "20260106_8823.md", "8823"},
-		{"not found", "9999", ""},
-		{"empty query", "", ""},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			got := Resolve(notes, tt.query)
-			if tt.wantID == "" {
-				if got != nil {
-					t.Errorf("Resolve(%q) = %v, want nil", tt.query, got)
-				}
-				return
-			}
-			if got == nil {
-				t.Fatalf("Resolve(%q) = nil, want ID %q", tt.query, tt.wantID)
-			}
-			if got.ID != tt.wantID {
-				t.Errorf("Resolve(%q).ID = %q, want %q", tt.query, got.ID, tt.wantID)
-			}
-		})
-	}
-}
-
 func TestResolveRef(t *testing.T) {
 	root := testdataPath(t)
 

@@ -50,43 +50,6 @@ func Scan(root string) ([]Note, error) {
 	return notes, nil
 }
 
-// Resolve finds a single note matching the query by ID, slug, type, or base filename.
-// Returns the first (most recent) match, or nil if not found.
-func Resolve(notes []Note, query string) *Note {
-	// Strip .md extension if provided
-	query = strings.TrimSuffix(query, ".md")
-
-	// Try exact ID match first
-	for i := range notes {
-		if notes[i].ID == query {
-			return &notes[i]
-		}
-	}
-
-	// Try exact slug match
-	for i := range notes {
-		if notes[i].Slug != "" && notes[i].Slug == query {
-			return &notes[i]
-		}
-	}
-
-	// Try exact type match
-	for i := range notes {
-		if notes[i].Type != "" && notes[i].Type == query {
-			return &notes[i]
-		}
-	}
-
-	// Try exact base filename match
-	for i := range notes {
-		if notes[i].BaseName == query {
-			return &notes[i]
-		}
-	}
-
-	return nil
-}
-
 // ResolveRef resolves a note reference to a Note using the following priority:
 //  1. Numeric ID
 //  2. Absolute or relative path (must exist and be under root)
