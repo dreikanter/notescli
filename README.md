@@ -1,6 +1,6 @@
 # Notes CLI
 
-A CLI tool for managing a file-based of markdown notes.
+A CLI tool for managing a file-based store of markdown notes.
 
 ## Install
 
@@ -20,18 +20,6 @@ For development, use `make build` or `make install` from a local clone.
 ## Usage
 
 ```sh
-# Show help
-notes --help
-
-# Read a note by ID
-notes read 8823
-
-# Read a note by slug
-notes read todo
-
-# Read a note by filename
-notes read 20260106_8823.md
-
 # Create a new note
 notes new
 notes new --title "Meeting notes" --slug meeting --tag work
@@ -39,30 +27,47 @@ notes new --title "Meeting notes" --slug meeting --tag work
 # Create today's todo from the previous todo
 notes new-todo
 
-# Filter notes by filename fragment
-notes ls --name todo
-notes ls --name 2026
-
 # List recent notes
 notes ls
 notes ls --limit 10
 notes ls --type todo
+notes ls --slug meeting
 notes ls --tag work
 notes ls --tag work --tag meeting
 notes ls --tag work --type todo
+notes ls --name 2026
 
-# Search note contents (only .md files, .git excluded)
-notes grep "search pattern"
+# Read a note by ID, slug, or filename
+notes read 8823
+notes read meeting
+notes read 20260106_8823.md
+
+# Append stdin text to a note
+echo "text" | notes append 8823
+echo "text" | notes append --type todo
+echo "text" | notes append --type weekly --create
+
+# Update frontmatter and rename a note
+notes update 8823 --title "New Title"
+notes update 8823 --tag work --tag planning
+notes update 8823 --slug meeting
+notes update 8823 --no-slug
+notes update 8823 --type todo
+notes update 8823 --no-type
+notes update 8823 --no-tags
 
 # Print path to most recent note
 notes latest
 notes latest --type todo
+notes latest --slug meeting
+notes latest --tag work
+
+# Search note contents
+notes grep "search pattern"
+notes rg "search pattern"
 
 # Print the notes store path
 notes path
-
-# Override notes store path
-notes --path /path/to/notes read 8823
 ```
 
 The notes store path is resolved in this order:
@@ -74,6 +79,8 @@ The notes store path is resolved in this order:
 ## Development
 
 ```sh
+make build       # build local ./notes binary
+make install     # build and install to ~/go/bin/notes
 make test        # run all tests
 make lint        # run golangci-lint
 make clean       # remove built binary
