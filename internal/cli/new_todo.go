@@ -49,7 +49,7 @@ var newTodoCmd = &cobra.Command{
 		prevLines := strings.Split(string(prevData), "\n")
 
 		// Rollover tasks
-		result := note.RolloverTasks(prevLines, newTodoForce)
+		result := note.RolloverTasks(prevLines)
 
 		// Write back modified previous todo
 		if err := os.WriteFile(prevPath, []byte(strings.Join(result.UpdatedLines, "\n")), 0o644); err != nil {
@@ -81,6 +81,6 @@ var newTodoCmd = &cobra.Command{
 }
 
 func init() {
-	newTodoCmd.Flags().BoolVar(&newTodoForce, "force", false, "regenerate today's todo even if it exists, and carry over in-progress tasks")
+	newTodoCmd.Flags().BoolVar(&newTodoForce, "force", false, "regenerate today's todo even if it exists")
 	rootCmd.AddCommand(newTodoCmd)
 }

@@ -5,7 +5,7 @@ import (
 	"strings"
 )
 
-// taskRe matches lines like "  - [ ] some task" or "[ ] some task" or "  [>] task".
+// taskRe matches lines like "  - [ ] some task" or "[ ] some task".
 var taskRe = regexp.MustCompile(`^(\s*(?:- )?\[)(.?)(\].*)$`)
 
 // Task represents a parsed task line from a todo note.
@@ -39,6 +39,17 @@ func (t *Task) Reassembled(marker string) string {
 	return t.Prefix + marker + t.Suffix
 }
 
+// WithTag returns the task line with a tag inserted after the marker bracket.
+// E.g. "- [ ] Do thing" with tag "moved" becomes "- [ ] (moved) Do thing".
+func (t *Task) WithTag(tag string) string {
+	// Suffix starts with "] ", insert tag after the "] "
+	if len(t.Suffix) >= 2 && t.Suffix[:2] == "] " {
+		return t.Prefix + t.Marker + "] (" + tag + ") " + t.Suffix[2:]
+	}
+	// Suffix is just "]" with no text
+	return t.Prefix + t.Marker + "] (" + tag + ")" + t.Suffix[1:]
+}
+
 // ExtractTasks parses all task lines from a todo file's content lines.
 func ExtractTasks(lines []string) []Task {
 	var tasks []Task
@@ -53,12 +64,11 @@ func ExtractTasks(lines []string) []Task {
 // RolloverResult holds the output of a todo rollover operation.
 type RolloverResult struct {
 	CarriedTasks []Task   // tasks to include in the new todo
-	UpdatedLines []string // modified lines of the previous todo (with [ ] → [>])
+	UpdatedLines []string // modified lines of the previous todo (with (moved) tag added)
 }
 
 // RolloverTasks determines which tasks to carry over and produces the modified previous todo.
-// If force is true, also carry over in-progress [>] tasks.
-func RolloverTasks(prevLines []string, force bool) RolloverResult {
+func RolloverTasks(prevLines []string) RolloverResult {
 	tasks := ExtractTasks(prevLines)
 	updated := make([]string, len(prevLines))
 	copy(updated, prevLines)
@@ -81,17 +91,13 @@ func RolloverTasks(prevLines []string, force bool) RolloverResult {
 		case t.IsDaily:
 			// Daily tasks are always carried over regardless of marker
 			addTask(t)
-			// If the task was pending, mark as forwarded in previous
 			if t.Marker == " " {
-				updated[t.LineNumber] = t.Reassembled(">")
+				updated[t.LineNumber] = t.WithTag("moved")
 			}
 		case t.Marker == " ":
-			// Pending tasks: carry over and mark as forwarded
+			// Pending tasks: carry over and tag as moved in previous
 			addTask(t)
-			updated[t.LineNumber] = t.Reassembled(">")
-		case t.Marker == ">" && force:
-			// In-progress tasks: only carry over with --force
-			addTask(t)
+			updated[t.LineNumber] = t.WithTag("moved")
 		}
 	}
 
