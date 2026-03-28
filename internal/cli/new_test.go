@@ -1,6 +1,7 @@
 package cli
 
 import (
+	"bytes"
 	"io"
 	"os"
 	"path/filepath"
@@ -14,39 +15,31 @@ func runNew(t *testing.T, root string, stdin string, args ...string) (string, er
 	newCmd.ResetFlags()
 	newCmd.Flags().String("slug", "", "descriptive slug appended to filename")
 	newCmd.Flags().String("type", "", "note type (todo, backlog, weekly)")
-	newCmd.Flags().StringArray("tag", nil, "tag for frontmatter (repeatable)")
+	newCmd.Flags().StringSlice("tag", nil, "tag for frontmatter (repeatable)")
 	newCmd.Flags().String("description", "", "description for frontmatter")
 	newCmd.Flags().String("title", "", "title for frontmatter")
 
+	buf := new(bytes.Buffer)
+	rootCmd.SetOut(buf)
+	rootCmd.SetErr(buf)
 	rootCmd.SetArgs(append([]string{"new", "--path", root}, args...))
 
-	// Capture os.Stdout (new prints via fmt.Println, not cmd.OutOrStdout).
-	oldStdout := os.Stdout
-	pr, pw, err := os.Pipe()
-	if err != nil {
-		t.Fatalf("cannot create stdout pipe: %v", err)
-	}
-	os.Stdout = pw
-	defer func() { os.Stdout = oldStdout }()
-
-	// Replace stdin.
 	oldStdin := os.Stdin
-	sr, sw, err := os.Pipe()
+	defer func() { os.Stdin = oldStdin }()
+
+	r, w, err := os.Pipe()
 	if err != nil {
 		t.Fatalf("cannot create stdin pipe: %v", err)
 	}
-	os.Stdin = sr
-	defer func() { os.Stdin = oldStdin }()
+	os.Stdin = r
 
 	go func() {
-		_, _ = io.WriteString(sw, stdin)
-		sw.Close()
+		_, _ = io.WriteString(w, stdin)
+		w.Close()
 	}()
 
 	execErr := rootCmd.Execute()
-	pw.Close()
-	out, _ := io.ReadAll(pr)
-	return strings.TrimSpace(string(out)), execErr
+	return strings.TrimSpace(buf.String()), execErr
 }
 
 func TestNewDefault(t *testing.T) {

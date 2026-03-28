@@ -20,8 +20,6 @@ func runLs(t *testing.T, args ...string) (string, error) {
 	buf := new(bytes.Buffer)
 	rootCmd.SetOut(buf)
 	rootCmd.SetErr(buf)
-	lsCmd.SetOut(buf)
-	lsCmd.SetErr(buf)
 	rootCmd.SetArgs(append([]string{"ls", "--path", root}, args...))
 
 	err := rootCmd.Execute()

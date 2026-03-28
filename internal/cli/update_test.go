@@ -12,7 +12,7 @@ func runUpdate(t *testing.T, root string, args ...string) (string, error) {
 	t.Helper()
 
 	updateCmd.ResetFlags()
-	updateCmd.Flags().StringArray("tag", nil, "tag for frontmatter (repeatable); replaces existing tags")
+	updateCmd.Flags().StringSlice("tag", nil, "tag for frontmatter (repeatable); replaces existing tags")
 	updateCmd.Flags().Bool("no-tags", false, "remove all tags from frontmatter")
 	updateCmd.Flags().String("title", "", "title for frontmatter (empty string clears it)")
 	updateCmd.Flags().String("description", "", "description for frontmatter (empty string clears it)")

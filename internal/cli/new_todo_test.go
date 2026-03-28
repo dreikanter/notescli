@@ -1,8 +1,8 @@
 package cli
 
 import (
+	"bytes"
 	"encoding/json"
-	"io"
 	"os"
 	"path/filepath"
 	"strings"
@@ -16,21 +16,13 @@ func runNewTodo(t *testing.T, root string, args ...string) (string, error) {
 	newTodoCmd.ResetFlags()
 	newTodoCmd.Flags().Bool("force", false, "regenerate today's todo even if it exists")
 
+	buf := new(bytes.Buffer)
+	rootCmd.SetOut(buf)
+	rootCmd.SetErr(buf)
 	rootCmd.SetArgs(append([]string{"new-todo", "--path", root}, args...))
 
-	// Capture os.Stdout (new-todo prints via fmt.Println, not cmd.OutOrStdout).
-	oldStdout := os.Stdout
-	pr, pw, err := os.Pipe()
-	if err != nil {
-		t.Fatalf("cannot create stdout pipe: %v", err)
-	}
-	os.Stdout = pw
-	defer func() { os.Stdout = oldStdout }()
-
-	execErr := rootCmd.Execute()
-	pw.Close()
-	out, _ := io.ReadAll(pr)
-	return strings.TrimSpace(string(out)), execErr
+	err := rootCmd.Execute()
+	return strings.TrimSpace(buf.String()), err
 }
 
 // emptyNotesRoot creates a temp dir with only id.json, no notes.
