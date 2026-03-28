@@ -86,13 +86,12 @@ func Resolve(notes []Note, query string) *Note {
 	return nil
 }
 
-// Filter returns all notes whose base filename or type contains the fragment (case-insensitive).
+// Filter returns all notes whose filename contains the fragment (case-insensitive).
 func Filter(notes []Note, fragment string) []Note {
 	fragment = strings.ToLower(fragment)
 	var results []Note
 	for _, n := range notes {
-		if strings.Contains(strings.ToLower(n.BaseName), fragment) ||
-			strings.Contains(strings.ToLower(n.Type), fragment) {
+		if strings.Contains(strings.ToLower(filepath.Base(n.RelPath)), fragment) {
 			results = append(results, n)
 		}
 	}

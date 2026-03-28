@@ -39,9 +39,9 @@ notes new --title "Meeting notes" --slug meeting --tag work
 # Create today's todo from the previous todo
 notes new-todo
 
-# Filter notes by fragment
-notes filter todo
-notes filter 2026
+# Filter notes by filename fragment
+notes ls --name todo
+notes ls --name 2026
 
 # List recent notes
 notes ls
