@@ -33,7 +33,7 @@ notes ls --limit 10
 notes ls --type todo
 notes ls --slug meeting
 notes ls --tag work
-notes ls --tag work --tag meeting
+notes ls --tag work --tag meeting  # multiple --tag flags are ANDed; all flags compose
 notes ls --tag work --type todo
 notes ls --name 2026
 
