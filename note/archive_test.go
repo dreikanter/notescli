@@ -105,9 +105,9 @@ func TestResolve(t *testing.T) {
 
 func TestFilter(t *testing.T) {
 	notes := []Note{
-		{BaseName: "20260106_8823", Type: ""},
-		{BaseName: "20260102_8814", Type: "todo"},
-		{BaseName: "20241203_6973_disable-letter_opener", Type: ""},
+		{RelPath: "2026/01/20260106_8823.md", BaseName: "20260106_8823", Type: ""},
+		{RelPath: "2026/01/20260102_8814.todo.md", BaseName: "20260102_8814", Type: "todo"},
+		{RelPath: "2024/12/20241203_6973_disable-letter_opener.md", BaseName: "20241203_6973_disable-letter_opener", Type: ""},
 	}
 
 	tests := []struct {
