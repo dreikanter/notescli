@@ -4,6 +4,79 @@ import (
 	"testing"
 )
 
+func TestParseFrontmatterFields(t *testing.T) {
+	tests := []struct {
+		name  string
+		input string
+		want  FrontmatterFields
+	}{
+		{
+			name:  "empty input",
+			input: "",
+			want:  FrontmatterFields{},
+		},
+		{
+			name:  "no frontmatter",
+			input: "# Hello\n\nBody text.\n",
+			want:  FrontmatterFields{},
+		},
+		{
+			name:  "title only",
+			input: "---\ntitle: My Note\n---\n\n# Content\n",
+			want:  FrontmatterFields{Title: "My Note"},
+		},
+		{
+			name:  "tags only",
+			input: "---\ntags: [work, planning]\n---\n\n# Content\n",
+			want:  FrontmatterFields{Tags: []string{"work", "planning"}},
+		},
+		{
+			name:  "description only",
+			input: "---\ndescription: Quick thought\n---\n\n# Content\n",
+			want:  FrontmatterFields{Description: "Quick thought"},
+		},
+		{
+			name:  "all fields",
+			input: "---\ntitle: Weekly Review\ntags: [review, work]\ndescription: Week 10\n---\n\n# Content\n",
+			want: FrontmatterFields{
+				Title:       "Weekly Review",
+				Tags:        []string{"review", "work"},
+				Description: "Week 10",
+			},
+		},
+		{
+			name:  "unclosed frontmatter",
+			input: "---\ntitle: Oops\n# Content\n",
+			want:  FrontmatterFields{},
+		},
+		{
+			name:  "roundtrip with BuildFrontmatter",
+			input: BuildFrontmatter(FrontmatterFields{Title: "T", Tags: []string{"a", "b"}, Description: "D"}) + "body\n",
+			want:  FrontmatterFields{Title: "T", Tags: []string{"a", "b"}, Description: "D"},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := ParseFrontmatterFields([]byte(tt.input))
+			if got.Title != tt.want.Title {
+				t.Errorf("Title = %q, want %q", got.Title, tt.want.Title)
+			}
+			if got.Description != tt.want.Description {
+				t.Errorf("Description = %q, want %q", got.Description, tt.want.Description)
+			}
+			if len(got.Tags) != len(tt.want.Tags) {
+				t.Fatalf("Tags = %v, want %v", got.Tags, tt.want.Tags)
+			}
+			for i := range tt.want.Tags {
+				if got.Tags[i] != tt.want.Tags[i] {
+					t.Errorf("Tags[%d] = %q, want %q", i, got.Tags[i], tt.want.Tags[i])
+				}
+			}
+		})
+	}
+}
+
 func TestBuildFrontmatter(t *testing.T) {
 	tests := []struct {
 		name   string

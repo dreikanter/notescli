@@ -80,6 +80,58 @@ func ParseTags(data []byte) []string {
 	}
 }
 
+// ParseFrontmatterFields extracts all frontmatter fields from data.
+// Returns zero-value FrontmatterFields if no valid frontmatter is present.
+func ParseFrontmatterFields(data []byte) FrontmatterFields {
+	if !bytes.HasPrefix(data, frontmatterDelim) {
+		return FrontmatterFields{}
+	}
+
+	rest := data[len(frontmatterDelim):]
+	idx := bytes.IndexByte(rest, '\n')
+	if idx < 0 {
+		return FrontmatterFields{}
+	}
+	if len(bytes.TrimRight(rest[:idx], "\r")) > 0 {
+		return FrontmatterFields{}
+	}
+	rest = rest[idx+1:]
+
+	var f FrontmatterFields
+	closed := false
+	for {
+		line, after, found := bytes.Cut(rest, []byte("\n"))
+		trimmed := bytes.TrimRight(line, "\r")
+
+		if bytes.Equal(trimmed, frontmatterDelim) {
+			closed = true
+			break
+		}
+
+		s := string(trimmed)
+		if t := strings.TrimPrefix(s, "title: "); t != s {
+			f.Title = t
+		} else if t := strings.TrimPrefix(s, "description: "); t != s {
+			f.Description = t
+		} else if bytes.HasPrefix(trimmed, []byte("tags: [")) && bytes.HasSuffix(trimmed, []byte("]")) {
+			inner := s[len("tags: [") : len(s)-1]
+			if inner != "" {
+				f.Tags = strings.Split(inner, ", ")
+			}
+		}
+
+		if !found {
+			break
+		}
+		rest = after
+	}
+
+	if !closed {
+		return FrontmatterFields{}
+	}
+	return f
+}
+
 var frontmatterDelim = []byte("---")
 
 // StripFrontmatter removes YAML frontmatter from the beginning of data.
