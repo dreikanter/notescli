@@ -6,15 +6,15 @@
 
 - Add `append` command for appending stdin text to existing notes ([#30])
 - Add `update` command for updating frontmatter and renaming notes ([#34])
-- Add `--name` flag to `ls` for case-insensitive substring search on note filenames
+- Add `--name` flag to `ls` for case-insensitive substring search on note filenames ([#36])
 
 ### Changed
 
-- Migrate `new`, `ls`, `new-todo`, and `update` flag bindings from package-level vars to `GetString`/`GetBool` (Pattern B) for cleaner test isolation ([#35])
+- Migrate `new`, `ls`, `new-todo`, and `update` flag bindings from package-level vars to `GetString`/`GetBool` (Pattern B) for cleaner test isolation ([#39])
 
 ### Removed
 
-- Remove `filter` command (superseded by `ls --name`)
+- Remove `filter` command (superseded by `ls --name`) ([#38])
 
 ## [0.1.23] - 2026-03-24
 
@@ -147,3 +147,6 @@
 [#28]: https://github.com/dreikanter/notescli/pull/28
 [#30]: https://github.com/dreikanter/notescli/pull/30
 [#34]: https://github.com/dreikanter/notescli/pull/34
+[#36]: https://github.com/dreikanter/notescli/pull/36
+[#38]: https://github.com/dreikanter/notescli/pull/38
+[#39]: https://github.com/dreikanter/notescli/pull/39
