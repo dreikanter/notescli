@@ -36,16 +36,4 @@ Run `make lint` before committing or creating a PR to catch issues early.
 
 ## Pull Requests
 
-Use the template in `.github/pull_request_template.md` for all PR bodies:
-
-```markdown
-## Summary
-
-- bullet points describing what changed
-
-## References
-
-- Closes #<issue-number>
-```
-
-When running `gh pr create`, pass this structure via `--body`.
+Use `.github/pull_request_template.md` for all PR bodies. When running `gh pr create`, pass its content via `--body`.
