@@ -1,27 +1,58 @@
 # Changelog
 
+## [0.1.32] - 2026-03-28
+
+### Added
+
+- Add `--today` flag to `ls` for filtering notes created today ([#42])
+
+## [0.1.31] - 2026-03-28
+
+### Changed
+
+- Unify note ref resolution across `read`, `append`, and `update` via `note.ResolveRef`: accepts numeric ID, absolute/relative path, basename, slug, or type name ([#41])
+
+## [0.1.30] - 2026-03-28
+
+### Changed
+
+- Migrate `new`, `ls`, `new-todo`, and `update` flag bindings from package-level vars to `GetString`/`GetBool` for cleaner test isolation ([#39])
+
+## [0.1.29] - 2026-03-28
+
+### Removed
+
+- Remove `filter` command (superseded by `ls --name`) ([#38])
+
 ## [0.1.28] - 2026-03-28
 
 ### Added
 
-- Add `--today` flag to `ls` for filtering notes created today ([#32])
+- Add `--name` flag to `ls` for case-insensitive substring search on note filenames ([#36])
 
 ## [0.1.27] - 2026-03-28
 
 ### Added
 
-- Add `append` command for appending stdin text to existing notes ([#30])
 - Add `update` command for updating frontmatter and renaming notes ([#34])
-- Add `--name` flag to `ls` for case-insensitive substring search on note filenames ([#36])
+
+## [0.1.26] - 2026-03-28
 
 ### Changed
 
-- Migrate `new`, `ls`, `new-todo`, and `update` flag bindings from package-level vars to `GetString`/`GetBool` (Pattern B) for cleaner test isolation ([#39])
-- Unify note ref resolution across `read`, `append`, and `update` via a single `note.ResolveRef` function: accepts numeric ID, absolute/relative path, basename, slug, or type name ([#40])
+- Replace `[>]` forwarded state with `(moved)` tag in todo rollover ([#33])
 
-### Removed
+## [0.1.25] - 2026-03-24
 
-- Remove `filter` command (superseded by `ls --name`) ([#38])
+### Added
+
+- Add `--create` flag to `append` subcommand ([#31])
+
+## [0.1.24] - 2026-03-24
+
+### Added
+
+- Add `append` command for appending stdin text to existing notes ([#30])
 
 ## [0.1.23] - 2026-03-24
 
@@ -119,7 +150,15 @@
 - Add `new` and `new-todo` commands ([#2])
 - Add `--no-frontmatter` flag to `read` command ([#3], [#4])
 
+[0.1.32]: https://github.com/dreikanter/notescli/releases/tag/v0.1.32
+[0.1.31]: https://github.com/dreikanter/notescli/releases/tag/v0.1.31
+[0.1.30]: https://github.com/dreikanter/notescli/releases/tag/v0.1.30
+[0.1.29]: https://github.com/dreikanter/notescli/releases/tag/v0.1.29
 [0.1.28]: https://github.com/dreikanter/notescli/releases/tag/v0.1.28
+[0.1.27]: https://github.com/dreikanter/notescli/releases/tag/v0.1.27
+[0.1.26]: https://github.com/dreikanter/notescli/releases/tag/v0.1.26
+[0.1.25]: https://github.com/dreikanter/notescli/releases/tag/v0.1.25
+[0.1.24]: https://github.com/dreikanter/notescli/releases/tag/v0.1.24
 [0.1.23]: https://github.com/dreikanter/notescli/releases/tag/v0.1.23
 [0.1.19]: https://github.com/dreikanter/notescli/releases/tag/v0.1.19
 [0.1.18]: https://github.com/dreikanter/notescli/releases/tag/v0.1.18
@@ -153,9 +192,13 @@
 [#25]: https://github.com/dreikanter/notescli/pull/25
 [#27]: https://github.com/dreikanter/notescli/pull/27
 [#28]: https://github.com/dreikanter/notescli/pull/28
-[#32]: https://github.com/dreikanter/notescli/pull/32
+[#29]: https://github.com/dreikanter/notescli/pull/29
 [#30]: https://github.com/dreikanter/notescli/pull/30
+[#31]: https://github.com/dreikanter/notescli/pull/31
+[#33]: https://github.com/dreikanter/notescli/pull/33
 [#34]: https://github.com/dreikanter/notescli/pull/34
 [#36]: https://github.com/dreikanter/notescli/pull/36
 [#38]: https://github.com/dreikanter/notescli/pull/38
 [#39]: https://github.com/dreikanter/notescli/pull/39
+[#41]: https://github.com/dreikanter/notescli/pull/41
+[#42]: https://github.com/dreikanter/notescli/pull/42

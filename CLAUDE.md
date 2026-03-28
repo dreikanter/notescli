@@ -34,6 +34,21 @@ Run `make lint` before committing or creating a PR to catch issues early.
 - One logical change per commit (atomic commits)
 - Commit message: one short line, no body
 
+## Changelog
+
+Update `CHANGELOG.md` in every PR with an entry for the version that PR will create.
+
+Each PR merge auto-increments the patch version. To find the next version:
+
+```sh
+git describe --tags   # e.g. v0.1.32 → next PR will be v0.1.33
+```
+
+Rules:
+- One entry per PR — do not bundle multiple PRs into one entry
+- Use the exact next patch version as the heading
+- Reference the PR number (`[#N]`) in the entry and add its link at the bottom
+
 ## Pull Requests
 
 Use `.github/pull_request_template.md` for all PR bodies. When running `gh pr create`, pass its content via `--body`.
