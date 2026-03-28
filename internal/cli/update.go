@@ -16,7 +16,7 @@ var updateCmd = &cobra.Command{
 	Short: "Update frontmatter and/or rename a note",
 	Args:  cobra.ExactArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
-		updateTags, _ := cmd.Flags().GetStringArray("tag")
+		updateTags, _ := cmd.Flags().GetStringSlice("tag")
 		updateNoTags, _ := cmd.Flags().GetBool("no-tags")
 		updateTitle, _ := cmd.Flags().GetString("title")
 		updateDescription, _ := cmd.Flags().GetString("description")
@@ -109,7 +109,7 @@ var updateCmd = &cobra.Command{
 }
 
 func init() {
-	updateCmd.Flags().StringArray("tag", nil, "tag for frontmatter (repeatable); replaces existing tags")
+	updateCmd.Flags().StringSlice("tag", nil, "tag for frontmatter (repeatable); replaces existing tags")
 	updateCmd.Flags().Bool("no-tags", false, "remove all tags from frontmatter")
 	updateCmd.Flags().String("title", "", "title for frontmatter (empty string clears it)")
 	updateCmd.Flags().String("description", "", "description for frontmatter (empty string clears it)")
