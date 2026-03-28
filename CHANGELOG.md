@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.1.34] - 2026-03-28
+
+### Added
+
+- Add `resolve` command to print the absolute path of a note by ref ([#44])
+
+[#44]: https://github.com/dreikanter/notescli/pull/44
+
 ## [0.1.32] - 2026-03-28
 
 ### Added
