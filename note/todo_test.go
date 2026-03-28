@@ -71,6 +71,8 @@ func TestWithTag(t *testing.T) {
 		{"with existing tag", "- [ ] (private) Do the thing", "moved", "- [ ] (moved) (private) Do the thing"},
 		{"no bullet", "[ ] Do the thing", "moved", "[ ] (moved) Do the thing"},
 		{"indented", "  - [ ] Do the thing", "moved", "  - [ ] (moved) Do the thing"},
+		{"already tagged", "- [ ] (moved) Do the thing", "moved", "- [ ] (moved) Do the thing"},
+		{"already tagged with other", "- [ ] (moved) (private) Do the thing", "moved", "- [ ] (moved) (private) Do the thing"},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

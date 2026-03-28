@@ -41,13 +41,18 @@ func (t *Task) Reassembled(marker string) string {
 
 // WithTag returns the task line with a tag inserted after the marker bracket.
 // E.g. "- [ ] Do thing" with tag "moved" becomes "- [ ] (moved) Do thing".
+// Returns the line unchanged if the tag is already present.
 func (t *Task) WithTag(tag string) string {
+	tagStr := "(" + tag + ")"
+	if strings.Contains(t.Suffix, tagStr) {
+		return t.Line
+	}
 	// Suffix starts with "] ", insert tag after the "] "
 	if len(t.Suffix) >= 2 && t.Suffix[:2] == "] " {
-		return t.Prefix + t.Marker + "] (" + tag + ") " + t.Suffix[2:]
+		return t.Prefix + t.Marker + "] " + tagStr + " " + t.Suffix[2:]
 	}
 	// Suffix is just "]" with no text
-	return t.Prefix + t.Marker + "] (" + tag + ")" + t.Suffix[1:]
+	return t.Prefix + t.Marker + "] " + tagStr + t.Suffix[1:]
 }
 
 // ExtractTasks parses all task lines from a todo file's content lines.
