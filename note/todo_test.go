@@ -12,19 +12,21 @@ func TestParseTask(t *testing.T) {
 		wantNil bool
 		marker  string
 		isDaily bool
+		isMoved bool
 	}{
-		{"pending", "[ ] Buy milk", false, " ", false},
-		{"pending with bullet", "- [ ] Buy milk", false, " ", false},
-		{"pending indented", "  [ ] Buy milk", false, " ", false},
-		{"pending indented bullet", "  - [ ] Buy milk", false, " ", false},
-		{"in progress", "[>] Working on it", false, ">", false},
-		{"completed", "[+] Done task", false, "+", false},
-		{"daily", "[ ] Standup [daily]", false, " ", true},
-		{"daily completed", "[+] Standup [daily]", false, "+", true},
-		{"not a task", "Just a regular line", true, "", false},
-		{"empty", "", true, "", false},
-		{"header", "# Todo", true, "", false},
-		{"frontmatter", "---", true, "", false},
+		{"pending", "[ ] Buy milk", false, " ", false, false},
+		{"pending with bullet", "- [ ] Buy milk", false, " ", false, false},
+		{"pending indented", "  [ ] Buy milk", false, " ", false, false},
+		{"pending indented bullet", "  - [ ] Buy milk", false, " ", false, false},
+		{"completed", "[+] Done task", false, "+", false, false},
+		{"daily", "[ ] Standup [daily]", false, " ", true, false},
+		{"daily completed", "[+] Standup [daily]", false, "+", true, false},
+		{"moved", "- [ ] (moved) Buy milk", false, " ", false, true},
+		{"moved with other tag", "- [ ] (moved) (private) Do thing", false, " ", false, true},
+		{"not a task", "Just a regular line", true, "", false, false},
+		{"empty", "", true, "", false, false},
+		{"header", "# Todo", true, "", false, false},
+		{"frontmatter", "---", true, "", false, false},
 	}
 
 	for _, tt := range tests {
@@ -45,6 +47,9 @@ func TestParseTask(t *testing.T) {
 			if task.IsDaily != tt.isDaily {
 				t.Errorf("isDaily: got %v, want %v", task.IsDaily, tt.isDaily)
 			}
+			if task.IsMoved != tt.isMoved {
+				t.Errorf("isMoved: got %v, want %v", task.IsMoved, tt.isMoved)
+			}
 		})
 	}
 }
@@ -54,10 +59,38 @@ func TestReassembled(t *testing.T) {
 	if task == nil {
 		t.Fatal("expected task")
 	}
-	got := task.Reassembled(">")
-	want := "  - [>] Some task"
+	got := task.Reassembled("+")
+	want := "  - [+] Some task"
 	if got != want {
 		t.Errorf("got %q, want %q", got, want)
+	}
+}
+
+func TestWithTag(t *testing.T) {
+	tests := []struct {
+		name string
+		line string
+		tag  string
+		want string
+	}{
+		{"simple", "- [ ] Do the thing", "moved", "- [ ] (moved) Do the thing"},
+		{"with existing tag", "- [ ] (private) Do the thing", "moved", "- [ ] (moved) (private) Do the thing"},
+		{"no bullet", "[ ] Do the thing", "moved", "[ ] (moved) Do the thing"},
+		{"indented", "  - [ ] Do the thing", "moved", "  - [ ] (moved) Do the thing"},
+		{"already tagged", "- [ ] (moved) Do the thing", "moved", "- [ ] (moved) Do the thing"},
+		{"already tagged with other", "- [ ] (moved) (private) Do the thing", "moved", "- [ ] (moved) (private) Do the thing"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			task := ParseTask(tt.line, 0)
+			if task == nil {
+				t.Fatalf("expected task for %q", tt.line)
+			}
+			got := task.WithTag(tt.tag)
+			if got != tt.want {
+				t.Errorf("got %q, want %q", got, tt.want)
+			}
+		})
 	}
 }
 
@@ -70,62 +103,86 @@ slug: todo
 
 [ ] Pending task two
 
-[>] In progress task
-
 [+] Completed task
 
 [ ] Standup [daily]`, "\n")
 
-	result := RolloverTasks(prev, false)
+	result := RolloverTasks(prev)
 
 	// Should carry over: pending task one, pending task two, standup daily
 	if len(result.CarriedTasks) != 3 {
 		t.Fatalf("carried %d tasks, want 3", len(result.CarriedTasks))
 	}
 
-	// Verify previous todo was updated: pending tasks → [>]
+	// Verify previous todo was updated: pending tasks tagged (moved)
 	for _, line := range result.UpdatedLines {
-		if strings.Contains(line, "Pending task one") && !strings.Contains(line, "[>]") {
-			t.Errorf("pending task one should be [>] in updated lines, got: %s", line)
+		if strings.Contains(line, "Pending task one") && !strings.Contains(line, "(moved)") {
+			t.Errorf("pending task one should have (moved) tag, got: %s", line)
 		}
-		if strings.Contains(line, "Pending task two") && !strings.Contains(line, "[>]") {
-			t.Errorf("pending task two should be [>] in updated lines, got: %s", line)
+		if strings.Contains(line, "Pending task two") && !strings.Contains(line, "(moved)") {
+			t.Errorf("pending task two should have (moved) tag, got: %s", line)
 		}
 	}
 
-	// In-progress task should NOT be modified in updated lines
+	// Verify moved tasks still have [ ] marker
 	for _, line := range result.UpdatedLines {
-		if strings.Contains(line, "In progress task") && !strings.Contains(line, "[>]") {
-			t.Errorf("in-progress task should remain [>], got: %s", line)
+		if strings.Contains(line, "(moved)") && !strings.Contains(line, "[ ]") {
+			t.Errorf("moved task should keep [ ] marker, got: %s", line)
 		}
 	}
 }
 
-func TestRolloverTasksForce(t *testing.T) {
-	prev := strings.Split(`[ ] Pending task
+func TestRolloverTasksMovedFormat(t *testing.T) {
+	prev := strings.Split(`[ ] Buy milk
 
-[>] In progress task
+[ ] (private) Secret task
 
 [+] Completed task`, "\n")
 
-	result := RolloverTasks(prev, true)
+	result := RolloverTasks(prev)
 
-	// With force: carry pending + in-progress
 	if len(result.CarriedTasks) != 2 {
 		t.Fatalf("carried %d tasks, want 2", len(result.CarriedTasks))
 	}
 
-	markers := make(map[string]bool)
-	for _, task := range result.CarriedTasks {
-		if strings.Contains(task.Suffix, "Pending") {
-			markers["pending"] = true
+	// Verify (moved) is inserted before existing tags
+	for _, line := range result.UpdatedLines {
+		if strings.Contains(line, "Buy milk") && strings.Contains(line, "(moved)") {
+			want := "[ ] (moved) Buy milk"
+			if line != want {
+				t.Errorf("got %q, want %q", line, want)
+			}
 		}
-		if strings.Contains(task.Suffix, "In progress") {
-			markers["in-progress"] = true
+		if strings.Contains(line, "Secret task") && strings.Contains(line, "(moved)") {
+			want := "[ ] (moved) (private) Secret task"
+			if line != want {
+				t.Errorf("got %q, want %q", line, want)
+			}
 		}
 	}
-	if !markers["pending"] || !markers["in-progress"] {
-		t.Error("expected both pending and in-progress tasks to be carried over with force")
+}
+
+func TestRolloverTasksSkipsMoved(t *testing.T) {
+	prev := strings.Split(`[ ] (moved) Already moved task
+
+[ ] Fresh task
+
+[x] Done task`, "\n")
+
+	result := RolloverTasks(prev)
+
+	if len(result.CarriedTasks) != 1 {
+		t.Fatalf("carried %d tasks, want 1", len(result.CarriedTasks))
+	}
+	if !strings.Contains(result.CarriedTasks[0].Suffix, "Fresh task") {
+		t.Errorf("expected Fresh task, got: %s", result.CarriedTasks[0].Suffix)
+	}
+
+	// Already-moved task should not be re-tagged
+	for _, line := range result.UpdatedLines {
+		if strings.Contains(line, "Already moved") && line != "[ ] (moved) Already moved task" {
+			t.Errorf("moved task should be unchanged, got: %s", line)
+		}
 	}
 }
 
@@ -134,7 +191,7 @@ func TestRolloverTasksDailyAlwaysCarried(t *testing.T) {
 
 [+] Completed other task`, "\n")
 
-	result := RolloverTasks(prev, false)
+	result := RolloverTasks(prev)
 
 	if len(result.CarriedTasks) != 1 {
 		t.Fatalf("carried %d tasks, want 1", len(result.CarriedTasks))
@@ -148,7 +205,7 @@ func TestRolloverTasksNoDuplicates(t *testing.T) {
 	// A daily task that is also pending should appear only once
 	prev := strings.Split(`[ ] Standup [daily]`, "\n")
 
-	result := RolloverTasks(prev, false)
+	result := RolloverTasks(prev)
 
 	if len(result.CarriedTasks) != 1 {
 		t.Fatalf("carried %d tasks, want 1 (no duplicates)", len(result.CarriedTasks))
@@ -162,7 +219,7 @@ slug: todo
 
 [+] Everything done`, "\n")
 
-	result := RolloverTasks(prev, false)
+	result := RolloverTasks(prev)
 
 	if len(result.CarriedTasks) != 0 {
 		t.Errorf("carried %d tasks, want 0", len(result.CarriedTasks))
@@ -172,7 +229,7 @@ slug: todo
 func TestFormatTodoContent(t *testing.T) {
 	tasks := []Task{
 		{Prefix: "[", Marker: " ", Suffix: "] Task one"},
-		{Prefix: "[", Marker: ">", Suffix: "] Task two"},
+		{Prefix: "[", Marker: " ", Suffix: "] Task two"},
 	}
 
 	content := FormatTodoContent(tasks)
