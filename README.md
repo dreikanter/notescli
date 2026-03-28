@@ -99,6 +99,9 @@ Patch version auto-increments on each PR merge to `main` via GitHub Actions
 (e.g. `v0.1.0` → `v0.1.1`). To bump minor or major, edit the version prefix in
 `.github/workflows/tag.yml` and push a manual tag (e.g. `git tag v0.2.0`).
 
+Each PR must include a `CHANGELOG.md` entry for the version it will create. Check
+the next version with `git describe --tags` and increment the patch number.
+
 After merging, pull and reinstall locally:
 
 ```sh
