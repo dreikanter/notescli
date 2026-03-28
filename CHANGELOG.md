@@ -5,6 +5,7 @@
 ### Added
 
 - Add `append` command for appending stdin text to existing notes ([#30])
+- Add `update` command for updating frontmatter and renaming notes ([#34])
 
 ## [0.1.23] - 2026-03-24
 
@@ -136,3 +137,4 @@
 [#27]: https://github.com/dreikanter/notescli/pull/27
 [#28]: https://github.com/dreikanter/notescli/pull/28
 [#30]: https://github.com/dreikanter/notescli/pull/30
+[#34]: https://github.com/dreikanter/notescli/pull/34
