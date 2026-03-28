@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.1.28] - 2026-03-28
+
+### Added
+
+- Add `--today` flag to `ls` for filtering notes created today ([#32])
+
 ## [0.1.27] - 2026-03-28
 
 ### Added
@@ -113,6 +119,7 @@
 - Add `new` and `new-todo` commands ([#2])
 - Add `--no-frontmatter` flag to `read` command ([#3], [#4])
 
+[0.1.28]: https://github.com/dreikanter/notescli/releases/tag/v0.1.28
 [0.1.23]: https://github.com/dreikanter/notescli/releases/tag/v0.1.23
 [0.1.19]: https://github.com/dreikanter/notescli/releases/tag/v0.1.19
 [0.1.18]: https://github.com/dreikanter/notescli/releases/tag/v0.1.18
@@ -146,6 +153,7 @@
 [#25]: https://github.com/dreikanter/notescli/pull/25
 [#27]: https://github.com/dreikanter/notescli/pull/27
 [#28]: https://github.com/dreikanter/notescli/pull/28
+[#32]: https://github.com/dreikanter/notescli/pull/32
 [#30]: https://github.com/dreikanter/notescli/pull/30
 [#34]: https://github.com/dreikanter/notescli/pull/34
 [#36]: https://github.com/dreikanter/notescli/pull/36

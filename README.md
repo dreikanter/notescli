@@ -36,6 +36,7 @@ notes ls --tag work
 notes ls --tag work --tag meeting  # multiple --tag flags are ANDed; all flags compose
 notes ls --tag work --type todo
 notes ls --name 2026
+notes ls --today
 
 # Note references: any command accepting a note ref resolves by ID, slug, basename, or full path
 notes read 8823
