@@ -78,9 +78,6 @@ func ResolveRef(root, query string) (*Note, error) {
 		if err != nil {
 			return nil, fmt.Errorf("cannot resolve path: %w", err)
 		}
-		if _, statErr := os.Stat(absPath); statErr != nil {
-			return nil, fmt.Errorf("note not found: %s", query)
-		}
 		absRoot, err := filepath.EvalSymlinks(root)
 		if err != nil {
 			return nil, fmt.Errorf("cannot resolve notes path: %w", err)
