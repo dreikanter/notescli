@@ -107,7 +107,7 @@ func FilterByTags(notes []Note, root string, tags []string) ([]Note, error) {
 		if err != nil {
 			return nil, err
 		}
-		noteTags := ParseTags(data)
+		noteTags := ParseFrontmatterFields(data).Tags
 		if hasAllTags(noteTags, tags) {
 			results = append(results, n)
 		}

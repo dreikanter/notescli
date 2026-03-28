@@ -34,52 +34,6 @@ func BuildFrontmatter(f FrontmatterFields) string {
 	return "---\n" + strings.Join(lines, "\n") + "\n---\n\n"
 }
 
-// ParseTags extracts tags from YAML frontmatter in data.
-// Returns nil if no tags are found.
-func ParseTags(data []byte) []string {
-	// Must start with "---"
-	if !bytes.HasPrefix(data, frontmatterDelim) {
-		return nil
-	}
-
-	rest := data[len(frontmatterDelim):]
-	idx := bytes.IndexByte(rest, '\n')
-	if idx < 0 {
-		return nil
-	}
-	if len(bytes.TrimRight(rest[:idx], "\r")) > 0 {
-		return nil
-	}
-	rest = rest[idx+1:]
-
-	var tagsLine []byte
-	for {
-		line, after, found := bytes.Cut(rest, []byte("\n"))
-		trimmed := bytes.TrimRight(line, "\r")
-
-		if bytes.Equal(trimmed, frontmatterDelim) {
-			// Found closing delimiter — return any tags we collected.
-			if tagsLine == nil {
-				return nil
-			}
-			inner := tagsLine[len("tags: [") : len(tagsLine)-1]
-			if len(inner) == 0 {
-				return nil
-			}
-			return strings.Split(string(inner), ", ")
-		}
-
-		if bytes.HasPrefix(trimmed, []byte("tags: [")) && bytes.HasSuffix(trimmed, []byte("]")) {
-			tagsLine = trimmed
-		}
-
-		if !found {
-			return nil
-		}
-		rest = after
-	}
-}
-
 // ParseFrontmatterFields extracts all frontmatter fields from data.
 // Returns zero-value FrontmatterFields if no valid frontmatter is present.
 func ParseFrontmatterFields(data []byte) FrontmatterFields {
@@ -98,14 +52,12 @@ func ParseFrontmatterFields(data []byte) FrontmatterFields {
 	rest = rest[idx+1:]
 
 	var f FrontmatterFields
-	closed := false
 	for {
 		line, after, found := bytes.Cut(rest, []byte("\n"))
 		trimmed := bytes.TrimRight(line, "\r")
 
 		if bytes.Equal(trimmed, frontmatterDelim) {
-			closed = true
-			break
+			return f
 		}
 
 		s := string(trimmed)
@@ -121,15 +73,11 @@ func ParseFrontmatterFields(data []byte) FrontmatterFields {
 		}
 
 		if !found {
-			break
+			// Reached end without closing delimiter — not valid frontmatter.
+			return FrontmatterFields{}
 		}
 		rest = after
 	}
-
-	if !closed {
-		return FrontmatterFields{}
-	}
-	return f
 }
 
 var frontmatterDelim = []byte("---")
