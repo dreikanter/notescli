@@ -2,6 +2,7 @@ package cli
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/dreikanter/notescli/note"
 	"github.com/spf13/cobra"
@@ -17,11 +18,16 @@ var lsCmd = &cobra.Command{
 		lsSlug, _ := cmd.Flags().GetString("slug")
 		lsTags, _ := cmd.Flags().GetStringSlice("tag")
 		lsName, _ := cmd.Flags().GetString("name")
+		lsToday, _ := cmd.Flags().GetBool("today")
 
 		root := mustNotesPath()
 		notes, err := note.Scan(root)
 		if err != nil {
 			return err
+		}
+
+		if lsToday {
+			notes = note.FilterByDate(notes, time.Now().Format("20060102"))
 		}
 
 		if lsName != "" {
@@ -60,5 +66,6 @@ func init() {
 	lsCmd.Flags().String("slug", "", "filter by descriptive slug")
 	lsCmd.Flags().StringSlice("tag", nil, "filter by frontmatter tag (repeatable, AND logic)")
 	lsCmd.Flags().String("name", "", "filter by filename fragment (case-insensitive substring)")
+	lsCmd.Flags().Bool("today", false, "filter notes created today")
 	rootCmd.AddCommand(lsCmd)
 }

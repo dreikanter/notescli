@@ -16,6 +16,7 @@ func runLs(t *testing.T, args ...string) (string, error) {
 	lsCmd.Flags().String("slug", "", "filter by descriptive slug")
 	lsCmd.Flags().StringSlice("tag", nil, "filter by frontmatter tag (repeatable, AND logic)")
 	lsCmd.Flags().String("name", "", "filter by filename fragment (case-insensitive substring)")
+	lsCmd.Flags().Bool("today", false, "filter notes created today")
 
 	buf := new(bytes.Buffer)
 	rootCmd.SetOut(buf)
@@ -152,6 +153,17 @@ func TestLsNameNoMatch(t *testing.T) {
 
 	if out != "" {
 		t.Errorf("expected empty output, got %q", out)
+	}
+}
+
+func TestLsToday(t *testing.T) {
+	// testdata notes are all in the past; --today should return nothing
+	out, err := runLs(t, "--today")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if out != "" {
+		t.Errorf("expected empty output for --today on past testdata, got %q", out)
 	}
 }
 
