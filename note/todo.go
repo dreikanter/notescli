@@ -12,9 +12,10 @@ var taskRe = regexp.MustCompile(`^(\s*(?:- )?\[)(.?)(\].*)$`)
 type Task struct {
 	Line       string // original full line
 	Prefix     string // everything before the marker character: e.g. "  - ["
-	Marker     string // single char marker: " ", ">", "+", etc.
+	Marker     string // single char marker: " ", "x", "+", etc.
 	Suffix     string // everything after marker: e.g. "] some task"
 	IsDaily    bool   // whether line contains [daily]
+	IsMoved    bool   // whether line contains (moved)
 	LineNumber int    // 0-based index in the source file lines
 }
 
@@ -30,6 +31,7 @@ func ParseTask(line string, lineNumber int) *Task {
 		Marker:     m[2],
 		Suffix:     m[3],
 		IsDaily:    strings.Contains(line, "[daily]"),
+		IsMoved:    strings.Contains(line, "(moved)"),
 		LineNumber: lineNumber,
 	}
 }
@@ -82,6 +84,8 @@ func RolloverTasks(prevLines []string) RolloverResult {
 	var carried []Task
 
 	addTask := func(t Task) {
+		// Strip (moved) from suffix so carried tasks are clean
+		t.Suffix = strings.Replace(t.Suffix, "(moved) ", "", 1)
 		// Normalize: strip leading whitespace, bullet, and marker for dedup
 		key := strings.TrimSpace(t.Suffix)
 		if seen[key] {
@@ -96,10 +100,10 @@ func RolloverTasks(prevLines []string) RolloverResult {
 		case t.IsDaily:
 			// Daily tasks are always carried over regardless of marker
 			addTask(t)
-			if t.Marker == " " {
+			if t.Marker == " " && !t.IsMoved {
 				updated[t.LineNumber] = t.WithTag("moved")
 			}
-		case t.Marker == " ":
+		case t.Marker == " " && !t.IsMoved:
 			// Pending tasks: carry over and tag as moved in previous
 			addTask(t)
 			updated[t.LineNumber] = t.WithTag("moved")

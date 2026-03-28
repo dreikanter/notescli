@@ -12,18 +12,21 @@ func TestParseTask(t *testing.T) {
 		wantNil bool
 		marker  string
 		isDaily bool
+		isMoved bool
 	}{
-		{"pending", "[ ] Buy milk", false, " ", false},
-		{"pending with bullet", "- [ ] Buy milk", false, " ", false},
-		{"pending indented", "  [ ] Buy milk", false, " ", false},
-		{"pending indented bullet", "  - [ ] Buy milk", false, " ", false},
-		{"completed", "[+] Done task", false, "+", false},
-		{"daily", "[ ] Standup [daily]", false, " ", true},
-		{"daily completed", "[+] Standup [daily]", false, "+", true},
-		{"not a task", "Just a regular line", true, "", false},
-		{"empty", "", true, "", false},
-		{"header", "# Todo", true, "", false},
-		{"frontmatter", "---", true, "", false},
+		{"pending", "[ ] Buy milk", false, " ", false, false},
+		{"pending with bullet", "- [ ] Buy milk", false, " ", false, false},
+		{"pending indented", "  [ ] Buy milk", false, " ", false, false},
+		{"pending indented bullet", "  - [ ] Buy milk", false, " ", false, false},
+		{"completed", "[+] Done task", false, "+", false, false},
+		{"daily", "[ ] Standup [daily]", false, " ", true, false},
+		{"daily completed", "[+] Standup [daily]", false, "+", true, false},
+		{"moved", "- [ ] (moved) Buy milk", false, " ", false, true},
+		{"moved with other tag", "- [ ] (moved) (private) Do thing", false, " ", false, true},
+		{"not a task", "Just a regular line", true, "", false, false},
+		{"empty", "", true, "", false, false},
+		{"header", "# Todo", true, "", false, false},
+		{"frontmatter", "---", true, "", false, false},
 	}
 
 	for _, tt := range tests {
@@ -43,6 +46,9 @@ func TestParseTask(t *testing.T) {
 			}
 			if task.IsDaily != tt.isDaily {
 				t.Errorf("isDaily: got %v, want %v", task.IsDaily, tt.isDaily)
+			}
+			if task.IsMoved != tt.isMoved {
+				t.Errorf("isMoved: got %v, want %v", task.IsMoved, tt.isMoved)
 			}
 		})
 	}
@@ -152,6 +158,30 @@ func TestRolloverTasksMovedFormat(t *testing.T) {
 			if line != want {
 				t.Errorf("got %q, want %q", line, want)
 			}
+		}
+	}
+}
+
+func TestRolloverTasksSkipsMoved(t *testing.T) {
+	prev := strings.Split(`[ ] (moved) Already moved task
+
+[ ] Fresh task
+
+[x] Done task`, "\n")
+
+	result := RolloverTasks(prev)
+
+	if len(result.CarriedTasks) != 1 {
+		t.Fatalf("carried %d tasks, want 1", len(result.CarriedTasks))
+	}
+	if !strings.Contains(result.CarriedTasks[0].Suffix, "Fresh task") {
+		t.Errorf("expected Fresh task, got: %s", result.CarriedTasks[0].Suffix)
+	}
+
+	// Already-moved task should not be re-tagged
+	for _, line := range result.UpdatedLines {
+		if strings.Contains(line, "Already moved") && line != "[ ] (moved) Already moved task" {
+			t.Errorf("moved task should be unchanged, got: %s", line)
 		}
 	}
 }
