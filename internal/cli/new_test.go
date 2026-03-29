@@ -18,6 +18,8 @@ func runNew(t *testing.T, root string, stdin string, args ...string) (string, er
 	newCmd.Flags().StringSlice("tag", nil, "tag for frontmatter (repeatable)")
 	newCmd.Flags().String("description", "", "description for frontmatter")
 	newCmd.Flags().String("title", "", "title for frontmatter")
+	newCmd.Flags().Bool("public", false, "mark note as public in frontmatter")
+	newCmd.Flags().Bool("private", false, "mark note as private in frontmatter (default; overrides --public)")
 
 	buf := new(bytes.Buffer)
 	rootCmd.SetOut(buf)
@@ -65,6 +67,13 @@ func TestNewWithSlug(t *testing.T) {
 	if !strings.Contains(filepath.Base(out), "_myslug") {
 		t.Errorf("expected slug in filename, got %q", filepath.Base(out))
 	}
+	data, err := os.ReadFile(out)
+	if err != nil {
+		t.Fatalf("read note: %v", err)
+	}
+	if !strings.Contains(string(data), "slug: myslug") {
+		t.Errorf("expected slug in frontmatter, got:\n%s", string(data))
+	}
 }
 
 func TestNewWithType(t *testing.T) {
@@ -111,6 +120,36 @@ func TestNewWithTitleAndDescription(t *testing.T) {
 	}
 	if !strings.Contains(content, "description: A description") {
 		t.Errorf("expected description in frontmatter, got:\n%s", content)
+	}
+}
+
+func TestNewWithPublic(t *testing.T) {
+	root := copyTestdata(t)
+	out, err := runNew(t, root, "", "--public")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	data, err := os.ReadFile(out)
+	if err != nil {
+		t.Fatalf("read note: %v", err)
+	}
+	if !strings.Contains(string(data), "public: true") {
+		t.Errorf("expected public: true in frontmatter, got:\n%s", string(data))
+	}
+}
+
+func TestNewPublicPrivateBothPrivateWins(t *testing.T) {
+	root := copyTestdata(t)
+	out, err := runNew(t, root, "", "--public", "--private")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	data, err := os.ReadFile(out)
+	if err != nil {
+		t.Fatalf("read note: %v", err)
+	}
+	if strings.Contains(string(data), "public:") {
+		t.Errorf("expected public field absent when --private wins, got:\n%s", string(data))
 	}
 }
 

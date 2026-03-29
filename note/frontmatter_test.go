@@ -54,6 +54,47 @@ func TestParseFrontmatterFields(t *testing.T) {
 			input: BuildFrontmatter(FrontmatterFields{Title: "T", Tags: []string{"a", "b"}, Description: "D"}) + "body\n",
 			want:  FrontmatterFields{Title: "T", Tags: []string{"a", "b"}, Description: "D"},
 		},
+		{
+			name:  "slug only",
+			input: "---\nslug: my-slug\n---\n\n# Content\n",
+			want:  FrontmatterFields{Slug: "my-slug"},
+		},
+		{
+			name:  "public true",
+			input: "---\npublic: true\n---\n\n# Content\n",
+			want:  FrontmatterFields{Public: true},
+		},
+		{
+			name:  "public absent means false",
+			input: "---\ntitle: T\n---\n\n# Content\n",
+			want:  FrontmatterFields{Title: "T"},
+		},
+		{
+			name:  "public non-true value means false",
+			input: "---\npublic: yes\n---\n\n# Content\n",
+			want:  FrontmatterFields{},
+		},
+		{
+			name:  "all fields including slug and public",
+			input: "---\ntitle: T\nslug: s\ntags: [a]\ndescription: D\npublic: true\n---\n\n# Content\n",
+			want: FrontmatterFields{
+				Title:       "T",
+				Slug:        "s",
+				Tags:        []string{"a"},
+				Description: "D",
+				Public:      true,
+			},
+		},
+		{
+			name: "roundtrip with slug and public",
+			input: BuildFrontmatter(FrontmatterFields{
+				Title:  "T",
+				Slug:   "s",
+				Tags:   []string{"a"},
+				Public: true,
+			}) + "body\n",
+			want: FrontmatterFields{Title: "T", Slug: "s", Tags: []string{"a"}, Public: true},
+		},
 	}
 
 	for _, tt := range tests {
@@ -72,6 +113,12 @@ func TestParseFrontmatterFields(t *testing.T) {
 				if got.Tags[i] != tt.want.Tags[i] {
 					t.Errorf("Tags[%d] = %q, want %q", i, got.Tags[i], tt.want.Tags[i])
 				}
+			}
+			if got.Slug != tt.want.Slug {
+				t.Errorf("Slug = %q, want %q", got.Slug, tt.want.Slug)
+			}
+			if got.Public != tt.want.Public {
+				t.Errorf("Public = %v, want %v", got.Public, tt.want.Public)
 			}
 		})
 	}
@@ -115,6 +162,32 @@ func TestBuildFrontmatter(t *testing.T) {
 			name:   "title only",
 			fields: FrontmatterFields{Title: "My Note"},
 			want:   "---\ntitle: My Note\n---\n\n",
+		},
+		{
+			name:   "slug only",
+			fields: FrontmatterFields{Slug: "my-slug"},
+			want:   "---\nslug: my-slug\n---\n\n",
+		},
+		{
+			name:   "public true",
+			fields: FrontmatterFields{Public: true},
+			want:   "---\npublic: true\n---\n\n",
+		},
+		{
+			name:   "public false omitted",
+			fields: FrontmatterFields{Title: "T"},
+			want:   "---\ntitle: T\n---\n\n",
+		},
+		{
+			name: "all fields including slug and public",
+			fields: FrontmatterFields{
+				Title:       "T",
+				Slug:        "s",
+				Tags:        []string{"a"},
+				Description: "D",
+				Public:      true,
+			},
+			want: "---\ntitle: T\nslug: s\ntags: [a]\ndescription: D\npublic: true\n---\n\n",
 		},
 	}
 

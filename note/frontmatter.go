@@ -8,8 +8,10 @@ import (
 // FrontmatterFields holds optional fields for note frontmatter.
 type FrontmatterFields struct {
 	Title       string
+	Slug        string
 	Tags        []string
 	Description string
+	Public      bool
 }
 
 // BuildFrontmatter generates YAML frontmatter from the given fields.
@@ -20,11 +22,17 @@ func BuildFrontmatter(f FrontmatterFields) string {
 	if f.Title != "" {
 		lines = append(lines, "title: "+f.Title)
 	}
+	if f.Slug != "" {
+		lines = append(lines, "slug: "+f.Slug)
+	}
 	if len(f.Tags) > 0 {
 		lines = append(lines, "tags: ["+strings.Join(f.Tags, ", ")+"]")
 	}
 	if f.Description != "" {
 		lines = append(lines, "description: "+f.Description)
+	}
+	if f.Public {
+		lines = append(lines, "public: true")
 	}
 
 	if len(lines) == 0 {
@@ -63,6 +71,8 @@ func ParseFrontmatterFields(data []byte) FrontmatterFields {
 		s := string(trimmed)
 		if t := strings.TrimPrefix(s, "title: "); t != s {
 			f.Title = t
+		} else if t := strings.TrimPrefix(s, "slug: "); t != s {
+			f.Slug = t
 		} else if t := strings.TrimPrefix(s, "description: "); t != s {
 			f.Description = t
 		} else if bytes.HasPrefix(trimmed, []byte("tags: [")) && bytes.HasSuffix(trimmed, []byte("]")) {
@@ -70,6 +80,8 @@ func ParseFrontmatterFields(data []byte) FrontmatterFields {
 			if inner != "" {
 				f.Tags = strings.Split(inner, ", ")
 			}
+		} else if s == "public: true" {
+			f.Public = true
 		}
 
 		if !found {

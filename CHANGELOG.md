@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.1.36] - 2026-03-29
+
+### Added
+
+- Add `Slug` and `Public` fields to `FrontmatterFields`; extend parser and builder; sync `slug:` frontmatter when `--slug`/`--no-slug` is used in `update` ([#46])
+
+[#46]: https://github.com/dreikanter/notescli/pull/46
+
 ## [0.1.35] - 2026-03-28
 
 ### Added
