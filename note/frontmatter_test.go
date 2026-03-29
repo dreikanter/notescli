@@ -85,6 +85,16 @@ func TestParseFrontmatterFields(t *testing.T) {
 				Public:      true,
 			},
 		},
+		{
+			name: "roundtrip with slug and public",
+			input: BuildFrontmatter(FrontmatterFields{
+				Title:  "T",
+				Slug:   "s",
+				Tags:   []string{"a"},
+				Public: true,
+			}) + "body\n",
+			want: FrontmatterFields{Title: "T", Slug: "s", Tags: []string{"a"}, Public: true},
+		},
 	}
 
 	for _, tt := range tests {
@@ -152,6 +162,32 @@ func TestBuildFrontmatter(t *testing.T) {
 			name:   "title only",
 			fields: FrontmatterFields{Title: "My Note"},
 			want:   "---\ntitle: My Note\n---\n\n",
+		},
+		{
+			name:   "slug only",
+			fields: FrontmatterFields{Slug: "my-slug"},
+			want:   "---\nslug: my-slug\n---\n\n",
+		},
+		{
+			name:   "public true",
+			fields: FrontmatterFields{Public: true},
+			want:   "---\npublic: true\n---\n\n",
+		},
+		{
+			name:   "public false omitted",
+			fields: FrontmatterFields{Title: "T"},
+			want:   "---\ntitle: T\n---\n\n",
+		},
+		{
+			name: "all fields including slug and public",
+			fields: FrontmatterFields{
+				Title:       "T",
+				Slug:        "s",
+				Tags:        []string{"a"},
+				Description: "D",
+				Public:      true,
+			},
+			want: "---\ntitle: T\nslug: s\ntags: [a]\ndescription: D\npublic: true\n---\n\n",
 		},
 	}
 
