@@ -66,6 +66,7 @@ var updateCmd = &cobra.Command{
 		} else if cmd.Flags().Changed("slug") {
 			newSlug = updateSlug
 		}
+		updated.Slug = newSlug
 
 		// Determine new type.
 		newType := n.Type

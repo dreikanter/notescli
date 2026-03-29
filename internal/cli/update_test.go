@@ -273,3 +273,37 @@ func TestUpdateBodyPreserved(t *testing.T) {
 		t.Errorf("body content not preserved after update, got:\n%s", content)
 	}
 }
+
+// TestUpdateSlugSyncsToFrontmatter verifies that --slug also sets the slug frontmatter field.
+func TestUpdateSlugSyncsToFrontmatter(t *testing.T) {
+	root := copyTestdata(t)
+	out, err := runUpdate(t, root, "8823", "--slug", "new-slug")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	data, _ := os.ReadFile(out)
+	if !strings.Contains(string(data), "slug: new-slug") {
+		t.Errorf("expected slug in frontmatter, got:\n%s", string(data))
+	}
+}
+
+// TestUpdateNoSlugRemovesSlugFromFrontmatter verifies that --no-slug removes the slug frontmatter field.
+func TestUpdateNoSlugRemovesSlugFromFrontmatter(t *testing.T) {
+	root := copyTestdata(t)
+	// First add a slug to frontmatter on note 8823
+	_, err := runUpdate(t, root, "8823", "--slug", "to-remove")
+	if err != nil {
+		t.Fatalf("unexpected error setting slug: %v", err)
+	}
+	// Then remove it
+	out, err := runUpdate(t, root, "8823", "--no-slug")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	data, _ := os.ReadFile(out)
+	if strings.Contains(string(data), "slug:") {
+		t.Errorf("expected slug removed from frontmatter, got:\n%s", string(data))
+	}
+}
