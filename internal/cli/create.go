@@ -17,6 +17,7 @@ type createNoteParams struct {
 	Tags        []string
 	Title       string
 	Description string
+	Public      bool
 	Body        string // initial content after frontmatter
 }
 
@@ -44,6 +45,7 @@ func createNote(p createNoteParams) (string, error) {
 		Slug:        p.Slug,
 		Tags:        p.Tags,
 		Description: p.Description,
+		Public:      p.Public,
 	})
 	content += p.Body
 

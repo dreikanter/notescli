@@ -20,6 +20,8 @@ func runUpdate(t *testing.T, root string, args ...string) (string, error) {
 	updateCmd.Flags().Bool("no-slug", false, "remove slug from filename")
 	updateCmd.Flags().String("type", "", "update note type and rename file (todo, backlog, weekly)")
 	updateCmd.Flags().Bool("no-type", false, "remove type suffix from filename")
+	updateCmd.Flags().Bool("public", false, "mark note as public in frontmatter")
+	updateCmd.Flags().Bool("private", false, "mark note as private in frontmatter (overrides --public)")
 
 	buf := new(bytes.Buffer)
 	rootCmd.SetOut(buf)
@@ -334,5 +336,85 @@ func TestUpdateNoFlagDoesNotTouchFrontmatterSlug(t *testing.T) {
 	}
 	if !strings.Contains(string(data), "slug: keep-me") {
 		t.Errorf("expected slug frontmatter to be preserved, got:\n%s", string(data))
+	}
+}
+
+// TestUpdatePublicSetsPublicField verifies that --public writes public: true to frontmatter.
+func TestUpdatePublicSetsPublicField(t *testing.T) {
+	root := copyTestdata(t)
+	out, err := runUpdate(t, root, "8823", "--public")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	data, err := os.ReadFile(out)
+	if err != nil {
+		t.Fatalf("read note: %v", err)
+	}
+	if !strings.Contains(string(data), "public: true") {
+		t.Errorf("expected public: true in frontmatter, got:\n%s", string(data))
+	}
+}
+
+// TestUpdatePrivateRemovesPublicField verifies that --private removes public: true from frontmatter.
+func TestUpdatePrivateRemovesPublicField(t *testing.T) {
+	root := copyTestdata(t)
+	// First mark as public
+	_, err := runUpdate(t, root, "8823", "--public")
+	if err != nil {
+		t.Fatalf("unexpected error setting public: %v", err)
+	}
+	// Then mark as private
+	out, err := runUpdate(t, root, "8823", "--private")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	data, err := os.ReadFile(out)
+	if err != nil {
+		t.Fatalf("read note: %v", err)
+	}
+	if strings.Contains(string(data), "public:") {
+		t.Errorf("expected public field removed from frontmatter, got:\n%s", string(data))
+	}
+}
+
+// TestUpdatePrivateTakesPrecedenceOverPublic verifies --private wins when combined with --public.
+func TestUpdatePrivateTakesPrecedenceOverPublic(t *testing.T) {
+	root := copyTestdata(t)
+	out, err := runUpdate(t, root, "8823", "--public", "--private")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	data, err := os.ReadFile(out)
+	if err != nil {
+		t.Fatalf("read note: %v", err)
+	}
+	if strings.Contains(string(data), "public:") {
+		t.Errorf("expected public field absent when --private wins, got:\n%s", string(data))
+	}
+}
+
+// TestUpdateNoPublicFlagPreservesPublicField verifies unrelated updates don't touch the public field.
+func TestUpdateNoPublicFlagPreservesPublicField(t *testing.T) {
+	root := copyTestdata(t)
+	// Mark as public
+	_, err := runUpdate(t, root, "8823", "--public")
+	if err != nil {
+		t.Fatalf("unexpected error setting public: %v", err)
+	}
+	// Update only the title — no public/private flag
+	out, err := runUpdate(t, root, "8823", "--title", "New Title")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	data, err := os.ReadFile(out)
+	if err != nil {
+		t.Fatalf("read note: %v", err)
+	}
+	if !strings.Contains(string(data), "public: true") {
+		t.Errorf("expected public: true preserved after unrelated update, got:\n%s", string(data))
 	}
 }

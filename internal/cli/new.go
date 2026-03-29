@@ -20,6 +20,8 @@ var newCmd = &cobra.Command{
 		tags, _ := cmd.Flags().GetStringSlice("tag")
 		description, _ := cmd.Flags().GetString("description")
 		title, _ := cmd.Flags().GetString("title")
+		publicFlag, _ := cmd.Flags().GetBool("public")
+		privateFlag, _ := cmd.Flags().GetBool("private")
 
 		if noteType != "" && !note.IsKnownType(noteType) {
 			return fmt.Errorf("unknown note type %q (valid types: %s)", noteType, strings.Join(note.KnownTypes, ", "))
@@ -36,6 +38,7 @@ var newCmd = &cobra.Command{
 			body = string(data)
 		}
 
+		public := publicFlag && !privateFlag
 		fullPath, err := createNote(createNoteParams{
 			Root:        root,
 			Slug:        slug,
@@ -43,6 +46,7 @@ var newCmd = &cobra.Command{
 			Tags:        tags,
 			Title:       title,
 			Description: description,
+			Public:      public,
 			Body:        body,
 		})
 		if err != nil {
@@ -68,5 +72,7 @@ func init() {
 	newCmd.Flags().StringSlice("tag", nil, "tag for frontmatter (repeatable)")
 	newCmd.Flags().String("description", "", "description for frontmatter")
 	newCmd.Flags().String("title", "", "title for frontmatter")
+	newCmd.Flags().Bool("public", false, "mark note as public in frontmatter")
+	newCmd.Flags().Bool("private", false, "mark note as private in frontmatter (default; overrides --public)")
 	rootCmd.AddCommand(newCmd)
 }

@@ -24,6 +24,7 @@ var updateCmd = &cobra.Command{
 		updateNoSlug, _ := cmd.Flags().GetBool("no-slug")
 		updateType, _ := cmd.Flags().GetString("type")
 		updateNoType, _ := cmd.Flags().GetBool("no-type")
+		updatePrivate, _ := cmd.Flags().GetBool("private")
 
 		if updateType != "" && !note.IsKnownType(updateType) {
 			return fmt.Errorf("unknown note type %q (valid types: %s)", updateType, strings.Join(note.KnownTypes, ", "))
@@ -68,6 +69,11 @@ var updateCmd = &cobra.Command{
 		}
 		if updateNoSlug || cmd.Flags().Changed("slug") {
 			updated.Slug = newSlug
+		}
+		if updatePrivate {
+			updated.Public = false
+		} else if cmd.Flags().Changed("public") {
+			updated.Public = true
 		}
 
 		// Determine new type.
@@ -115,5 +121,7 @@ func init() {
 	updateCmd.Flags().Bool("no-slug", false, "remove slug from filename")
 	updateCmd.Flags().String("type", "", "update note type and rename file (todo, backlog, weekly)")
 	updateCmd.Flags().Bool("no-type", false, "remove type suffix from filename")
+	updateCmd.Flags().Bool("public", false, "mark note as public in frontmatter")
+	updateCmd.Flags().Bool("private", false, "mark note as private in frontmatter (overrides --public)")
 	rootCmd.AddCommand(updateCmd)
 }
