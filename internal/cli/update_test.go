@@ -307,3 +307,23 @@ func TestUpdateNoSlugRemovesSlugFromFrontmatter(t *testing.T) {
 		t.Errorf("expected slug removed from frontmatter, got:\n%s", string(data))
 	}
 }
+
+// TestUpdateNoFlagDoesNotTouchFrontmatterSlug verifies that unrelated updates don't clobber an existing frontmatter slug.
+func TestUpdateNoFlagDoesNotTouchFrontmatterSlug(t *testing.T) {
+	root := copyTestdata(t)
+	// Give note 8823 a slug in frontmatter
+	_, err := runUpdate(t, root, "8823", "--slug", "keep-me")
+	if err != nil {
+		t.Fatalf("unexpected error setting slug: %v", err)
+	}
+	// Update only the title — slug flags are NOT passed
+	out, err := runUpdate(t, root, "8823", "--title", "New Title")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	data, _ := os.ReadFile(out)
+	if !strings.Contains(string(data), "slug: keep-me") {
+		t.Errorf("expected slug frontmatter to be preserved, got:\n%s", string(data))
+	}
+}
