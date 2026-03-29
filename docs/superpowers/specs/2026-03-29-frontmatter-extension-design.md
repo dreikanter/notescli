@@ -9,17 +9,19 @@ Date: 2026-03-29
 - `ParseFrontmatterFields` — line-by-line string matching, only reads `title`, `tags`, `description`
 - `BuildFrontmatter` — manual string concatenation to produce YAML output
 
-Both are fragile: special YAML characters (colons, quotes) in titles or tags would produce invalid output or silently misparse. `notespub` also needs fields not covered (`public`, `slug`), and any future consumer would need to duplicate knowledge of the format.
+Both are fragile: special YAML characters (colons, quotes) in titles or tags would produce invalid output or silently misparse. `notespub` also needs fields not covered (`public`), and any future consumer would need to duplicate knowledge of the format.
+
+Additionally, `BuildFrontmatter` drops all fields it doesn't know about — round-tripping a note with unknown fields (e.g. `public: true`) through notescli would silently lose them.
 
 ## Goal
 
-Replace all manual YAML handling with `gopkg.in/yaml.v3`. No mix of manual and library approaches — all frontmatter reading and writing goes through the library.
+Replace all manual YAML handling with `gopkg.in/yaml.v3`. No mix of manual and library approaches. Preserve unknown frontmatter fields on update.
 
-## Approach
+## API Changes
 
 ### Parsing
 
-Replace hand-rolled parser with a new function using `yaml.v3`:
+Replace hand-rolled parser with a generic function:
 
 ```go
 // ParseFrontmatter returns all frontmatter fields as a map.
@@ -27,42 +29,69 @@ Replace hand-rolled parser with a new function using `yaml.v3`:
 func ParseFrontmatter(data []byte) map[string]any
 ```
 
-- Extracts the YAML block using the existing delimiter logic
+- Extracts the YAML block using existing delimiter logic
 - Unmarshals into `map[string]any` via `yaml.v3` — supports any field, any value type
-- `ParseFrontmatterFields` is reimplemented on top of `ParseFrontmatter` (no duplication, backward compatible)
-- `StripFrontmatter` is unchanged — delimiter logic stays as-is
+- `ParseFrontmatterFields` is reimplemented on top of `ParseFrontmatter` — same signature, backward compatible
+- `StripFrontmatter` is unchanged
 
-### Writing
-
-Replace manual string builder with `yaml.v3` marshaling:
+### Writing — new notes
 
 ```go
 // BuildFrontmatter generates YAML frontmatter from the given fields.
+// Use for new notes. Same signature, now backed by yaml.v3 marshal.
 func BuildFrontmatter(f FrontmatterFields) string
 ```
 
-- Same signature and behavior, now backed by `yaml.v3` marshal
 - Correctly handles special characters in all field values
+- Used only when creating a note from scratch
 
-## Fields notespub requires
+### Writing — existing notes
 
-| Field | Type | Purpose |
-|---|---|---|
-| `public` | bool | Whether note is included in the build |
-| `title` | string | Page title |
-| `slug` | string | URL slug override (falls back to slugified title) |
-| `tags` | []string | Tag pages + related notes |
-| `description` | string | Meta description |
+```go
+// UpdateFrontmatter merges fields into the note's existing frontmatter.
+// Unknown frontmatter fields are preserved.
+// Returns the full updated note content (frontmatter + body).
+func UpdateFrontmatter(data []byte, f FrontmatterFields) ([]byte, error)
+```
+
+- `data` is the full note file content
+- Extracts existing YAML block → unmarshals to `map[string]any`
+- Merges known fields from `f` onto the map (only non-zero values)
+- Marshals full map back to YAML — unknown fields survive
+- Reconstructs note: new frontmatter + original body via `StripFrontmatter`
+- No file I/O — caller reads and writes the file
+
+### `FrontmatterFields` struct
+
+Add `Slug` — it is a note management concern (can be set in frontmatter to override the filename slug):
+
+```go
+type FrontmatterFields struct {
+    Title       string
+    Slug        string   // ← added
+    Tags        []string
+    Description string
+}
+```
+
+`public` is a publishing concern — not added to `FrontmatterFields`. notespub reads it directly from `ParseFrontmatter` map:
+
+```go
+fm := note.ParseFrontmatter(data)
+public, _ := fm["public"].(bool)
+```
 
 ## Implementation Notes
 
 - Promote `gopkg.in/yaml.v3` from indirect to direct dependency (already in module graph via golangci-lint)
 - No changes to `Note` struct, store scanning, or `StripFrontmatter`
 - All changes in `frontmatter.go` and `frontmatter_test.go`
-- Existing tests must continue to pass; add cases for special characters and new fields
+- Existing tests must continue to pass; add cases for:
+  - Special characters in field values
+  - Unknown fields preserved through `UpdateFrontmatter`
+  - Block-style tag syntax (`- tag`) now supported via yaml.v3
 
 ## Out of Scope
 
 - Validating frontmatter schema
 - Supporting TOML or JSON frontmatter
-- Block-style tag syntax (already supported via yaml.v3 unmarshal)
