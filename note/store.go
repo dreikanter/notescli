@@ -2,48 +2,59 @@ package note
 
 import (
 	"fmt"
-	"io/fs"
 	"os"
 	"path/filepath"
 	"sort"
 	"strings"
 )
 
-// Scan walks the store directory and returns all valid notes, sorted newest first.
+// Scan enumerates notes under root using the known YYYY/MM/ directory structure.
+// Only directories matching year (all digits) and month (01–12) patterns are visited.
 func Scan(root string) ([]Note, error) {
 	var notes []Note
 
-	err := filepath.WalkDir(root, func(path string, d fs.DirEntry, err error) error {
-		if err != nil {
-			return err
-		}
-		if d.IsDir() {
-			if path != root && strings.HasPrefix(d.Name(), ".") {
-				return filepath.SkipDir
-			}
-			return nil
-		}
-		if filepath.Ext(path) != ".md" {
-			return nil
-		}
-
-		base := strings.TrimSuffix(filepath.Base(path), ".md")
-		n, parseErr := ParseFilename(base)
-		if parseErr != nil {
-			return nil // skip files that don't match the naming convention
-		}
-
-		rel, relErr := filepath.Rel(root, path)
-		if relErr != nil {
-			return nil
-		}
-
-		n.RelPath = rel
-		notes = append(notes, n)
-		return nil
-	})
+	years, err := os.ReadDir(root)
 	if err != nil {
 		return nil, err
+	}
+
+	for _, y := range years {
+		if !y.IsDir() || !isDigits(y.Name()) {
+			continue
+		}
+
+		yearPath := filepath.Join(root, y.Name())
+		months, err := os.ReadDir(yearPath)
+		if err != nil {
+			return nil, err
+		}
+
+		for _, m := range months {
+			if !m.IsDir() || len(m.Name()) != 2 || !isDigits(m.Name()) {
+				continue
+			}
+
+			monthPath := filepath.Join(yearPath, m.Name())
+			files, err := os.ReadDir(monthPath)
+			if err != nil {
+				return nil, err
+			}
+
+			for _, f := range files {
+				if f.IsDir() || filepath.Ext(f.Name()) != ".md" {
+					continue
+				}
+
+				base := strings.TrimSuffix(f.Name(), ".md")
+				n, parseErr := ParseFilename(base)
+				if parseErr != nil {
+					continue
+				}
+
+				n.RelPath = filepath.Join(y.Name(), m.Name(), f.Name())
+				notes = append(notes, n)
+			}
+		}
 	}
 
 	sort.Slice(notes, func(i, j int) bool {
