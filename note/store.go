@@ -9,7 +9,7 @@ import (
 )
 
 // Scan enumerates notes under root using the known YYYY/MM/ directory structure.
-// Only directories matching year (all digits) and month (01–12) patterns are visited.
+// Only directories matching year (all digits) and month (two-digit) patterns are visited.
 func Scan(root string) ([]Note, error) {
 	var notes []Note
 
