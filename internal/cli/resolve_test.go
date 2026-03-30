@@ -88,6 +88,33 @@ func TestResolveByRelativePath(t *testing.T) {
 	}
 }
 
+func TestResolveByIDWithWhitespace(t *testing.T) {
+	root := testdataPath(t)
+	want := filepath.Join(root, "2026/01/20260106_8823.md")
+
+	tests := []struct {
+		name  string
+		query string
+	}{
+		{"trailing space", "8823 "},
+		{"leading space", " 8823"},
+		{"both spaces", " 8823 "},
+		{"trailing tab", "8823\t"},
+		{"trailing newline", "8823\n"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			out, err := runResolve(t, root, tt.query)
+			if err != nil {
+				t.Fatalf("unexpected error for query %q: %v", tt.query, err)
+			}
+			if out != want {
+				t.Errorf("got %q, want %q", out, want)
+			}
+		})
+	}
+}
+
 func TestResolveNonExistentErrors(t *testing.T) {
 	root := testdataPath(t)
 	_, err := runResolve(t, root, "9999")

@@ -18,6 +18,9 @@ func Scan(root string) ([]Note, error) {
 			return err
 		}
 		if d.IsDir() {
+			if path != root && strings.HasPrefix(d.Name(), ".") {
+				return filepath.SkipDir
+			}
 			return nil
 		}
 		if filepath.Ext(path) != ".md" {
@@ -57,6 +60,8 @@ func Scan(root string) ([]Note, error) {
 //  4. Slug
 //  5. Type — most recent note of that type (e.g. "todo", "backlog", "weekly")
 func ResolveRef(root, query string) (*Note, error) {
+	query = strings.TrimSpace(query)
+
 	notes, err := Scan(root)
 	if err != nil {
 		return nil, err
