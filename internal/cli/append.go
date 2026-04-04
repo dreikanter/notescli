@@ -34,6 +34,8 @@ var appendCmd = &cobra.Command{
 			return nil
 		}
 
+		todayDate := time.Now().Format("20060102")
+
 		noteType, _ := cmd.Flags().GetString("type")
 		slug, _ := cmd.Flags().GetString("slug")
 		tags, _ := cmd.Flags().GetStringSlice("tag")
@@ -58,8 +60,13 @@ var appendCmd = &cobra.Command{
 			return fmt.Errorf("--create and --today are mutually exclusive")
 		}
 
+		flagName := "create"
+		if today {
+			flagName = "today"
+		}
+
 		if canCreate && len(args) == 1 {
-			return fmt.Errorf("--%s cannot be combined with positional argument", map[bool]string{true: "today", false: "create"}[today])
+			return fmt.Errorf("--%s cannot be combined with positional argument", flagName)
 		}
 
 		if noteType != "" && !note.IsKnownType(noteType) {
@@ -99,7 +106,7 @@ var appendCmd = &cobra.Command{
 
 			needsCreate := false
 			if len(notes) > 0 {
-				if today && notes[0].Date != time.Now().Format("20060102") {
+				if today && notes[0].Date != todayDate {
 					needsCreate = true
 				} else {
 					targetPath = filepath.Join(root, notes[0].RelPath)
@@ -108,6 +115,10 @@ var appendCmd = &cobra.Command{
 				needsCreate = true
 			} else {
 				return fmt.Errorf("no notes found matching the given criteria")
+			}
+
+			if !needsCreate && (title != "" || description != "") {
+				fmt.Fprintln(cmd.ErrOrStderr(), "warning: --title and --description are ignored when appending to an existing note")
 			}
 
 			if needsCreate {
@@ -124,7 +135,7 @@ var appendCmd = &cobra.Command{
 				}
 			}
 		} else if canCreate {
-			return fmt.Errorf("--%s requires filter flags (--type, --slug, --tag)", map[bool]string{true: "today", false: "create"}[today])
+			return fmt.Errorf("--%s requires filter flags (--type, --slug, --tag)", flagName)
 		} else {
 			return fmt.Errorf("specify a note by positional argument or filter flags (--type, --slug, --tag)")
 		}
