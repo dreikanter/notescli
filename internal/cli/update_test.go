@@ -193,23 +193,15 @@ func TestUpdateDescription(t *testing.T) {
 	}
 }
 
-// TestUpdateNoFlagsUnchanged verifies no change when no flags are provided.
-func TestUpdateNoFlagsUnchanged(t *testing.T) {
+// TestUpdateNoFlagsErrors verifies that update with no flags returns an error.
+func TestUpdateNoFlagsErrors(t *testing.T) {
 	root := copyTestdata(t)
-	target := filepath.Join(root, "2026/01/20260106_8823.md")
-	before, _ := os.ReadFile(target)
-
-	out, err := runUpdate(t, root, "8823")
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
+	_, err := runUpdate(t, root, "8823")
+	if err == nil {
+		t.Fatal("expected error when no update flags provided, got nil")
 	}
-	if out != target {
-		t.Errorf("got path %q, want %q", out, target)
-	}
-
-	after, _ := os.ReadFile(target)
-	if string(before) != string(after) {
-		t.Error("file should not have changed when no flags provided")
+	if !strings.Contains(err.Error(), "at least one update flag is required") {
+		t.Errorf("unexpected error message: %v", err)
 	}
 }
 
