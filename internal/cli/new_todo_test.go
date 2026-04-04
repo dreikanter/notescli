@@ -98,10 +98,24 @@ func TestNewTodoForceRegenerates(t *testing.T) {
 	}
 }
 
-func TestNewTodoNoPreviousErrors(t *testing.T) {
+func TestNewTodoNoPreviousCreatesEmpty(t *testing.T) {
 	root := emptyNotesRoot(t)
-	_, err := runNewTodo(t, root)
-	if err == nil {
-		t.Fatal("expected error when no previous todo exists, got nil")
+	out, err := runNewTodo(t, root)
+	if err != nil {
+		t.Fatalf("expected success when no previous todo, got error: %v", err)
+	}
+	if out == "" {
+		t.Fatal("expected output path, got empty string")
+	}
+	if _, err := os.Stat(out); err != nil {
+		t.Fatalf("created file does not exist: %v", err)
+	}
+	data, err := os.ReadFile(out)
+	if err != nil {
+		t.Fatalf("cannot read created file: %v", err)
+	}
+	content := string(data)
+	if strings.Contains(content, "[ ]") {
+		t.Errorf("expected no tasks in empty todo, got:\n%s", content)
 	}
 }

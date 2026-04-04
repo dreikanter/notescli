@@ -34,26 +34,23 @@ var newTodoCmd = &cobra.Command{
 			}
 		}
 
-		// Find the most recent previous todo
+		// Find the most recent previous todo and roll over tasks
+		var carriedTasks []note.Task
 		prev := note.FindLatestTodo(notes, today)
-		if prev == nil {
-			return fmt.Errorf("no previous todo found")
-		}
+		if prev != nil {
+			prevPath := filepath.Join(root, prev.RelPath)
+			prevData, err := os.ReadFile(prevPath)
+			if err != nil {
+				return fmt.Errorf("cannot read previous todo: %w", err)
+			}
+			prevLines := strings.Split(string(prevData), "\n")
 
-		// Read previous todo content
-		prevPath := filepath.Join(root, prev.RelPath)
-		prevData, err := os.ReadFile(prevPath)
-		if err != nil {
-			return fmt.Errorf("cannot read previous todo: %w", err)
-		}
-		prevLines := strings.Split(string(prevData), "\n")
+			result := note.RolloverTasks(prevLines)
+			carriedTasks = result.CarriedTasks
 
-		// Rollover tasks
-		result := note.RolloverTasks(prevLines)
-
-		// Write back modified previous todo
-		if err := os.WriteFile(prevPath, []byte(strings.Join(result.UpdatedLines, "\n")), 0o644); err != nil {
-			return fmt.Errorf("cannot update previous todo: %w", err)
+			if err := os.WriteFile(prevPath, []byte(strings.Join(result.UpdatedLines, "\n")), 0o644); err != nil {
+				return fmt.Errorf("cannot update previous todo: %w", err)
+			}
 		}
 
 		// Allocate new ID and create new todo
@@ -69,7 +66,7 @@ var newTodoCmd = &cobra.Command{
 		}
 
 		fullPath := filepath.Join(dir, filename)
-		content := note.FormatTodoContent(result.CarriedTasks)
+		content := note.FormatTodoContent(carriedTasks)
 
 		if err := os.WriteFile(fullPath, []byte(content), 0o644); err != nil {
 			return fmt.Errorf("cannot write todo: %w", err)
