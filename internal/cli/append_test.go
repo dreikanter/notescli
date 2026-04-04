@@ -42,13 +42,7 @@ func runAppend(t *testing.T, root string, stdin string, args ...string) (string,
 	t.Helper()
 
 	appendCmd.ResetFlags()
-	appendCmd.Flags().String("type", "", "filter by note type")
-	appendCmd.Flags().String("slug", "", "filter by slug")
-	appendCmd.Flags().StringSlice("tag", nil, "filter by tag (repeatable, all must match)")
-	appendCmd.Flags().Bool("create", false, "create note if no match found")
-	appendCmd.Flags().Bool("today", false, "append to today's note or create a new one")
-	appendCmd.Flags().String("title", "", "title for frontmatter (requires --create or --today)")
-	appendCmd.Flags().String("description", "", "description for frontmatter (requires --create or --today)")
+	registerAppendFlags()
 
 	buf := new(bytes.Buffer)
 	rootCmd.SetOut(buf)

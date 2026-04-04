@@ -162,7 +162,7 @@ var appendCmd = &cobra.Command{
 	},
 }
 
-func init() {
+func registerAppendFlags() {
 	appendCmd.Flags().String("type", "", "filter by note type")
 	appendCmd.Flags().String("slug", "", "filter by slug")
 	appendCmd.Flags().StringSlice("tag", nil, "filter by tag (repeatable, all must match)")
@@ -170,5 +170,9 @@ func init() {
 	appendCmd.Flags().Bool("today", false, "append to today's note or create a new one")
 	appendCmd.Flags().String("title", "", "title for frontmatter (requires --create or --today)")
 	appendCmd.Flags().String("description", "", "description for frontmatter (requires --create or --today)")
+}
+
+func init() {
+	registerAppendFlags()
 	rootCmd.AddCommand(appendCmd)
 }
