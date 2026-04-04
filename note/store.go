@@ -95,7 +95,8 @@ func ResolveRefDate(root, query, date string) (*Note, error) {
 				return &notes[i], nil
 			}
 		}
-		return nil, fmt.Errorf("note not found: %s", query)
+		// No early return: fall through to basename/slug/type resolution.
+		// This allows all-digit slugs (e.g. "999") to be found when no ID matches.
 	}
 
 	// Step 2: absolute or relative path
