@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+	"time"
 )
 
 // copyTestdata copies testdata into a temporary directory so append tests
@@ -41,12 +42,7 @@ func runAppend(t *testing.T, root string, stdin string, args ...string) (string,
 	t.Helper()
 
 	appendCmd.ResetFlags()
-	appendCmd.Flags().String("type", "", "filter by note type")
-	appendCmd.Flags().String("slug", "", "filter by slug")
-	appendCmd.Flags().StringSlice("tag", nil, "filter by tag (repeatable, all must match)")
-	appendCmd.Flags().Bool("create", false, "create note if no match found")
-	appendCmd.Flags().String("title", "", "title for frontmatter (requires --create)")
-	appendCmd.Flags().String("description", "", "description for frontmatter (requires --create)")
+	registerAppendFlags()
 
 	buf := new(bytes.Buffer)
 	rootCmd.SetOut(buf)
@@ -418,5 +414,141 @@ func TestAppendCreateUnknownTypeErrors(t *testing.T) {
 	_, err := runAppend(t, root, "text", "--type", "invalid", "--create")
 	if err == nil {
 		t.Fatal("expected error for unknown note type, got nil")
+	}
+}
+
+func TestAppendTodayCreatesNewWhenOldDate(t *testing.T) {
+	root := copyTestdata(t)
+	// Existing meeting note is from 20260104, not today — should create new
+	out, err := runAppend(t, root, "today content", "--slug", "meeting", "--today")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	// Should NOT be the old file
+	oldFile := filepath.Join(root, "2026/01/20260104_8818_meeting.md")
+	if out == oldFile {
+		t.Error("expected a new file, but got the old one")
+	}
+
+	// New file should contain today's date and the slug
+	base := filepath.Base(out)
+	today := time.Now().Format("20060102")
+	if !strings.HasPrefix(base, today) {
+		t.Errorf("expected filename to start with %s, got %s", today, base)
+	}
+	if !strings.Contains(base, "_meeting") {
+		t.Errorf("expected slug in filename, got %s", base)
+	}
+
+	data, _ := os.ReadFile(out)
+	if !strings.Contains(string(data), "today content") {
+		t.Error("appended content not found in created file")
+	}
+}
+
+func TestAppendTodayAppendsToExistingTodayNote(t *testing.T) {
+	root := copyTestdata(t)
+
+	// First create a note for today with the slug
+	firstOut, err := runAppend(t, root, "first entry", "--slug", "daily", "--today")
+	if err != nil {
+		t.Fatalf("unexpected error on first append: %v", err)
+	}
+
+	// Second append with --today should reuse the same file
+	secondOut, err := runAppend(t, root, "second entry", "--slug", "daily", "--today")
+	if err != nil {
+		t.Fatalf("unexpected error on second append: %v", err)
+	}
+
+	if firstOut != secondOut {
+		t.Errorf("expected same file, got %q and %q", firstOut, secondOut)
+	}
+
+	data, _ := os.ReadFile(firstOut)
+	content := string(data)
+	if !strings.Contains(content, "first entry") {
+		t.Error("first entry not found")
+	}
+	if !strings.Contains(content, "second entry") {
+		t.Error("second entry not found")
+	}
+}
+
+func TestAppendTodayCreatesWhenNoMatch(t *testing.T) {
+	root := copyTestdata(t)
+	out, err := runAppend(t, root, "brand new", "--slug", "nonexistent", "--today")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	base := filepath.Base(out)
+	today := time.Now().Format("20060102")
+	if !strings.HasPrefix(base, today) {
+		t.Errorf("expected filename to start with %s, got %s", today, base)
+	}
+
+	data, _ := os.ReadFile(out)
+	if !strings.Contains(string(data), "brand new") {
+		t.Error("appended content not found")
+	}
+}
+
+func TestAppendTodayWithTitle(t *testing.T) {
+	root := copyTestdata(t)
+	out, err := runAppend(t, root, "titled content", "--slug", "sessions", "--today",
+		"--title", "Claude Sessions")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	data, _ := os.ReadFile(out)
+	content := string(data)
+	if !strings.Contains(content, "title: Claude Sessions") {
+		t.Errorf("expected title in frontmatter, got:\n%s", content)
+	}
+	if !strings.Contains(content, "titled content") {
+		t.Error("appended content not found")
+	}
+}
+
+func TestAppendTodayWithPositionalArgErrors(t *testing.T) {
+	root := copyTestdata(t)
+	_, err := runAppend(t, root, "text", "8823", "--today")
+	if err == nil {
+		t.Fatal("expected error when combining --today with positional arg, got nil")
+	}
+}
+
+func TestAppendTodayWithCreateErrors(t *testing.T) {
+	root := copyTestdata(t)
+	_, err := runAppend(t, root, "text", "--slug", "meeting", "--today", "--create")
+	if err == nil {
+		t.Fatal("expected error when combining --today with --create, got nil")
+	}
+}
+
+func TestAppendTodayWithoutFiltersErrors(t *testing.T) {
+	root := copyTestdata(t)
+	_, err := runAppend(t, root, "text", "--today")
+	if err == nil {
+		t.Fatal("expected error when using --today without filter flags, got nil")
+	}
+}
+
+func TestAppendTitleWithoutCreateOrTodayErrors(t *testing.T) {
+	root := copyTestdata(t)
+	_, err := runAppend(t, root, "text", "--type", "todo", "--title", "Oops")
+	if err == nil {
+		t.Fatal("expected error when using --title without --create or --today, got nil")
+	}
+}
+
+func TestAppendDescriptionWithoutCreateOrTodayErrors(t *testing.T) {
+	root := copyTestdata(t)
+	_, err := runAppend(t, root, "text", "--type", "todo", "--description", "Oops")
+	if err == nil {
+		t.Fatal("expected error when using --description without --create or --today, got nil")
 	}
 }
