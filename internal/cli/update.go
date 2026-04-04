@@ -26,6 +26,23 @@ var updateCmd = &cobra.Command{
 		updateNoType, _ := cmd.Flags().GetBool("no-type")
 		updatePrivate, _ := cmd.Flags().GetBool("private")
 
+		// At least one update flag must be provided.
+		updateFlags := []string{
+			"tag", "no-tags", "title", "description",
+			"slug", "no-slug", "type", "no-type",
+			"public", "private",
+		}
+		hasFlag := false
+		for _, name := range updateFlags {
+			if cmd.Flags().Changed(name) {
+				hasFlag = true
+				break
+			}
+		}
+		if !hasFlag {
+			return fmt.Errorf("at least one update flag is required")
+		}
+
 		if updateType != "" && !note.IsKnownType(updateType) {
 			return fmt.Errorf("unknown note type %q (valid types: %s)", updateType, strings.Join(note.KnownTypes, ", "))
 		}
