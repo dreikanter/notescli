@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.1.41] - 2026-04-04
+
+### Fixed
+
+- Fix `grep` and `rg` commands passing `--help` to the subprocess instead of showing notes-specific help; improve `Long` descriptions to document injected default flags ([#63])
+
+[#63]: https://github.com/dreikanter/notescli/pull/63
+
 ## [0.1.40] - 2026-04-04
 
 ### Added

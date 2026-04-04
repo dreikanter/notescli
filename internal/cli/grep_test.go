@@ -72,3 +72,32 @@ func TestGrepCaseInsensitive(t *testing.T) {
 		t.Errorf("expected output to contain todo note, got %q", out)
 	}
 }
+
+func TestGrepHelp(t *testing.T) {
+	r, w, err := os.Pipe()
+	if err != nil {
+		t.Fatalf("cannot create pipe: %v", err)
+	}
+
+	rootCmd.SetOut(w)
+	t.Cleanup(func() { rootCmd.SetOut(nil) })
+
+	rootCmd.SetArgs([]string{"grep", "--help"})
+	execErr := rootCmd.Execute()
+	w.Close()
+
+	buf := make([]byte, 64*1024)
+	n, _ := r.Read(buf)
+	r.Close()
+
+	out := string(buf[:n])
+	if execErr != nil {
+		t.Fatalf("unexpected error: %v", execErr)
+	}
+	if !strings.Contains(out, "grep") {
+		t.Errorf("expected help output to contain 'grep', got: %q", out)
+	}
+	if !strings.Contains(out, "--include=*.md") {
+		t.Errorf("expected help output to mention injected flags, got: %q", out)
+	}
+}
