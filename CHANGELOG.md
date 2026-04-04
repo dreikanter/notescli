@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.1.43] - 2026-04-04
+
+### Fixed
+
+- Fix ref resolution for all-digit slugs; reject all-digit slugs in `new` and `update` commands ([#72])
+
+[#72]: https://github.com/dreikanter/notescli/pull/72
+
 ## [0.1.42] - 2026-04-04
 
 ### Fixed
