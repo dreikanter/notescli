@@ -10,7 +10,7 @@ import (
 
 var lsCmd = &cobra.Command{
 	Use:   "ls",
-	Short: "List recent notes",
+	Short: "List notes",
 	Args:  cobra.NoArgs,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		lsLimit, _ := cmd.Flags().GetInt("limit")
@@ -61,7 +61,7 @@ var lsCmd = &cobra.Command{
 }
 
 func init() {
-	lsCmd.Flags().Int("limit", 20, "maximum number of notes to list")
+	lsCmd.Flags().Int("limit", 0, "maximum number of notes to list (0 = no limit)")
 	lsCmd.Flags().String("type", "", "filter by note type, e.g. todo, backlog, weekly")
 	lsCmd.Flags().String("slug", "", "filter by descriptive slug")
 	lsCmd.Flags().StringSlice("tag", nil, "filter by frontmatter tag (repeatable, AND logic)")

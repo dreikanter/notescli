@@ -11,7 +11,7 @@ func runLs(t *testing.T, args ...string) (string, error) {
 
 	root := testdataPath(t)
 	lsCmd.ResetFlags()
-	lsCmd.Flags().Int("limit", 20, "maximum number of notes to list")
+	lsCmd.Flags().Int("limit", 0, "maximum number of notes to list (0 = no limit)")
 	lsCmd.Flags().String("type", "", "filter by note type, e.g. todo, backlog, weekly")
 	lsCmd.Flags().String("slug", "", "filter by descriptive slug")
 	lsCmd.Flags().StringSlice("tag", nil, "filter by frontmatter tag (repeatable, AND logic)")
@@ -164,6 +164,18 @@ func TestLsToday(t *testing.T) {
 	}
 	if out != "" {
 		t.Errorf("expected empty output for --today on past testdata, got %q", out)
+	}
+}
+
+func TestLsUnlimitedByDefault(t *testing.T) {
+	out, err := runLs(t)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	lines := strings.Split(out, "\n")
+	if len(lines) != 4 {
+		t.Fatalf("expected all 4 testdata notes without limit, got %d:\n%s", len(lines), out)
 	}
 }
 
