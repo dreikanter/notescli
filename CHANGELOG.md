@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.1.44] - 2026-04-04
+
+### Fixed
+
+- Reject conflicting `update` flags (`--slug`/`--no-slug`, `--type`/`--no-type`, `--tag`/`--no-tags`, `--public`/`--private`) instead of silently picking a winner ([#57])
+
+[#57]: https://github.com/dreikanter/notescli/pull/57
+
 ## [0.1.43] - 2026-04-04
 
 ### Fixed

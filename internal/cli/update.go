@@ -145,6 +145,10 @@ func init() {
 	updateCmd.Flags().String("type", "", "update note type and rename file (todo, backlog, weekly)")
 	updateCmd.Flags().Bool("no-type", false, "remove type suffix from filename")
 	updateCmd.Flags().Bool("public", false, "mark note as public in frontmatter")
-	updateCmd.Flags().Bool("private", false, "mark note as private in frontmatter (overrides --public)")
+	updateCmd.Flags().Bool("private", false, "mark note as private in frontmatter")
+	updateCmd.MarkFlagsMutuallyExclusive("slug", "no-slug")
+	updateCmd.MarkFlagsMutuallyExclusive("type", "no-type")
+	updateCmd.MarkFlagsMutuallyExclusive("tag", "no-tags")
+	updateCmd.MarkFlagsMutuallyExclusive("public", "private")
 	rootCmd.AddCommand(updateCmd)
 }

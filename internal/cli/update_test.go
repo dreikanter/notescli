@@ -21,7 +21,11 @@ func runUpdate(t *testing.T, root string, args ...string) (string, error) {
 	updateCmd.Flags().String("type", "", "update note type and rename file (todo, backlog, weekly)")
 	updateCmd.Flags().Bool("no-type", false, "remove type suffix from filename")
 	updateCmd.Flags().Bool("public", false, "mark note as public in frontmatter")
-	updateCmd.Flags().Bool("private", false, "mark note as private in frontmatter (overrides --public)")
+	updateCmd.Flags().Bool("private", false, "mark note as private in frontmatter")
+	updateCmd.MarkFlagsMutuallyExclusive("slug", "no-slug")
+	updateCmd.MarkFlagsMutuallyExclusive("type", "no-type")
+	updateCmd.MarkFlagsMutuallyExclusive("tag", "no-tags")
+	updateCmd.MarkFlagsMutuallyExclusive("public", "private")
 
 	buf := new(bytes.Buffer)
 	rootCmd.SetOut(buf)
@@ -223,33 +227,39 @@ func TestUpdateInvalidTypeErrors(t *testing.T) {
 	}
 }
 
-// TestUpdateNoSlugTakesPrecedenceOverSlug verifies --no-slug wins when combined with --slug.
-func TestUpdateNoSlugTakesPrecedenceOverSlug(t *testing.T) {
+// TestUpdateSlugAndNoSlugConflict verifies --slug and --no-slug cannot be used together.
+func TestUpdateSlugAndNoSlugConflict(t *testing.T) {
 	root := copyTestdata(t)
-	// 8818 already has slug "meeting"; pass both --slug and --no-slug
-	out, err := runUpdate(t, root, "8818", "--slug", "other", "--no-slug")
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
+	_, err := runUpdate(t, root, "8818", "--slug", "other", "--no-slug")
+	if err == nil {
+		t.Fatal("expected error for --slug and --no-slug together, got nil")
 	}
-
-	want := filepath.Join(root, "2026/01/20260104_8818.md")
-	if out != want {
-		t.Errorf("got path %q, want %q (--no-slug should win)", out, want)
+	if !strings.Contains(err.Error(), "slug") || !strings.Contains(err.Error(), "no-slug") {
+		t.Errorf("expected error mentioning both flags, got: %v", err)
 	}
 }
 
-// TestUpdateNoTypeTakesPrecedenceOverType verifies --no-type wins when combined with --type.
-func TestUpdateNoTypeTakesPrecedenceOverType(t *testing.T) {
+// TestUpdateTagAndNoTagsConflict verifies --tag and --no-tags cannot be used together.
+func TestUpdateTagAndNoTagsConflict(t *testing.T) {
 	root := copyTestdata(t)
-	// 8814 has type "todo"; pass both --type backlog and --no-type
-	out, err := runUpdate(t, root, "8814", "--type", "backlog", "--no-type")
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
+	_, err := runUpdate(t, root, "8823", "--tag", "foo", "--no-tags")
+	if err == nil {
+		t.Fatal("expected error for --tag and --no-tags together, got nil")
 	}
+	if !strings.Contains(err.Error(), "tag") || !strings.Contains(err.Error(), "no-tags") {
+		t.Errorf("expected error mentioning both flags, got: %v", err)
+	}
+}
 
-	want := filepath.Join(root, "2026/01/20260102_8814.md")
-	if out != want {
-		t.Errorf("got path %q, want %q (--no-type should win)", out, want)
+// TestUpdateTypeAndNoTypeConflict verifies --type and --no-type cannot be used together.
+func TestUpdateTypeAndNoTypeConflict(t *testing.T) {
+	root := copyTestdata(t)
+	_, err := runUpdate(t, root, "8814", "--type", "backlog", "--no-type")
+	if err == nil {
+		t.Fatal("expected error for --type and --no-type together, got nil")
+	}
+	if !strings.Contains(err.Error(), "type") || !strings.Contains(err.Error(), "no-type") {
+		t.Errorf("expected error mentioning both flags, got: %v", err)
 	}
 }
 
@@ -371,20 +381,15 @@ func TestUpdatePrivateRemovesPublicField(t *testing.T) {
 	}
 }
 
-// TestUpdatePrivateTakesPrecedenceOverPublic verifies --private wins when combined with --public.
-func TestUpdatePrivateTakesPrecedenceOverPublic(t *testing.T) {
+// TestUpdatePublicAndPrivateConflict verifies --public and --private cannot be used together.
+func TestUpdatePublicAndPrivateConflict(t *testing.T) {
 	root := copyTestdata(t)
-	out, err := runUpdate(t, root, "8823", "--public", "--private")
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
+	_, err := runUpdate(t, root, "8823", "--public", "--private")
+	if err == nil {
+		t.Fatal("expected error for --public and --private together, got nil")
 	}
-
-	data, err := os.ReadFile(out)
-	if err != nil {
-		t.Fatalf("read note: %v", err)
-	}
-	if strings.Contains(string(data), "public:") {
-		t.Errorf("expected public field absent when --private wins, got:\n%s", string(data))
+	if !strings.Contains(err.Error(), "public") || !strings.Contains(err.Error(), "private") {
+		t.Errorf("expected error mentioning both flags, got: %v", err)
 	}
 }
 
