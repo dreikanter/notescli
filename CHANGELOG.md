@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.1.45] - 2026-04-04
+
+### Fixed
+
+- `new-todo` no longer fails when no previous todo exists; creates an empty todo instead. `--force` works correctly when today's todo is the only one ([#58])
+
+[#58]: https://github.com/dreikanter/notescli/pull/58
+
 ## [0.1.44] - 2026-04-04
 
 ### Fixed
