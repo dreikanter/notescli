@@ -6,6 +6,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"github.com/dreikanter/notescli/note"
 	"github.com/spf13/cobra"
@@ -37,22 +38,28 @@ var appendCmd = &cobra.Command{
 		slug, _ := cmd.Flags().GetString("slug")
 		tags, _ := cmd.Flags().GetStringSlice("tag")
 		create, _ := cmd.Flags().GetBool("create")
+		today, _ := cmd.Flags().GetBool("today")
 		title, _ := cmd.Flags().GetString("title")
 		description, _ := cmd.Flags().GetString("description")
 
 		hasFilters := noteType != "" || slug != "" || len(tags) > 0
+		canCreate := create || today
 
-		if !create {
+		if !canCreate {
 			if title != "" {
-				return fmt.Errorf("--title requires --create")
+				return fmt.Errorf("--title requires --create or --today")
 			}
 			if description != "" {
-				return fmt.Errorf("--description requires --create")
+				return fmt.Errorf("--description requires --create or --today")
 			}
 		}
 
-		if create && len(args) == 1 {
-			return fmt.Errorf("--create cannot be combined with positional argument")
+		if create && today {
+			return fmt.Errorf("--create and --today are mutually exclusive")
+		}
+
+		if canCreate && len(args) == 1 {
+			return fmt.Errorf("--%s cannot be combined with positional argument", map[bool]string{true: "today", false: "create"}[today])
 		}
 
 		if noteType != "" && !note.IsKnownType(noteType) {
@@ -90,9 +97,20 @@ var appendCmd = &cobra.Command{
 				}
 			}
 
+			needsCreate := false
 			if len(notes) > 0 {
-				targetPath = filepath.Join(root, notes[0].RelPath)
-			} else if create {
+				if today && notes[0].Date != time.Now().Format("20060102") {
+					needsCreate = true
+				} else {
+					targetPath = filepath.Join(root, notes[0].RelPath)
+				}
+			} else if canCreate {
+				needsCreate = true
+			} else {
+				return fmt.Errorf("no notes found matching the given criteria")
+			}
+
+			if needsCreate {
 				targetPath, err = createNote(createNoteParams{
 					Root:        root,
 					Slug:        slug,
@@ -104,11 +122,9 @@ var appendCmd = &cobra.Command{
 				if err != nil {
 					return err
 				}
-			} else {
-				return fmt.Errorf("no notes found matching the given criteria")
 			}
-		} else if create {
-			return fmt.Errorf("--create requires filter flags (--type, --slug, --tag)")
+		} else if canCreate {
+			return fmt.Errorf("--%s requires filter flags (--type, --slug, --tag)", map[bool]string{true: "today", false: "create"}[today])
 		} else {
 			return fmt.Errorf("specify a note by positional argument or filter flags (--type, --slug, --tag)")
 		}
@@ -140,7 +156,8 @@ func init() {
 	appendCmd.Flags().String("slug", "", "filter by slug")
 	appendCmd.Flags().StringSlice("tag", nil, "filter by tag (repeatable, all must match)")
 	appendCmd.Flags().Bool("create", false, "create note if no match found")
-	appendCmd.Flags().String("title", "", "title for frontmatter (requires --create)")
-	appendCmd.Flags().String("description", "", "description for frontmatter (requires --create)")
+	appendCmd.Flags().Bool("today", false, "append to today's note or create a new one")
+	appendCmd.Flags().String("title", "", "title for frontmatter (requires --create or --today)")
+	appendCmd.Flags().String("description", "", "description for frontmatter (requires --create or --today)")
 	rootCmd.AddCommand(appendCmd)
 }

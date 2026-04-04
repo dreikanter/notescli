@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.1.38] - 2026-04-04
+
+### Added
+
+- Add `--today` flag to `append` for daily note rotation: appends to today's matching note or creates a new one ([#49])
+
+[#49]: https://github.com/dreikanter/notescli/pull/49
+
 ## [0.1.37] - 2026-03-30
 
 ### Fixed
@@ -183,6 +191,11 @@
 - Add `new` and `new-todo` commands ([#2])
 - Add `--no-frontmatter` flag to `read` command ([#3], [#4])
 
+[0.1.38]: https://github.com/dreikanter/notescli/releases/tag/v0.1.38
+[0.1.37]: https://github.com/dreikanter/notescli/releases/tag/v0.1.37
+[0.1.36]: https://github.com/dreikanter/notescli/releases/tag/v0.1.36
+[0.1.35]: https://github.com/dreikanter/notescli/releases/tag/v0.1.35
+[0.1.34]: https://github.com/dreikanter/notescli/releases/tag/v0.1.34
 [0.1.32]: https://github.com/dreikanter/notescli/releases/tag/v0.1.32
 [0.1.31]: https://github.com/dreikanter/notescli/releases/tag/v0.1.31
 [0.1.30]: https://github.com/dreikanter/notescli/releases/tag/v0.1.30
