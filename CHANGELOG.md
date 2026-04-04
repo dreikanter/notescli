@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.1.41] - 2026-04-04
+
+### Added
+
+- Add `--public` and `--private` flags to `append` command, gated on `--create`/`--today` ([#68])
+
+[#68]: https://github.com/dreikanter/notescli/pull/68
+
 ## [0.1.40] - 2026-04-04
 
 ### Added
