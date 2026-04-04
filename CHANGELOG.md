@@ -1,6 +1,6 @@
 # Changelog
 
-## [0.1.41] - 2026-04-04
+## [0.1.42] - 2026-04-04
 
 ### Fixed
 
@@ -8,6 +8,13 @@
 
 [#55]: https://github.com/dreikanter/notescli/pull/55
 
+## [0.1.41] - 2026-04-04
+
+### Changed
+
+- `update` command now returns an error when called with no flags instead of silently rewriting the file unchanged ([#69])
+
+[#69]: https://github.com/dreikanter/notescli/pull/69
 ## [0.1.40] - 2026-04-04
 
 ### Added
