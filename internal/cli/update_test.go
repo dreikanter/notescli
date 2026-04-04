@@ -40,7 +40,7 @@ func TestUpdateTagsByID(t *testing.T) {
 		t.Fatalf("unexpected error: %v", err)
 	}
 
-	want := filepath.Join(root, "2026/01/20260106_8823.md")
+	want := filepath.Join(root, "2026/01/20260106_8823_999.md")
 	if out != want {
 		t.Errorf("got path %q, want %q", out, want)
 	}
@@ -85,7 +85,7 @@ func TestUpdateSlugRenamesFile(t *testing.T) {
 	if _, err := os.Stat(want); err != nil {
 		t.Errorf("new file does not exist: %v", err)
 	}
-	if _, err := os.Stat(filepath.Join(root, "2026/01/20260106_8823.md")); err == nil {
+	if _, err := os.Stat(filepath.Join(root, "2026/01/20260106_8823_999.md")); err == nil {
 		t.Error("old file should have been removed")
 	}
 }
@@ -119,11 +119,11 @@ func TestUpdateTypeRenamesFile(t *testing.T) {
 		t.Fatalf("unexpected error: %v", err)
 	}
 
-	want := filepath.Join(root, "2026/01/20260106_8823.todo.md")
+	want := filepath.Join(root, "2026/01/20260106_8823_999.todo.md")
 	if out != want {
 		t.Errorf("got path %q, want %q", out, want)
 	}
-	if _, err := os.Stat(filepath.Join(root, "2026/01/20260106_8823.md")); err == nil {
+	if _, err := os.Stat(filepath.Join(root, "2026/01/20260106_8823_999.md")); err == nil {
 		t.Error("old file should have been removed")
 	}
 }
