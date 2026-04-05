@@ -46,7 +46,12 @@ func isTerminalEditor(bin string) bool {
 var editCmd = &cobra.Command{
 	Use:   "edit <id|type|query>",
 	Short: "Open a note in your editor",
-	Args:  cobra.ExactArgs(1),
+	Long: `Open a note in your editor. The editor is read from $VISUAL, falling back to $EDITOR.
+
+Terminal editors (vi, vim, nvim, nano, emacs, micro, etc.) run in the foreground with the terminal attached. All other editors are launched as detached processes so control returns to the terminal immediately.
+
+The editor value may include arguments, e.g. EDITOR="subl --wait".`,
+	Args: cobra.ExactArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		root := mustNotesPath()
 		n, err := note.ResolveRef(root, args[0])
