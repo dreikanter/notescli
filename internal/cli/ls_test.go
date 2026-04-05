@@ -2,6 +2,7 @@ package cli
 
 import (
 	"bytes"
+	"path/filepath"
 	"strings"
 	"testing"
 )
@@ -191,5 +192,25 @@ func TestLsNameAndType(t *testing.T) {
 	}
 	if !strings.Contains(lines[0], "8814") {
 		t.Errorf("expected note 8814, got %q", lines[0])
+	}
+}
+
+func TestLsOutputsAbsolutePaths(t *testing.T) {
+	out, err := runLs(t)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	root := testdataPath(t)
+	for _, line := range strings.Split(out, "\n") {
+		if line == "" {
+			continue
+		}
+		if !filepath.IsAbs(line) {
+			t.Errorf("expected absolute path, got %q", line)
+		}
+		if !strings.HasPrefix(line, root) {
+			t.Errorf("expected path under %s, got %q", root, line)
+		}
 	}
 }

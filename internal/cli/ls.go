@@ -2,6 +2,7 @@ package cli
 
 import (
 	"fmt"
+	"path/filepath"
 	"time"
 
 	"github.com/dreikanter/notescli/note"
@@ -54,7 +55,7 @@ var lsCmd = &cobra.Command{
 		}
 
 		for _, n := range notes {
-			fmt.Fprintln(cmd.OutOrStdout(), n.RelPath)
+			fmt.Fprintln(cmd.OutOrStdout(), filepath.Join(root, n.RelPath))
 		}
 		return nil
 	},

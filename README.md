@@ -24,7 +24,7 @@ For development, use `make build` or `make install` from a local clone.
 notes new
 notes new --title "Meeting notes" --slug meeting --tag work
 
-# Create today's todo from the previous todo
+# Create today's todo (rolls over pending tasks from the previous one)
 notes new-todo
 
 # List recent notes
