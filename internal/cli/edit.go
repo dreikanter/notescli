@@ -69,7 +69,9 @@ The editor value may include arguments, e.g. EDITOR="subl --wait".`,
 
 		bin, extraArgs := parseEditor(raw)
 		path := filepath.Join(root, n.RelPath)
-		cmdArgs := append(extraArgs, path)
+		cmdArgs := make([]string, 0, len(extraArgs)+1)
+		cmdArgs = append(cmdArgs, extraArgs...)
+		cmdArgs = append(cmdArgs, path)
 		ec := exec.Command(bin, cmdArgs...)
 
 		if isTerminalEditor(bin) {
