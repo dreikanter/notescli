@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.1.63] - 2026-04-05
+
+### Changed
+
+- Replace `bin/update` script with `make update` target ([#98])
+
 ## [0.1.62] - 2026-04-05
 
 ### Changed
@@ -281,6 +287,7 @@
 - Add `new` and `new-todo` commands ([#2])
 - Add `--no-frontmatter` flag to `read` command ([#3], [#4])
 
+[0.1.63]: https://github.com/dreikanter/notescli/releases/tag/v0.1.63
 [0.1.60]: https://github.com/dreikanter/notescli/releases/tag/v0.1.60
 [0.1.59]: https://github.com/dreikanter/notescli/releases/tag/v0.1.59
 [0.1.58]: https://github.com/dreikanter/notescli/releases/tag/v0.1.58
@@ -373,3 +380,4 @@
 [#92]: https://github.com/dreikanter/notescli/issues/92
 [#93]: https://github.com/dreikanter/notescli/issues/93
 [#97]: https://github.com/dreikanter/notescli/pull/97
+[#98]: https://github.com/dreikanter/notescli/pull/98

@@ -21,8 +21,7 @@ Patch version auto-increments on each PR merge via GitHub Actions
 After merging a PR, reinstall locally:
 
 ```sh
-git checkout main && git pull --tags
-make install
+make update
 ```
 
 ## Workflow
