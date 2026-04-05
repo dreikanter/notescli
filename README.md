@@ -1,6 +1,23 @@
 # Notes CLI
 
-A CLI tool for managing a file-based store of markdown notes.
+A plain-text note archive you own entirely.
+
+Every note is a markdown file in a date-stamped folder (`2026/04/20260405_9522.md`). No database, no proprietary format, no account — just files on disk, synced however you like (Dropbox, git, rsync, nothing at all).
+
+A small Go CLI (`notes`) gives you fast, scriptable access to the archive from the terminal:
+
+- **Create** notes with optional title, tags, slug, and type
+- **List and filter** by date, type, tag, or slug
+- **Read, append, search** without leaving the shell
+- **Resolve** any reference (ID, type, substring) to a file path — so the tool composes with everything Unix already has
+
+The tool doesn't try to be a knowledge graph, a publishing platform, or a second brain app. It covers a deliberately small scope:
+
+1. **Capture** — get text into a file quickly (`echo "..." | notes new`)
+2. **Retrieve** — find it again by ID, type, tag, or full-text search
+3. **Integrate** — pipe notes into other tools, scripts, and AI assistants
+
+Think of it as the storage layer that sits underneath your workflow, not the workflow itself. Obsidian and Logseq are rich GUIs built around their own vaults. Notes CLI is closer to a structured `~/notes` directory with a fast command-line interface on top — no plugins, no sync service, no lock-in. The files are yours; the CLI is optional convenience.
 
 ## Install
 

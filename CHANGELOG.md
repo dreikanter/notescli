@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.1.65] - 2026-04-05
+
+### Changed
+
+- Rewrite README intro to explain the project's purpose and scope ([#100])
+
 ## [0.1.64] - 2026-04-05
 
 ### Changed
@@ -388,3 +394,4 @@
 [#97]: https://github.com/dreikanter/notescli/pull/97
 [#98]: https://github.com/dreikanter/notescli/pull/98
 [#99]: https://github.com/dreikanter/notescli/pull/99
+[#100]: https://github.com/dreikanter/notescli/pull/100
