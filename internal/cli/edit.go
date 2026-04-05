@@ -11,7 +11,7 @@ import (
 )
 
 var editCmd = &cobra.Command{
-	Use:   "edit <id|path|basename|slug|type>",
+	Use:   "edit <id|type|query>",
 	Short: "Open a note in your editor",
 	Args:  cobra.ExactArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {

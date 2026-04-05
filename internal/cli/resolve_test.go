@@ -9,8 +9,20 @@ import (
 	"time"
 )
 
+func testdataPath(t *testing.T) string {
+	t.Helper()
+	abs, err := filepath.Abs("../../testdata")
+	if err != nil {
+		t.Fatalf("cannot resolve testdata path: %v", err)
+	}
+	return abs
+}
+
 func runResolve(t *testing.T, root string, args ...string) (string, error) {
 	t.Helper()
+
+	resolveCmd.ResetFlags()
+	registerResolveFlags()
 
 	stdout := new(bytes.Buffer)
 	stderr := new(bytes.Buffer)
@@ -155,5 +167,99 @@ func TestResolveTodayFilterMatchesToday(t *testing.T) {
 	want := filepath.Join(dir, fname)
 	if out != want {
 		t.Errorf("got %q, want %q", out, want)
+	}
+}
+
+func TestResolveNoArgsNoFiltersErrors(t *testing.T) {
+	root := testdataPath(t)
+	_, err := runResolve(t, root)
+	if err == nil {
+		t.Fatal("expected error when no args and no filters, got nil")
+	}
+}
+
+func TestResolvePositionalWithFilterErrors(t *testing.T) {
+	root := testdataPath(t)
+	_, err := runResolve(t, root, "--type", "todo", "8823")
+	if err == nil {
+		t.Fatal("expected error when combining positional arg with filter flags, got nil")
+	}
+}
+
+// Filter flag tests (migrated from latest)
+
+func TestResolveFilterByType(t *testing.T) {
+	root := testdataPath(t)
+	out, err := runResolve(t, root, "--type", "todo")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	want := filepath.Join(root, "2026/01/20260102_8814.todo.md")
+	if out != want {
+		t.Errorf("got %q, want %q", out, want)
+	}
+}
+
+func TestResolveFilterBySlug(t *testing.T) {
+	root := testdataPath(t)
+	out, err := runResolve(t, root, "--slug", "meeting")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	want := filepath.Join(root, "2026/01/20260104_8818_meeting.md")
+	if out != want {
+		t.Errorf("got %q, want %q", out, want)
+	}
+}
+
+func TestResolveFilterByTag(t *testing.T) {
+	root := testdataPath(t)
+	out, err := runResolve(t, root, "--tag", "meeting")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	want := filepath.Join(root, "2026/01/20260104_8818_meeting.md")
+	if out != want {
+		t.Errorf("got %q, want %q", out, want)
+	}
+}
+
+func TestResolveCombinedFilters(t *testing.T) {
+	root := testdataPath(t)
+	out, err := runResolve(t, root, "--tag", "work", "--type", "todo")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	want := filepath.Join(root, "2026/01/20260102_8814.todo.md")
+	if out != want {
+		t.Errorf("got %q, want %q", out, want)
+	}
+}
+
+func TestResolveFilterSlugNotFound(t *testing.T) {
+	root := testdataPath(t)
+	_, err := runResolve(t, root, "--slug", "nonexistent")
+	if err == nil {
+		t.Fatal("expected error for nonexistent slug, got nil")
+	}
+}
+
+func TestResolveFilterTypeNotFound(t *testing.T) {
+	root := testdataPath(t)
+	_, err := runResolve(t, root, "--type", "nonexistent")
+	if err == nil {
+		t.Fatal("expected error for nonexistent type, got nil")
+	}
+}
+
+func TestResolveFilterTodayNoMatch(t *testing.T) {
+	root := testdataPath(t)
+	_, err := runResolve(t, root, "--today")
+	if err == nil {
+		t.Fatal("expected error when no notes exist for today, got nil")
 	}
 }

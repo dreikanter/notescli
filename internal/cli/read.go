@@ -11,7 +11,7 @@ import (
 )
 
 var readCmd = &cobra.Command{
-	Use:   "read [<id|path|basename|slug|type>]",
+	Use:   "read [<id|type|query>]",
 	Short: "Read a note by ref or filter flags",
 	Args:  cobra.MaximumNArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {

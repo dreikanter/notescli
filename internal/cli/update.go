@@ -12,7 +12,7 @@ import (
 )
 
 var updateCmd = &cobra.Command{
-	Use:   "update <ref>",
+	Use:   "update <id|type|query>",
 	Short: "Update frontmatter and/or rename a note",
 	Args:  cobra.ExactArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {

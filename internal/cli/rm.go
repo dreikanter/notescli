@@ -11,7 +11,7 @@ import (
 )
 
 var rmCmd = &cobra.Command{
-	Use:   "rm <id|path|basename|slug|type>",
+	Use:   "rm <id|type|query>",
 	Short: "Delete a note",
 	Args:  cobra.ExactArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
