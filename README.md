@@ -23,30 +23,47 @@ For development, use `make build` or `make install` from a local clone.
 # Create a new note
 notes new
 notes new --title "Meeting notes" --slug meeting --tag work
+notes new --type todo --upsert   # create or return existing today's todo
 
 # Create today's todo (rolls over pending tasks from the previous one)
 notes new-todo
 
-# List recent notes
+# List notes
 notes ls
 notes ls --limit 10
 notes ls --type todo
+notes ls --type todo --type backlog   # multiple --type flags are ORed
 notes ls --slug meeting
 notes ls --tag work
-notes ls --tag work --tag meeting  # multiple --tag flags are ANDed; all flags compose
-notes ls --tag work --type todo
+notes ls --tag work --tag meeting     # multiple --tag flags are ANDed
 notes ls --name 2026
 notes ls --today
 
-# Note references: any command accepting a note ref resolves by ID, slug, basename, or full path
+# Resolve a note reference and print its absolute path
+notes resolve 8823               # by ID
+notes resolve todo               # by type (most recent)
+notes resolve meeting            # by path substring (slug, basename, etc.)
+notes resolve --type todo        # by filter flags
+notes resolve --tag work --today
+
+# Note references: any command accepting a ref resolves by ID, type, or path substring
 notes read 8823
 notes read meeting
-notes read 20260106_8823.md
+notes read --type todo           # filter flags also work on read
+notes read --type todo --no-frontmatter
+
+# Open a note in $EDITOR
+notes edit todo
+notes edit meeting
 
 # Append stdin text to a note
 echo "text" | notes append 8823
 echo "text" | notes append --type todo
-echo "text" | notes append --type weekly --create
+echo "text" | notes append --type todo --today
+
+# Delete a note
+notes rm 8823
+notes rm meeting --today
 
 # Update frontmatter and rename a note
 notes update 8823 --title "New Title"
@@ -56,19 +73,12 @@ notes update 8823 --no-slug
 notes update 8823 --type todo
 notes update 8823 --no-type
 notes update 8823 --no-tags
-
-# Print path to most recent note
-notes latest
-notes latest --type todo
-notes latest --slug meeting
-notes latest --tag work
+notes update 8823 --public
+notes update 8823 --private
 
 # Search note contents
 notes grep "search pattern"
 notes rg "search pattern"
-
-# Print the notes store path
-notes path
 ```
 
 The notes store path is resolved in this order:
