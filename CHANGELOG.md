@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.1.62] - 2026-04-05
+
+### Changed
+
+- `resolve` with no arguments returns the most recent note ([#97])
+
 ## [0.1.60] - 2026-04-05
 
 ### Changed
@@ -366,3 +372,4 @@
 [#90]: https://github.com/dreikanter/notescli/issues/90
 [#92]: https://github.com/dreikanter/notescli/issues/92
 [#93]: https://github.com/dreikanter/notescli/issues/93
+[#97]: https://github.com/dreikanter/notescli/pull/97
