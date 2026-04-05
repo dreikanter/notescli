@@ -20,6 +20,7 @@ func runNew(t *testing.T, root string, stdin string, args ...string) (string, er
 	newCmd.Flags().String("title", "", "title for frontmatter")
 	newCmd.Flags().Bool("public", false, "mark note as public in frontmatter")
 	newCmd.Flags().Bool("private", false, "mark note as private in frontmatter (default; overrides --public)")
+	newCmd.Flags().Bool("upsert", false, "return existing note if today already has one matching --type/--slug")
 
 	buf := new(bytes.Buffer)
 	rootCmd.SetOut(buf)
@@ -170,5 +171,83 @@ func TestNewWithBody(t *testing.T) {
 	data, _ := os.ReadFile(out)
 	if !strings.Contains(string(data), "hello world") {
 		t.Errorf("expected body content in file, got:\n%s", string(data))
+	}
+}
+
+func TestNewUpsertCreatesWhenNoMatch(t *testing.T) {
+	root := copyTestdata(t)
+	out, err := runNew(t, root, "", "--slug", "report", "--upsert")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if !strings.Contains(filepath.Base(out), "_report") {
+		t.Errorf("expected slug in filename, got %s", filepath.Base(out))
+	}
+	if _, err := os.Stat(out); err != nil {
+		t.Errorf("created file does not exist: %v", err)
+	}
+}
+
+func TestNewUpsertReturnsExisting(t *testing.T) {
+	root := copyTestdata(t)
+
+	// Create a note first
+	first, err := runNew(t, root, "", "--slug", "report", "--upsert")
+	if err != nil {
+		t.Fatalf("unexpected error on first call: %v", err)
+	}
+
+	// Second call should return the same note
+	second, err := runNew(t, root, "", "--slug", "report", "--upsert")
+	if err != nil {
+		t.Fatalf("unexpected error on second call: %v", err)
+	}
+
+	if first != second {
+		t.Errorf("expected same path, got %q and %q", first, second)
+	}
+}
+
+func TestNewUpsertByType(t *testing.T) {
+	root := copyTestdata(t)
+
+	first, err := runNew(t, root, "", "--type", "weekly", "--upsert")
+	if err != nil {
+		t.Fatalf("unexpected error on first call: %v", err)
+	}
+
+	second, err := runNew(t, root, "", "--type", "weekly", "--upsert")
+	if err != nil {
+		t.Fatalf("unexpected error on second call: %v", err)
+	}
+
+	if first != second {
+		t.Errorf("expected same path, got %q and %q", first, second)
+	}
+}
+
+func TestNewUpsertWithoutFilterErrors(t *testing.T) {
+	root := copyTestdata(t)
+	_, err := runNew(t, root, "", "--upsert")
+	if err == nil {
+		t.Fatal("expected error when --upsert used without --type or --slug, got nil")
+	}
+}
+
+func TestNewWithoutUpsertAlwaysCreates(t *testing.T) {
+	root := copyTestdata(t)
+
+	first, err := runNew(t, root, "", "--slug", "report")
+	if err != nil {
+		t.Fatalf("unexpected error on first call: %v", err)
+	}
+
+	second, err := runNew(t, root, "", "--slug", "report")
+	if err != nil {
+		t.Fatalf("unexpected error on second call: %v", err)
+	}
+
+	if first == second {
+		t.Error("expected different paths without --upsert, got same path")
 	}
 }

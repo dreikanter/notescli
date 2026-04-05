@@ -1,5 +1,19 @@
 # Changelog
 
+## [0.1.58] - 2026-04-05
+
+### Added
+
+- Add `--upsert` flag to `new` command for idempotent create-or-return semantics ([#90])
+
+### Changed
+
+- Remove note creation logic from `append` command; `append` now only appends to existing notes ([#90])
+
+### Removed
+
+- Remove `--create`, `--today` (as creation trigger), `--title`, `--description`, `--public`, `--private` flags from `append` ([#90])
+
 ## [0.1.57] - 2026-04-05
 
 ### Changed
@@ -248,6 +262,7 @@
 - Add `new` and `new-todo` commands ([#2])
 - Add `--no-frontmatter` flag to `read` command ([#3], [#4])
 
+[0.1.58]: https://github.com/dreikanter/notescli/releases/tag/v0.1.58
 [0.1.57]: https://github.com/dreikanter/notescli/releases/tag/v0.1.57
 [0.1.55]: https://github.com/dreikanter/notescli/releases/tag/v0.1.55
 [0.1.54]: https://github.com/dreikanter/notescli/releases/tag/v0.1.54
@@ -333,3 +348,4 @@
 [#83]: https://github.com/dreikanter/notescli/pull/83
 [#85]: https://github.com/dreikanter/notescli/issues/85
 [#88]: https://github.com/dreikanter/notescli/issues/88
+[#90]: https://github.com/dreikanter/notescli/issues/90
