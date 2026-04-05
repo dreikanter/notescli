@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.1.49] - 2026-04-04
+
+### Added
+
+- Add `--today` flag to `latest` command to filter results to notes created today ([#61])
+
+[#61]: https://github.com/dreikanter/notescli/pull/61
+
 ## [0.1.48] - 2026-04-04
 
 ### Added
