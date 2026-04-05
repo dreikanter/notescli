@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.60] - 2026-04-05
+
+### Changed
+
+- Extract shared filter helper (`addFilterFlags`, `readFilterFlags`, `applyFilters`) to eliminate duplicated filter pipeline across `ls`, `resolve`, `read`, and `append` ([#92])
+- Normalize `--type` flag to `StringSlice` on `read` and `append` for consistency with `ls` and `resolve` ([#92])
+
 ## [0.1.59] - 2026-04-05
 
 ### Removed
@@ -268,6 +275,7 @@
 - Add `new` and `new-todo` commands ([#2])
 - Add `--no-frontmatter` flag to `read` command ([#3], [#4])
 
+[0.1.60]: https://github.com/dreikanter/notescli/releases/tag/v0.1.60
 [0.1.59]: https://github.com/dreikanter/notescli/releases/tag/v0.1.59
 [0.1.58]: https://github.com/dreikanter/notescli/releases/tag/v0.1.58
 [0.1.57]: https://github.com/dreikanter/notescli/releases/tag/v0.1.57
@@ -356,4 +364,5 @@
 [#85]: https://github.com/dreikanter/notescli/issues/85
 [#88]: https://github.com/dreikanter/notescli/issues/88
 [#90]: https://github.com/dreikanter/notescli/issues/90
+[#92]: https://github.com/dreikanter/notescli/issues/92
 [#93]: https://github.com/dreikanter/notescli/issues/93

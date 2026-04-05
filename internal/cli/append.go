@@ -6,7 +6,6 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
-	"time"
 
 	"github.com/dreikanter/notescli/note"
 	"github.com/spf13/cobra"
@@ -34,17 +33,12 @@ var appendCmd = &cobra.Command{
 			return nil
 		}
 
-		noteType, _ := cmd.Flags().GetString("type")
-		slug, _ := cmd.Flags().GetString("slug")
-		tags, _ := cmd.Flags().GetStringSlice("tag")
-		today, _ := cmd.Flags().GetBool("today")
-
-		hasFilters := noteType != "" || slug != "" || len(tags) > 0 || today
+		f := readFilterFlags(cmd)
 
 		var targetPath string
 
 		if len(args) == 1 {
-			if hasFilters {
+			if f.active() {
 				return fmt.Errorf("cannot combine positional argument with filter flags")
 			}
 
@@ -53,26 +47,15 @@ var appendCmd = &cobra.Command{
 				return resolveErr
 			}
 			targetPath = filepath.Join(root, n.RelPath)
-		} else if hasFilters {
+		} else if f.active() {
 			notes, scanErr := note.Scan(root)
 			if scanErr != nil {
 				return scanErr
 			}
 
-			if today {
-				notes = note.FilterByDate(notes, time.Now().Format("20060102"))
-			}
-			if noteType != "" {
-				notes = note.FilterByTypes(notes, []string{noteType})
-			}
-			if slug != "" {
-				notes = note.FilterBySlug(notes, slug)
-			}
-			if len(tags) > 0 {
-				notes, err = note.FilterByTags(notes, root, tags)
-				if err != nil {
-					return err
-				}
+			notes, err = applyFilters(notes, root, f)
+			if err != nil {
+				return err
 			}
 
 			if len(notes) == 0 {
@@ -106,10 +89,7 @@ var appendCmd = &cobra.Command{
 }
 
 func registerAppendFlags() {
-	appendCmd.Flags().String("type", "", "filter by note type")
-	appendCmd.Flags().String("slug", "", "filter by slug")
-	appendCmd.Flags().StringSlice("tag", nil, "filter by tag (repeatable, all must match)")
-	appendCmd.Flags().Bool("today", false, "only match notes created today")
+	addFilterFlags(appendCmd)
 }
 
 func init() {
