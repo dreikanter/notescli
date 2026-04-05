@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.1.47] - 2026-04-05
+
+### Fixed
+
+- Fix `ls --type` and `--slug` flags to accept multiple values, matching `latest` behavior ([#64])
+
+[#64]: https://github.com/dreikanter/notescli/pull/78
+
 ## [0.1.46] - 2026-04-04
 
 ### Added
@@ -49,6 +57,7 @@
 - `update` command now returns an error when called with no flags instead of silently rewriting the file unchanged ([#69])
 
 [#69]: https://github.com/dreikanter/notescli/pull/69
+
 ## [0.1.40] - 2026-04-04
 
 ### Added

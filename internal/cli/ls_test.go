@@ -13,8 +13,8 @@ func runLs(t *testing.T, args ...string) (string, error) {
 	root := testdataPath(t)
 	lsCmd.ResetFlags()
 	lsCmd.Flags().Int("limit", 0, "maximum number of notes to list (0 = no limit)")
-	lsCmd.Flags().String("type", "", "filter by note type, e.g. todo, backlog, weekly")
-	lsCmd.Flags().String("slug", "", "filter by descriptive slug")
+	lsCmd.Flags().StringSlice("type", nil, "filter by note type (repeatable)")
+	lsCmd.Flags().StringSlice("slug", nil, "filter by descriptive slug (repeatable)")
 	lsCmd.Flags().StringSlice("tag", nil, "filter by frontmatter tag (repeatable, AND logic)")
 	lsCmd.Flags().String("name", "", "filter by filename fragment (case-insensitive substring)")
 	lsCmd.Flags().Bool("today", false, "filter notes created today")
@@ -212,5 +212,34 @@ func TestLsOutputsAbsolutePaths(t *testing.T) {
 		if !strings.HasPrefix(line, root) {
 			t.Errorf("expected path under %s, got %q", root, line)
 		}
+	}
+}
+
+func TestLsMultipleTypes(t *testing.T) {
+	// "todo" exists; "backlog" does not — union should return the 1 todo note
+	out, err := runLs(t, "--type", "todo", "--type", "backlog")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	lines := strings.Split(out, "\n")
+	if len(lines) != 1 {
+		t.Fatalf("got %d lines, want 1:\n%s", len(lines), out)
+	}
+	if !strings.Contains(lines[0], "todo") {
+		t.Errorf("expected todo note, got %q", lines[0])
+	}
+}
+
+func TestLsMultipleSlugs(t *testing.T) {
+	// testdata has one note with slug "meeting" and one with "disable-letter_opener"
+	out, err := runLs(t, "--slug", "meeting", "--slug", "disable-letter_opener")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	lines := strings.Split(out, "\n")
+	if len(lines) != 2 {
+		t.Fatalf("got %d lines, want 2:\n%s", len(lines), out)
 	}
 }
