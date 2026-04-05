@@ -43,6 +43,8 @@ var appendCmd = &cobra.Command{
 		today, _ := cmd.Flags().GetBool("today")
 		title, _ := cmd.Flags().GetString("title")
 		description, _ := cmd.Flags().GetString("description")
+		publicFlag, _ := cmd.Flags().GetBool("public")
+		privateFlag, _ := cmd.Flags().GetBool("private")
 
 		hasFilters := noteType != "" || slug != "" || len(tags) > 0
 		canCreate := create || today
@@ -53,6 +55,12 @@ var appendCmd = &cobra.Command{
 			}
 			if description != "" {
 				return fmt.Errorf("--description requires --create or --today")
+			}
+			if publicFlag {
+				return fmt.Errorf("--public requires --create or --today")
+			}
+			if privateFlag {
+				return fmt.Errorf("--private requires --create or --today")
 			}
 		}
 
@@ -117,8 +125,8 @@ var appendCmd = &cobra.Command{
 				return fmt.Errorf("no notes found matching the given criteria")
 			}
 
-			if !needsCreate && (title != "" || description != "") {
-				fmt.Fprintln(cmd.ErrOrStderr(), "warning: --title and --description are ignored when appending to an existing note")
+			if !needsCreate && (title != "" || description != "" || publicFlag || privateFlag) {
+				fmt.Fprintln(cmd.ErrOrStderr(), "warning: --title, --description, --public, and --private are ignored when appending to an existing note")
 			}
 
 			if needsCreate {
@@ -129,6 +137,7 @@ var appendCmd = &cobra.Command{
 					Tags:        tags,
 					Title:       title,
 					Description: description,
+					Public:      publicFlag && !privateFlag,
 				})
 				if err != nil {
 					return err
@@ -170,6 +179,8 @@ func registerAppendFlags() {
 	appendCmd.Flags().Bool("today", false, "append to today's note or create a new one")
 	appendCmd.Flags().String("title", "", "title for frontmatter (requires --create or --today)")
 	appendCmd.Flags().String("description", "", "description for frontmatter (requires --create or --today)")
+	appendCmd.Flags().Bool("public", false, "mark note as public in frontmatter (requires --create or --today)")
+	appendCmd.Flags().Bool("private", false, "mark note as private in frontmatter (requires --create or --today; overrides --public)")
 }
 
 func init() {

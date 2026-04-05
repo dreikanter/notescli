@@ -1,12 +1,86 @@
 # Changelog
 
-## [0.1.41] - 2026-04-04
+## [0.1.50] - 2026-04-04
 
 ### Added
 
 - Add `--type`, `--slug`, `--tag`, and `--today` filter flags to `read`; mutually exclusive with the positional ref argument ([#62])
 
 [#62]: https://github.com/dreikanter/notescli/pull/62
+
+## [0.1.49] - 2026-04-04
+
+### Added
+
+- Add `--today` flag to `latest` command to filter results to notes created today ([#61])
+
+[#61]: https://github.com/dreikanter/notescli/pull/61
+
+## [0.1.48] - 2026-04-04
+
+### Added
+
+- Add `--public` and `--private` flags to `append` command, gated on `--create`/`--today` ([#68])
+
+[#68]: https://github.com/dreikanter/notescli/pull/68
+
+## [0.1.47] - 2026-04-05
+
+### Fixed
+
+- Fix `ls --type` and `--slug` flags to accept multiple values, matching `latest` behavior ([#64])
+
+[#64]: https://github.com/dreikanter/notescli/pull/78
+
+## [0.1.46] - 2026-04-04
+
+### Added
+
+- Add `edit` command to open a note in `$VISUAL` or `$EDITOR` ([#67])
+- Add `rm` command for deleting notes by ref ([#65])
+
+[#67]: https://github.com/dreikanter/notescli/pull/67
+[#65]: https://github.com/dreikanter/notescli/pull/65
+
+## [0.1.45] - 2026-04-04
+
+### Fixed
+
+- `new-todo` no longer fails when no previous todo exists; creates an empty todo instead. `--force` works correctly when today's todo is the only one ([#58])
+
+[#58]: https://github.com/dreikanter/notescli/pull/58
+
+## [0.1.44] - 2026-04-04
+
+### Fixed
+
+- Reject conflicting `update` flags (`--slug`/`--no-slug`, `--type`/`--no-type`, `--tag`/`--no-tags`, `--public`/`--private`) instead of silently picking a winner ([#57])
+
+[#57]: https://github.com/dreikanter/notescli/pull/57
+
+## [0.1.43] - 2026-04-04
+
+### Fixed
+
+- Fix ref resolution for all-digit slugs; reject all-digit slugs in `new` and `update` commands ([#72])
+
+[#72]: https://github.com/dreikanter/notescli/pull/72
+
+## [0.1.42] - 2026-04-04
+
+### Fixed
+
+- Output absolute paths from `ls` to enable Unix pipelines like `notes ls | xargs notes read` ([#55])
+
+[#55]: https://github.com/dreikanter/notescli/pull/55
+
+## [0.1.41] - 2026-04-04
+
+### Changed
+
+- `update` command now returns an error when called with no flags instead of silently rewriting the file unchanged ([#69])
+
+[#69]: https://github.com/dreikanter/notescli/pull/69
 
 ## [0.1.40] - 2026-04-04
 

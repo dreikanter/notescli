@@ -2,6 +2,7 @@ package cli
 
 import (
 	"fmt"
+	"path/filepath"
 	"time"
 
 	"github.com/dreikanter/notescli/note"
@@ -14,8 +15,8 @@ var lsCmd = &cobra.Command{
 	Args:  cobra.NoArgs,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		lsLimit, _ := cmd.Flags().GetInt("limit")
-		lsType, _ := cmd.Flags().GetString("type")
-		lsSlug, _ := cmd.Flags().GetString("slug")
+		lsTypes, _ := cmd.Flags().GetStringSlice("type")
+		lsSlugs, _ := cmd.Flags().GetStringSlice("slug")
 		lsTags, _ := cmd.Flags().GetStringSlice("tag")
 		lsName, _ := cmd.Flags().GetString("name")
 		lsToday, _ := cmd.Flags().GetBool("today")
@@ -34,12 +35,12 @@ var lsCmd = &cobra.Command{
 			notes = note.Filter(notes, lsName)
 		}
 
-		if lsType != "" {
-			notes = note.FilterByType(notes, lsType)
+		if len(lsTypes) > 0 {
+			notes = note.FilterByTypes(notes, lsTypes)
 		}
 
-		if lsSlug != "" {
-			notes = note.FilterBySlug(notes, lsSlug)
+		if len(lsSlugs) > 0 {
+			notes = note.FilterBySlugs(notes, lsSlugs)
 		}
 
 		if len(lsTags) > 0 {
@@ -54,7 +55,7 @@ var lsCmd = &cobra.Command{
 		}
 
 		for _, n := range notes {
-			fmt.Fprintln(cmd.OutOrStdout(), n.RelPath)
+			fmt.Fprintln(cmd.OutOrStdout(), filepath.Join(root, n.RelPath))
 		}
 		return nil
 	},
@@ -62,8 +63,8 @@ var lsCmd = &cobra.Command{
 
 func init() {
 	lsCmd.Flags().Int("limit", 0, "maximum number of notes to list (0 = no limit)")
-	lsCmd.Flags().String("type", "", "filter by note type, e.g. todo, backlog, weekly")
-	lsCmd.Flags().String("slug", "", "filter by descriptive slug")
+	lsCmd.Flags().StringSlice("type", nil, "filter by note type (repeatable)")
+	lsCmd.Flags().StringSlice("slug", nil, "filter by descriptive slug (repeatable)")
 	lsCmd.Flags().StringSlice("tag", nil, "filter by frontmatter tag (repeatable, AND logic)")
 	lsCmd.Flags().String("name", "", "filter by filename fragment (case-insensitive substring)")
 	lsCmd.Flags().Bool("today", false, "filter notes created today")
