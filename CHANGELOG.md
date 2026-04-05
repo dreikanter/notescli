@@ -1,102 +1,28 @@
 # Changelog
 
-## [0.1.52] - 2026-04-05
+## [0.1.41] - 2026-04-05
+
+### Added
+
+- Add `edit` command to open a note in `$VISUAL` or `$EDITOR` ([#76])
+- Add `rm` command for deleting notes by ref ([#77])
+- Add `--type`, `--slug`, `--tag`, and `--today` filter flags to `read`; mutually exclusive with the positional ref argument ([#81])
+- Add `--today` flag to `latest` command ([#82])
+- Add `--public` and `--private` flags to `append`, gated on `--create`/`--today` ([#83])
 
 ### Changed
 
+- `update` command now returns an error when called with no flags instead of silently rewriting the file unchanged ([#71])
+- Reject conflicting `update` flags (`--slug`/`--no-slug`, `--type`/`--no-type`, `--tag`/`--no-tags`, `--public`/`--private`) instead of silently picking a winner ([#74])
 - Clarify `latest` command description to distinguish it from `resolve` ([#79])
 
-[#79]: https://github.com/dreikanter/notescli/pull/79
-
-## [0.1.51] - 2026-04-04
-
 ### Fixed
 
-- Fix `grep` and `rg` commands passing `--help` to the subprocess instead of showing notes-specific help; improve `Long` descriptions to document injected default flags ([#63])
-
-[#63]: https://github.com/dreikanter/notescli/pull/63
-
-## [0.1.50] - 2026-04-04
-
-### Added
-
-- Add `--type`, `--slug`, `--tag`, and `--today` filter flags to `read`; mutually exclusive with the positional ref argument ([#62])
-
-[#62]: https://github.com/dreikanter/notescli/pull/62
-
-## [0.1.49] - 2026-04-04
-
-### Added
-
-- Add `--today` flag to `latest` command to filter results to notes created today ([#61])
-
-[#61]: https://github.com/dreikanter/notescli/pull/61
-
-## [0.1.48] - 2026-04-04
-
-### Added
-
-- Add `--public` and `--private` flags to `append` command, gated on `--create`/`--today` ([#68])
-
-[#68]: https://github.com/dreikanter/notescli/pull/68
-
-## [0.1.47] - 2026-04-05
-
-### Fixed
-
-- Fix `ls --type` and `--slug` flags to accept multiple values, matching `latest` behavior ([#64])
-
-[#64]: https://github.com/dreikanter/notescli/pull/78
-
-## [0.1.46] - 2026-04-04
-
-### Added
-
-- Add `edit` command to open a note in `$VISUAL` or `$EDITOR` ([#67])
-- Add `rm` command for deleting notes by ref ([#65])
-
-[#67]: https://github.com/dreikanter/notescli/pull/67
-[#65]: https://github.com/dreikanter/notescli/pull/65
-
-## [0.1.45] - 2026-04-04
-
-### Fixed
-
-- `new-todo` no longer fails when no previous todo exists; creates an empty todo instead. `--force` works correctly when today's todo is the only one ([#58])
-
-[#58]: https://github.com/dreikanter/notescli/pull/58
-
-## [0.1.44] - 2026-04-04
-
-### Fixed
-
-- Reject conflicting `update` flags (`--slug`/`--no-slug`, `--type`/`--no-type`, `--tag`/`--no-tags`, `--public`/`--private`) instead of silently picking a winner ([#57])
-
-[#57]: https://github.com/dreikanter/notescli/pull/57
-
-## [0.1.43] - 2026-04-04
-
-### Fixed
-
+- Output absolute paths from `ls` to enable Unix pipelines like `notes ls | xargs notes read` ([#73])
 - Fix ref resolution for all-digit slugs; reject all-digit slugs in `new` and `update` commands ([#72])
-
-[#72]: https://github.com/dreikanter/notescli/pull/72
-
-## [0.1.42] - 2026-04-04
-
-### Fixed
-
-- Output absolute paths from `ls` to enable Unix pipelines like `notes ls | xargs notes read` ([#55])
-
-[#55]: https://github.com/dreikanter/notescli/pull/55
-
-## [0.1.41] - 2026-04-04
-
-### Changed
-
-- `update` command now returns an error when called with no flags instead of silently rewriting the file unchanged ([#69])
-
-[#69]: https://github.com/dreikanter/notescli/pull/69
+- Fix `new-todo` when no previous todo exists; creates an empty todo instead. `--force` works correctly when today's todo is the only one ([#75])
+- Fix `ls --type` and `--slug` flags to accept multiple values, matching `latest` behavior ([#78])
+- Fix `grep` and `rg` commands passing `--help` to the subprocess instead of showing notes-specific help; improve `Long` descriptions to document injected default flags ([#80])
 
 ## [0.1.40] - 2026-04-04
 
@@ -104,23 +30,17 @@
 
 - Add `--today` flag to `resolve` command for date-based note existence checks ([#53])
 
-[#53]: https://github.com/dreikanter/notescli/pull/53
-
 ## [0.1.39] - 2026-04-04
 
 ### Changed
 
-- Remove default limit from `ls`; output all notes unless `--limit` is specified. Handle SIGPIPE for clean pipe behavior ([#50])
-
-[#50]: https://github.com/dreikanter/notescli/pull/50
+- Remove default limit from `ls`; output all notes unless `--limit` is specified. Handle SIGPIPE for clean pipe behavior ([#52])
 
 ## [0.1.38] - 2026-04-04
 
 ### Added
 
-- Add `--today` flag to `append` for daily note rotation: appends to today's matching note or creates a new one ([#49])
-
-[#49]: https://github.com/dreikanter/notescli/pull/49
+- Add `--today` flag to `append` for daily note rotation: appends to today's matching note or creates a new one ([#51])
 
 ## [0.1.37] - 2026-03-30
 
@@ -129,15 +49,11 @@
 - Trim whitespace from `resolve` query to prevent lookup failures from trailing spaces or newlines ([#48])
 - Restrict note scanning to known `YYYY/MM/` directory structure ([#48])
 
-[#48]: https://github.com/dreikanter/notescli/pull/48
-
 ## [0.1.36] - 2026-03-29
 
 ### Added
 
 - Add `Slug` and `Public` fields to `FrontmatterFields`; extend parser and builder; sync `slug:` frontmatter when `--slug`/`--no-slug` is used in `update` ([#46])
-
-[#46]: https://github.com/dreikanter/notescli/pull/46
 
 ## [0.1.35] - 2026-03-28
 
@@ -145,15 +61,11 @@
 
 - Add tests for `resolve` command, use `cmd.OutOrStdout()` in `read`, and minor test cleanup ([#45])
 
-[#45]: https://github.com/dreikanter/notescli/pull/45
-
 ## [0.1.34] - 2026-03-28
 
 ### Added
 
 - Add `resolve` command to print the absolute path of a note by ref ([#44])
-
-[#44]: https://github.com/dreikanter/notescli/pull/44
 
 ## [0.1.32] - 2026-03-28
 
@@ -305,6 +217,9 @@
 - Add `new` and `new-todo` commands ([#2])
 - Add `--no-frontmatter` flag to `read` command ([#3], [#4])
 
+[0.1.41]: https://github.com/dreikanter/notescli/releases/tag/v0.1.41
+[0.1.40]: https://github.com/dreikanter/notescli/releases/tag/v0.1.40
+[0.1.39]: https://github.com/dreikanter/notescli/releases/tag/v0.1.39
 [0.1.38]: https://github.com/dreikanter/notescli/releases/tag/v0.1.38
 [0.1.37]: https://github.com/dreikanter/notescli/releases/tag/v0.1.37
 [0.1.36]: https://github.com/dreikanter/notescli/releases/tag/v0.1.36
@@ -362,3 +277,23 @@
 [#39]: https://github.com/dreikanter/notescli/pull/39
 [#41]: https://github.com/dreikanter/notescli/pull/41
 [#42]: https://github.com/dreikanter/notescli/pull/42
+[#44]: https://github.com/dreikanter/notescli/pull/44
+[#45]: https://github.com/dreikanter/notescli/pull/45
+[#46]: https://github.com/dreikanter/notescli/pull/46
+[#48]: https://github.com/dreikanter/notescli/pull/48
+[#51]: https://github.com/dreikanter/notescli/pull/51
+[#52]: https://github.com/dreikanter/notescli/pull/52
+[#53]: https://github.com/dreikanter/notescli/pull/53
+[#71]: https://github.com/dreikanter/notescli/pull/71
+[#72]: https://github.com/dreikanter/notescli/pull/72
+[#73]: https://github.com/dreikanter/notescli/pull/73
+[#74]: https://github.com/dreikanter/notescli/pull/74
+[#75]: https://github.com/dreikanter/notescli/pull/75
+[#76]: https://github.com/dreikanter/notescli/pull/76
+[#77]: https://github.com/dreikanter/notescli/pull/77
+[#78]: https://github.com/dreikanter/notescli/pull/78
+[#79]: https://github.com/dreikanter/notescli/pull/79
+[#80]: https://github.com/dreikanter/notescli/pull/80
+[#81]: https://github.com/dreikanter/notescli/pull/81
+[#82]: https://github.com/dreikanter/notescli/pull/82
+[#83]: https://github.com/dreikanter/notescli/pull/83
