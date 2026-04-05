@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.1.50] - 2026-04-04
+
+### Added
+
+- Add `--type`, `--slug`, `--tag`, and `--today` filter flags to `read`; mutually exclusive with the positional ref argument ([#62])
+
+[#62]: https://github.com/dreikanter/notescli/pull/62
+
 ## [0.1.49] - 2026-04-04
 
 ### Added
