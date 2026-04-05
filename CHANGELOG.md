@@ -1,11 +1,11 @@
 # Changelog
 
-## [0.1.54] - 2026-04-05
+## [0.1.55] - 2026-04-05
 
 ### Changed
 
-- Simplify `--slug` flag to single-value on `ls` and `resolve` commands ([#85])
 - Merge `latest` into `resolve`; `resolve` now accepts `--type`, `--slug`, `--tag` filter flags as an alternative to the positional argument ([#85])
+- Unify `Use` line to `<id|type|query>` across all ref-accepting commands ([#88])
 
 ### Removed
 
@@ -14,6 +14,17 @@
 ### Fixed
 
 - Fix broken `edit` and `rm` tests after testdata rename in [#72] ([#85])
+
+## [0.1.54] - 2026-04-05
+
+### Changed
+
+- Simplify `--slug` flag to single-value on `ls` and `resolve` commands ([#85])
+
+### Fixed
+
+- Fix broken tests for `edit` and `rm` commands after testdata rename in [#72] ([#85])
+
 ## [0.1.41] - 2026-04-05
 
 ### Added
@@ -231,6 +242,7 @@
 - Add `new` and `new-todo` commands ([#2])
 - Add `--no-frontmatter` flag to `read` command ([#3], [#4])
 
+[0.1.55]: https://github.com/dreikanter/notescli/releases/tag/v0.1.55
 [0.1.54]: https://github.com/dreikanter/notescli/releases/tag/v0.1.54
 [0.1.41]: https://github.com/dreikanter/notescli/releases/tag/v0.1.41
 [0.1.40]: https://github.com/dreikanter/notescli/releases/tag/v0.1.40
@@ -313,3 +325,4 @@
 [#82]: https://github.com/dreikanter/notescli/pull/82
 [#83]: https://github.com/dreikanter/notescli/pull/83
 [#85]: https://github.com/dreikanter/notescli/issues/85
+[#88]: https://github.com/dreikanter/notescli/issues/88
