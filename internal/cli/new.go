@@ -4,7 +4,9 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"path/filepath"
 	"strings"
+	"time"
 
 	"github.com/dreikanter/notescli/note"
 	"github.com/spf13/cobra"
@@ -22,6 +24,7 @@ var newCmd = &cobra.Command{
 		title, _ := cmd.Flags().GetString("title")
 		publicFlag, _ := cmd.Flags().GetBool("public")
 		privateFlag, _ := cmd.Flags().GetBool("private")
+		upsert, _ := cmd.Flags().GetBool("upsert")
 
 		if noteType != "" && !note.IsKnownType(noteType) {
 			return fmt.Errorf("unknown note type %q (valid types: %s)", noteType, strings.Join(note.KnownTypes, ", "))
@@ -31,7 +34,31 @@ var newCmd = &cobra.Command{
 			return err
 		}
 
+		if upsert && noteType == "" && slug == "" {
+			return fmt.Errorf("--upsert requires --type or --slug")
+		}
+
 		root := mustNotesPath()
+
+		// --upsert: check if today already has a matching note
+		if upsert {
+			today := time.Now().Format("20060102")
+			notes, err := note.Scan(root)
+			if err != nil {
+				return err
+			}
+			notes = note.FilterByDate(notes, today)
+			if noteType != "" {
+				notes = note.FilterByTypes(notes, []string{noteType})
+			}
+			if slug != "" {
+				notes = note.FilterBySlug(notes, slug)
+			}
+			if len(notes) > 0 {
+				fmt.Fprintln(cmd.OutOrStdout(), filepath.Join(root, notes[0].RelPath))
+				return nil
+			}
+		}
 
 		var body string
 		if !isTerminal(os.Stdin) {
@@ -78,5 +105,6 @@ func init() {
 	newCmd.Flags().String("title", "", "title for frontmatter")
 	newCmd.Flags().Bool("public", false, "mark note as public in frontmatter")
 	newCmd.Flags().Bool("private", false, "mark note as private in frontmatter (default; overrides --public)")
+	newCmd.Flags().Bool("upsert", false, "return existing note if today already has one matching --type/--slug")
 	rootCmd.AddCommand(newCmd)
 }

@@ -14,7 +14,7 @@ import (
 
 var appendCmd = &cobra.Command{
 	Use:   "append [<id|type|query>]",
-	Short: "Append text from stdin to a note, optionally creating it",
+	Short: "Append text from stdin to a note",
 	Args:  cobra.MaximumNArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		root := mustNotesPath()
@@ -34,52 +34,12 @@ var appendCmd = &cobra.Command{
 			return nil
 		}
 
-		todayDate := time.Now().Format("20060102")
-
 		noteType, _ := cmd.Flags().GetString("type")
 		slug, _ := cmd.Flags().GetString("slug")
 		tags, _ := cmd.Flags().GetStringSlice("tag")
-		create, _ := cmd.Flags().GetBool("create")
 		today, _ := cmd.Flags().GetBool("today")
-		title, _ := cmd.Flags().GetString("title")
-		description, _ := cmd.Flags().GetString("description")
-		publicFlag, _ := cmd.Flags().GetBool("public")
-		privateFlag, _ := cmd.Flags().GetBool("private")
 
-		hasFilters := noteType != "" || slug != "" || len(tags) > 0
-		canCreate := create || today
-
-		if !canCreate {
-			if title != "" {
-				return fmt.Errorf("--title requires --create or --today")
-			}
-			if description != "" {
-				return fmt.Errorf("--description requires --create or --today")
-			}
-			if publicFlag {
-				return fmt.Errorf("--public requires --create or --today")
-			}
-			if privateFlag {
-				return fmt.Errorf("--private requires --create or --today")
-			}
-		}
-
-		if create && today {
-			return fmt.Errorf("--create and --today are mutually exclusive")
-		}
-
-		flagName := "create"
-		if today {
-			flagName = "today"
-		}
-
-		if canCreate && len(args) == 1 {
-			return fmt.Errorf("--%s cannot be combined with positional argument", flagName)
-		}
-
-		if noteType != "" && !note.IsKnownType(noteType) {
-			return fmt.Errorf("unknown note type %q (valid types: %s)", noteType, strings.Join(note.KnownTypes, ", "))
-		}
+		hasFilters := noteType != "" || slug != "" || len(tags) > 0 || today
 
 		var targetPath string
 
@@ -99,6 +59,9 @@ var appendCmd = &cobra.Command{
 				return scanErr
 			}
 
+			if today {
+				notes = note.FilterByDate(notes, time.Now().Format("20060102"))
+			}
 			if noteType != "" {
 				notes = note.FilterByTypes(notes, []string{noteType})
 			}
@@ -112,44 +75,15 @@ var appendCmd = &cobra.Command{
 				}
 			}
 
-			needsCreate := false
-			if len(notes) > 0 {
-				if today && notes[0].Date != todayDate {
-					needsCreate = true
-				} else {
-					targetPath = filepath.Join(root, notes[0].RelPath)
-				}
-			} else if canCreate {
-				needsCreate = true
-			} else {
+			if len(notes) == 0 {
 				return fmt.Errorf("no notes found matching the given criteria")
 			}
-
-			if !needsCreate && (title != "" || description != "" || publicFlag || privateFlag) {
-				fmt.Fprintln(cmd.ErrOrStderr(), "warning: --title, --description, --public, and --private are ignored when appending to an existing note")
-			}
-
-			if needsCreate {
-				targetPath, err = createNote(createNoteParams{
-					Root:        root,
-					Slug:        slug,
-					Type:        noteType,
-					Tags:        tags,
-					Title:       title,
-					Description: description,
-					Public:      publicFlag && !privateFlag,
-				})
-				if err != nil {
-					return err
-				}
-			}
-		} else if canCreate {
-			return fmt.Errorf("--%s requires filter flags (--type, --slug, --tag)", flagName)
+			targetPath = filepath.Join(root, notes[0].RelPath)
 		} else {
-			return fmt.Errorf("specify a note by positional argument or filter flags (--type, --slug, --tag)")
+			return fmt.Errorf("specify a note by positional argument or filter flags (--type, --slug, --tag, --today)")
 		}
 
-		// Read existing file (may be newly created)
+		// Read existing file
 		existing, err := os.ReadFile(targetPath)
 		if err != nil {
 			return fmt.Errorf("cannot read note: %w", err)
@@ -175,12 +109,7 @@ func registerAppendFlags() {
 	appendCmd.Flags().String("type", "", "filter by note type")
 	appendCmd.Flags().String("slug", "", "filter by slug")
 	appendCmd.Flags().StringSlice("tag", nil, "filter by tag (repeatable, all must match)")
-	appendCmd.Flags().Bool("create", false, "create note if no match found")
-	appendCmd.Flags().Bool("today", false, "append to today's note or create a new one")
-	appendCmd.Flags().String("title", "", "title for frontmatter (requires --create or --today)")
-	appendCmd.Flags().String("description", "", "description for frontmatter (requires --create or --today)")
-	appendCmd.Flags().Bool("public", false, "mark note as public in frontmatter (requires --create or --today)")
-	appendCmd.Flags().Bool("private", false, "mark note as private in frontmatter (requires --create or --today; overrides --public)")
+	appendCmd.Flags().Bool("today", false, "only match notes created today")
 }
 
 func init() {
