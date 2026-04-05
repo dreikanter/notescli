@@ -43,7 +43,7 @@ func TestLatestNoArgs(t *testing.T) {
 	}
 
 	root := testdataPath(t)
-	want := filepath.Join(root, "2026/01/20260106_8823.md")
+	want := filepath.Join(root, "2026/01/20260106_8823_999.md")
 	if out != want {
 		t.Errorf("got %q, want %q", out, want)
 	}

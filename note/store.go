@@ -95,7 +95,8 @@ func ResolveRefDate(root, query, date string) (*Note, error) {
 				return &notes[i], nil
 			}
 		}
-		return nil, fmt.Errorf("note not found: %s", query)
+		// No early return: fall through to basename/slug/type resolution.
+		// This allows all-digit slugs (e.g. "999") to be found when no ID matches.
 	}
 
 	// Step 2: absolute or relative path
@@ -237,6 +238,15 @@ func FilterByTypes(notes []Note, types []string) []Note {
 		}
 	}
 	return results
+}
+
+// ValidateSlug returns an error if the slug is ambiguous with note ID resolution.
+// All-digit slugs are rejected because they conflict with numeric ID lookup.
+func ValidateSlug(slug string) error {
+	if slug != "" && isDigits(slug) {
+		return fmt.Errorf("slug %q is all digits, which conflicts with note ID resolution", slug)
+	}
+	return nil
 }
 
 func toSet(vals []string) map[string]struct{} {

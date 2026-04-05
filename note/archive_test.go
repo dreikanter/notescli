@@ -29,6 +29,9 @@ func TestScan(t *testing.T) {
 	if notes[0].ID != "8823" {
 		t.Errorf("notes[0].ID = %q, want 8823 (newest)", notes[0].ID)
 	}
+	if notes[0].Slug != "999" {
+		t.Errorf("notes[0].Slug = %q, want \"999\"", notes[0].Slug)
+	}
 	if notes[1].ID != "8818" {
 		t.Errorf("notes[1].ID = %q, want 8818", notes[1].ID)
 	}
@@ -64,7 +67,7 @@ func TestScanSkipsInvalidFiles(t *testing.T) {
 
 func TestResolveRef(t *testing.T) {
 	root := testdataPath(t)
-	absPath := filepath.Join(root, "2026/01/20260106_8823.md")
+	absPath := filepath.Join(root, "2026/01/20260106_8823_999.md")
 
 	tests := []struct {
 		name    string
@@ -76,8 +79,9 @@ func TestResolveRef(t *testing.T) {
 		{"by id todo", "8814", "8814", false},
 		{"by type todo", "todo", "8814", false},
 		{"by slug", "disable-letter_opener", "6973", false},
-		{"by basename", "20260106_8823", "8823", false},
-		{"by basename with md", "20260106_8823.md", "8823", false},
+		{"by basename", "20260106_8823_999", "8823", false},
+		{"by basename with md", "20260106_8823_999.md", "8823", false},
+		{"by numeric slug fallthrough", "999", "8823", false},
 		{"by absolute path", absPath, "8823", false},
 		{"not found id", "9999", "", true},
 		{"not found slug", "nonexistent", "", true},
@@ -216,6 +220,29 @@ func TestFilterByDate(t *testing.T) {
 	got = FilterByDate(notes, "20991231")
 	if len(got) != 0 {
 		t.Errorf("FilterByDate(no match) = %v, want []", got)
+	}
+}
+
+func TestValidateSlug(t *testing.T) {
+	tests := []struct {
+		name    string
+		slug    string
+		wantErr bool
+	}{
+		{"empty slug is valid", "", false},
+		{"normal slug", "my-feature", false},
+		{"slug with digits", "feature-123", false},
+		{"all-digit slug", "999", true},
+		{"single digit", "0", true},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := ValidateSlug(tt.slug)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("ValidateSlug(%q) error = %v, wantErr %v", tt.slug, err, tt.wantErr)
+			}
+		})
 	}
 }
 
