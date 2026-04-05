@@ -5,8 +5,10 @@
 ### Added
 
 - Add `edit` command to open a note in `$VISUAL` or `$EDITOR` ([#67])
+- Add `rm` command for deleting notes by ref ([#65])
 
 [#67]: https://github.com/dreikanter/notescli/pull/67
+[#65]: https://github.com/dreikanter/notescli/pull/65
 
 ## [0.1.45] - 2026-04-04
 
