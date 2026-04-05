@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.1.59] - 2026-04-05
+
+### Removed
+
+- Remove redundant `path` command ([#93])
+
 ## [0.1.58] - 2026-04-05
 
 ### Added
@@ -262,6 +268,7 @@
 - Add `new` and `new-todo` commands ([#2])
 - Add `--no-frontmatter` flag to `read` command ([#3], [#4])
 
+[0.1.59]: https://github.com/dreikanter/notescli/releases/tag/v0.1.59
 [0.1.58]: https://github.com/dreikanter/notescli/releases/tag/v0.1.58
 [0.1.57]: https://github.com/dreikanter/notescli/releases/tag/v0.1.57
 [0.1.55]: https://github.com/dreikanter/notescli/releases/tag/v0.1.55
@@ -349,3 +356,4 @@
 [#85]: https://github.com/dreikanter/notescli/issues/85
 [#88]: https://github.com/dreikanter/notescli/issues/88
 [#90]: https://github.com/dreikanter/notescli/issues/90
+[#93]: https://github.com/dreikanter/notescli/issues/93
