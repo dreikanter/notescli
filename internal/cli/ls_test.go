@@ -14,7 +14,7 @@ func runLs(t *testing.T, args ...string) (string, error) {
 	lsCmd.ResetFlags()
 	lsCmd.Flags().Int("limit", 0, "maximum number of notes to list (0 = no limit)")
 	lsCmd.Flags().StringSlice("type", nil, "filter by note type (repeatable)")
-	lsCmd.Flags().StringSlice("slug", nil, "filter by descriptive slug (repeatable)")
+	lsCmd.Flags().String("slug", "", "filter by slug")
 	lsCmd.Flags().StringSlice("tag", nil, "filter by frontmatter tag (repeatable, AND logic)")
 	lsCmd.Flags().String("name", "", "filter by filename fragment (case-insensitive substring)")
 	lsCmd.Flags().Bool("today", false, "filter notes created today")
@@ -231,15 +231,17 @@ func TestLsMultipleTypes(t *testing.T) {
 	}
 }
 
-func TestLsMultipleSlugs(t *testing.T) {
-	// testdata has one note with slug "meeting" and one with "disable-letter_opener"
-	out, err := runLs(t, "--slug", "meeting", "--slug", "disable-letter_opener")
+func TestLsSlug(t *testing.T) {
+	out, err := runLs(t, "--slug", "meeting")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
 
 	lines := strings.Split(out, "\n")
-	if len(lines) != 2 {
-		t.Fatalf("got %d lines, want 2:\n%s", len(lines), out)
+	if len(lines) != 1 {
+		t.Fatalf("got %d lines, want 1:\n%s", len(lines), out)
+	}
+	if !strings.Contains(lines[0], "meeting") {
+		t.Errorf("expected meeting note, got %q", lines[0])
 	}
 }

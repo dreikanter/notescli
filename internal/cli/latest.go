@@ -35,7 +35,7 @@ func scanAndFilter(cmd *cobra.Command, root string) (*note.Note, error) {
 
 	today, _ := cmd.Flags().GetBool("today")
 	types, _ := cmd.Flags().GetStringSlice("type")
-	slugs, _ := cmd.Flags().GetStringSlice("slug")
+	slug, _ := cmd.Flags().GetString("slug")
 	tags, _ := cmd.Flags().GetStringSlice("tag")
 
 	if today {
@@ -46,8 +46,8 @@ func scanAndFilter(cmd *cobra.Command, root string) (*note.Note, error) {
 		notes = note.FilterByTypes(notes, types)
 	}
 
-	if len(slugs) > 0 {
-		notes = note.FilterBySlugs(notes, slugs)
+	if slug != "" {
+		notes = note.FilterBySlug(notes, slug)
 	}
 
 	if len(tags) > 0 {
@@ -58,7 +58,7 @@ func scanAndFilter(cmd *cobra.Command, root string) (*note.Note, error) {
 	}
 
 	if len(notes) == 0 {
-		if len(types) > 0 || len(slugs) > 0 || len(tags) > 0 || today {
+		if len(types) > 0 || slug != "" || len(tags) > 0 || today {
 			return nil, fmt.Errorf("no notes found matching the given criteria")
 		}
 		return nil, fmt.Errorf("no notes found")
@@ -69,7 +69,7 @@ func scanAndFilter(cmd *cobra.Command, root string) (*note.Note, error) {
 
 func init() {
 	latestCmd.Flags().StringSlice("type", nil, "filter by note type (repeatable)")
-	latestCmd.Flags().StringSlice("slug", nil, "filter by slug (repeatable)")
+	latestCmd.Flags().String("slug", "", "filter by slug")
 	latestCmd.Flags().StringSlice("tag", nil, "filter by tag (repeatable, all must match)")
 	latestCmd.Flags().Bool("today", false, "filter to notes created today")
 	rootCmd.AddCommand(latestCmd)

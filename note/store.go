@@ -208,15 +208,9 @@ func FilterByDate(notes []Note, date string) []Note {
 
 // FilterBySlug returns notes with an exact slug match.
 func FilterBySlug(notes []Note, slug string) []Note {
-	return FilterBySlugs(notes, []string{slug})
-}
-
-// FilterBySlugs returns notes whose slug matches any of the given values.
-func FilterBySlugs(notes []Note, slugs []string) []Note {
-	set := toSet(slugs)
 	var results []Note
 	for _, n := range notes {
-		if _, ok := set[n.Slug]; ok {
+		if n.Slug == slug {
 			results = append(results, n)
 		}
 	}

@@ -24,7 +24,7 @@ func runLatest(t *testing.T, args ...string) (string, error) {
 	// Reset flags to avoid state leaking between tests.
 	latestCmd.ResetFlags()
 	latestCmd.Flags().StringSlice("type", nil, "filter by note type (repeatable)")
-	latestCmd.Flags().StringSlice("slug", nil, "filter by slug (repeatable)")
+	latestCmd.Flags().String("slug", "", "filter by slug")
 	latestCmd.Flags().StringSlice("tag", nil, "filter by tag (repeatable, all must match)")
 	latestCmd.Flags().Bool("today", false, "filter to notes created today")
 

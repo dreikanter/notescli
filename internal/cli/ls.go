@@ -16,7 +16,7 @@ var lsCmd = &cobra.Command{
 	RunE: func(cmd *cobra.Command, args []string) error {
 		lsLimit, _ := cmd.Flags().GetInt("limit")
 		lsTypes, _ := cmd.Flags().GetStringSlice("type")
-		lsSlugs, _ := cmd.Flags().GetStringSlice("slug")
+		lsSlug, _ := cmd.Flags().GetString("slug")
 		lsTags, _ := cmd.Flags().GetStringSlice("tag")
 		lsName, _ := cmd.Flags().GetString("name")
 		lsToday, _ := cmd.Flags().GetBool("today")
@@ -39,8 +39,8 @@ var lsCmd = &cobra.Command{
 			notes = note.FilterByTypes(notes, lsTypes)
 		}
 
-		if len(lsSlugs) > 0 {
-			notes = note.FilterBySlugs(notes, lsSlugs)
+		if lsSlug != "" {
+			notes = note.FilterBySlug(notes, lsSlug)
 		}
 
 		if len(lsTags) > 0 {
@@ -64,7 +64,7 @@ var lsCmd = &cobra.Command{
 func init() {
 	lsCmd.Flags().Int("limit", 0, "maximum number of notes to list (0 = no limit)")
 	lsCmd.Flags().StringSlice("type", nil, "filter by note type (repeatable)")
-	lsCmd.Flags().StringSlice("slug", nil, "filter by descriptive slug (repeatable)")
+	lsCmd.Flags().String("slug", "", "filter by slug")
 	lsCmd.Flags().StringSlice("tag", nil, "filter by frontmatter tag (repeatable, AND logic)")
 	lsCmd.Flags().String("name", "", "filter by filename fragment (case-insensitive substring)")
 	lsCmd.Flags().Bool("today", false, "filter notes created today")

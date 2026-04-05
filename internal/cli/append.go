@@ -103,7 +103,7 @@ var appendCmd = &cobra.Command{
 				notes = note.FilterByTypes(notes, []string{noteType})
 			}
 			if slug != "" {
-				notes = note.FilterBySlugs(notes, []string{slug})
+				notes = note.FilterBySlug(notes, slug)
 			}
 			if len(tags) > 0 {
 				notes, err = note.FilterByTags(notes, root, tags)

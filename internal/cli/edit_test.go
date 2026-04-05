@@ -45,7 +45,7 @@ func TestEditOpensEditor(t *testing.T) {
 		t.Fatalf("marker file not created: %v", err)
 	}
 
-	want := filepath.Join(root, "2026/01/20260106_8823.md")
+	want := filepath.Join(root, "2026/01/20260106_8823_999.md")
 	if strings.TrimSpace(string(got)) != want {
 		t.Errorf("editor received %q, want %q", strings.TrimSpace(string(got)), want)
 	}
@@ -80,7 +80,7 @@ func TestEditPrefersVisual(t *testing.T) {
 		t.Fatalf("marker file not created: %v", err)
 	}
 
-	want := filepath.Join(root, "2026/01/20260106_8823.md")
+	want := filepath.Join(root, "2026/01/20260106_8823_999.md")
 	if strings.TrimSpace(string(got)) != want {
 		t.Errorf("editor received %q, want %q", strings.TrimSpace(string(got)), want)
 	}

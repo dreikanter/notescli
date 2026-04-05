@@ -26,7 +26,7 @@ func runRm(t *testing.T, root string, args ...string) (string, error) {
 
 func TestRmByID(t *testing.T) {
 	root := copyTestdata(t)
-	target := filepath.Join(root, "2026/01/20260106_8823.md")
+	target := filepath.Join(root, "2026/01/20260106_8823_999.md")
 
 	out, err := runRm(t, root, "8823")
 	if err != nil {
