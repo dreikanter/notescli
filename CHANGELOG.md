@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.1.57] - 2026-04-05
+
+### Changed
+
+- Simplify `ResolveRef` priority chain from 5 steps to 3: ID → type → path substring ([#88])
+
 ## [0.1.55] - 2026-04-05
 
 ### Changed
@@ -242,6 +248,7 @@
 - Add `new` and `new-todo` commands ([#2])
 - Add `--no-frontmatter` flag to `read` command ([#3], [#4])
 
+[0.1.57]: https://github.com/dreikanter/notescli/releases/tag/v0.1.57
 [0.1.55]: https://github.com/dreikanter/notescli/releases/tag/v0.1.55
 [0.1.54]: https://github.com/dreikanter/notescli/releases/tag/v0.1.54
 [0.1.41]: https://github.com/dreikanter/notescli/releases/tag/v0.1.41
