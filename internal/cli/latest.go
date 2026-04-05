@@ -11,7 +11,7 @@ import (
 
 var latestCmd = &cobra.Command{
 	Use:   "latest",
-	Short: "Print absolute path to the most recent note, optionally filtered by type, slug, or tag",
+	Short: "Print absolute path to the most recent note matching the given filters",
 	Args:  cobra.NoArgs,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		root := mustNotesPath()

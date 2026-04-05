@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.1.52] - 2026-04-05
+
+### Changed
+
+- Clarify `latest` command description to distinguish it from `resolve` ([#79])
+
+[#79]: https://github.com/dreikanter/notescli/pull/79
+
 ## [0.1.51] - 2026-04-04
 
 ### Fixed
