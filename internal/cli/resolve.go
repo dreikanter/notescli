@@ -14,6 +14,8 @@ var resolveCmd = &cobra.Command{
 	Short: "Resolve a note reference and print its absolute path",
 	Long: `Resolve a note reference and print its absolute path.
 
+With no arguments or flags, returns the most recent note.
+
 With a positional argument, resolution follows this priority:
   1. Exact numeric ID (e.g. "8823")
   2. Exact note type (todo, backlog, weekly) — most recent match
@@ -45,10 +47,6 @@ positional argument.`,
 
 			fmt.Fprintln(cmd.OutOrStdout(), filepath.Join(root, n.RelPath))
 			return nil
-		}
-
-		if !f.active() {
-			return fmt.Errorf("specify a note by positional argument or filter flags (--type, --slug, --tag, --today)")
 		}
 
 		notes, err := note.Scan(root)

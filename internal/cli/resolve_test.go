@@ -170,11 +170,16 @@ func TestResolveTodayFilterMatchesToday(t *testing.T) {
 	}
 }
 
-func TestResolveNoArgsNoFiltersErrors(t *testing.T) {
+func TestResolveNoArgsReturnsMostRecent(t *testing.T) {
 	root := testdataPath(t)
-	_, err := runResolve(t, root)
-	if err == nil {
-		t.Fatal("expected error when no args and no filters, got nil")
+	out, err := runResolve(t, root)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	want := filepath.Join(root, "2026/01/20260106_8823_999.md")
+	if out != want {
+		t.Errorf("got %q, want %q", out, want)
 	}
 }
 
