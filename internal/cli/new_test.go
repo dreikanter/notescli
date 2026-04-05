@@ -153,6 +153,14 @@ func TestNewPublicPrivateBothPrivateWins(t *testing.T) {
 	}
 }
 
+func TestNewAllDigitSlugErrors(t *testing.T) {
+	root := copyTestdata(t)
+	_, err := runNew(t, root, "", "--slug", "999")
+	if err == nil {
+		t.Fatal("expected error for all-digit slug, got nil")
+	}
+}
+
 func TestNewWithBody(t *testing.T) {
 	root := copyTestdata(t)
 	out, err := runNew(t, root, "hello world\n")

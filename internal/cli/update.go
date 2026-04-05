@@ -26,8 +26,31 @@ var updateCmd = &cobra.Command{
 		updateNoType, _ := cmd.Flags().GetBool("no-type")
 		updatePrivate, _ := cmd.Flags().GetBool("private")
 
+		// At least one update flag must be provided.
+		updateFlags := []string{
+			"tag", "no-tags", "title", "description",
+			"slug", "no-slug", "type", "no-type",
+			"public", "private",
+		}
+		hasFlag := false
+		for _, name := range updateFlags {
+			if cmd.Flags().Changed(name) {
+				hasFlag = true
+				break
+			}
+		}
+		if !hasFlag {
+			return fmt.Errorf("at least one update flag is required")
+		}
+
 		if updateType != "" && !note.IsKnownType(updateType) {
 			return fmt.Errorf("unknown note type %q (valid types: %s)", updateType, strings.Join(note.KnownTypes, ", "))
+		}
+
+		if cmd.Flags().Changed("slug") {
+			if err := note.ValidateSlug(updateSlug); err != nil {
+				return err
+			}
 		}
 
 		root := mustNotesPath()
@@ -122,6 +145,10 @@ func init() {
 	updateCmd.Flags().String("type", "", "update note type and rename file (todo, backlog, weekly)")
 	updateCmd.Flags().Bool("no-type", false, "remove type suffix from filename")
 	updateCmd.Flags().Bool("public", false, "mark note as public in frontmatter")
-	updateCmd.Flags().Bool("private", false, "mark note as private in frontmatter (overrides --public)")
+	updateCmd.Flags().Bool("private", false, "mark note as private in frontmatter")
+	updateCmd.MarkFlagsMutuallyExclusive("slug", "no-slug")
+	updateCmd.MarkFlagsMutuallyExclusive("type", "no-type")
+	updateCmd.MarkFlagsMutuallyExclusive("tag", "no-tags")
+	updateCmd.MarkFlagsMutuallyExclusive("public", "private")
 	rootCmd.AddCommand(updateCmd)
 }

@@ -29,7 +29,7 @@ func TestResolveByID(t *testing.T) {
 		t.Fatalf("unexpected error: %v", err)
 	}
 
-	want := filepath.Join(root, "2026/01/20260106_8823.md")
+	want := filepath.Join(root, "2026/01/20260106_8823_999.md")
 	if out != want {
 		t.Errorf("got %q, want %q", out, want)
 	}
@@ -63,7 +63,7 @@ func TestResolveByType(t *testing.T) {
 
 func TestResolveByAbsolutePath(t *testing.T) {
 	root := testdataPath(t)
-	target := filepath.Join(root, "2026/01/20260106_8823.md")
+	target := filepath.Join(root, "2026/01/20260106_8823_999.md")
 	out, err := runResolve(t, root, target)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -79,12 +79,12 @@ func TestResolveByRelativePath(t *testing.T) {
 
 	t.Chdir(root)
 
-	out, err := runResolve(t, root, "2026/01/20260106_8823.md")
+	out, err := runResolve(t, root, "2026/01/20260106_8823_999.md")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
 
-	want := filepath.Join(root, "2026/01/20260106_8823.md")
+	want := filepath.Join(root, "2026/01/20260106_8823_999.md")
 	if out != want {
 		t.Errorf("got %q, want %q", out, want)
 	}
@@ -92,7 +92,7 @@ func TestResolveByRelativePath(t *testing.T) {
 
 func TestResolveByIDWithWhitespace(t *testing.T) {
 	root := testdataPath(t)
-	want := filepath.Join(root, "2026/01/20260106_8823.md")
+	want := filepath.Join(root, "2026/01/20260106_8823_999.md")
 
 	tests := []struct {
 		name  string

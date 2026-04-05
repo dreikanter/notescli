@@ -26,6 +26,7 @@ func runLatest(t *testing.T, args ...string) (string, error) {
 	latestCmd.Flags().StringSlice("type", nil, "filter by note type (repeatable)")
 	latestCmd.Flags().StringSlice("slug", nil, "filter by slug (repeatable)")
 	latestCmd.Flags().StringSlice("tag", nil, "filter by tag (repeatable, all must match)")
+	latestCmd.Flags().Bool("today", false, "filter to notes created today")
 
 	buf := new(bytes.Buffer)
 	rootCmd.SetOut(buf)
@@ -43,7 +44,7 @@ func TestLatestNoArgs(t *testing.T) {
 	}
 
 	root := testdataPath(t)
-	want := filepath.Join(root, "2026/01/20260106_8823.md")
+	want := filepath.Join(root, "2026/01/20260106_8823_999.md")
 	if out != want {
 		t.Errorf("got %q, want %q", out, want)
 	}
@@ -112,5 +113,12 @@ func TestLatestTypeNotFound(t *testing.T) {
 	_, err := runLatest(t, "--type", "nonexistent")
 	if err == nil {
 		t.Fatal("expected error for nonexistent type, got nil")
+	}
+}
+
+func TestLatestWithTodayNoMatch(t *testing.T) {
+	_, err := runLatest(t, "--today")
+	if err == nil {
+		t.Fatal("expected error when no notes exist for today, got nil")
 	}
 }

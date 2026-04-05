@@ -75,7 +75,7 @@ func TestAppendByID(t *testing.T) {
 		t.Fatalf("unexpected error: %v", err)
 	}
 
-	want := filepath.Join(root, "2026/01/20260106_8823.md")
+	want := filepath.Join(root, "2026/01/20260106_8823_999.md")
 	if out != want {
 		t.Errorf("got output %q, want %q", out, want)
 	}
@@ -88,7 +88,7 @@ func TestAppendByID(t *testing.T) {
 
 func TestAppendByAbsolutePath(t *testing.T) {
 	root := copyTestdata(t)
-	target := filepath.Join(root, "2026/01/20260106_8823.md")
+	target := filepath.Join(root, "2026/01/20260106_8823_999.md")
 	out, err := runAppend(t, root, "path append", target)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -117,17 +117,17 @@ func TestAppendByRelativePath(t *testing.T) {
 	}
 	t.Cleanup(func() { _ = os.Chdir(oldWd) })
 
-	out, err := runAppend(t, root, "rel append", "2026/01/20260106_8823.md")
+	out, err := runAppend(t, root, "rel append", "2026/01/20260106_8823_999.md")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
 
-	want := filepath.Join(root, "2026/01/20260106_8823.md")
+	want := filepath.Join(root, "2026/01/20260106_8823_999.md")
 	if out != want {
 		t.Errorf("got output %q, want %q", out, want)
 	}
 
-	data, _ := os.ReadFile(filepath.Join(root, "2026/01/20260106_8823.md"))
+	data, _ := os.ReadFile(filepath.Join(root, "2026/01/20260106_8823_999.md"))
 	if !strings.Contains(string(data), "rel append") {
 		t.Error("appended text not found in file")
 	}
@@ -195,7 +195,7 @@ func TestAppendNonExistentNote(t *testing.T) {
 
 func TestAppendEmptyStdin(t *testing.T) {
 	root := copyTestdata(t)
-	target := filepath.Join(root, "2026/01/20260106_8823.md")
+	target := filepath.Join(root, "2026/01/20260106_8823_999.md")
 	before, _ := os.ReadFile(target)
 
 	_, err := runAppend(t, root, "", "8823")
@@ -211,7 +211,7 @@ func TestAppendEmptyStdin(t *testing.T) {
 
 func TestAppendWhitespaceOnlyStdin(t *testing.T) {
 	root := copyTestdata(t)
-	target := filepath.Join(root, "2026/01/20260106_8823.md")
+	target := filepath.Join(root, "2026/01/20260106_8823_999.md")
 	before, _ := os.ReadFile(target)
 
 	_, err := runAppend(t, root, "   \n\n  \t  ", "8823")
@@ -231,7 +231,7 @@ func TestAppendMultipleProducesSeparation(t *testing.T) {
 	_, _ = runAppend(t, root, "first fragment", "8823")
 	_, _ = runAppend(t, root, "second fragment", "8823")
 
-	data, _ := os.ReadFile(filepath.Join(root, "2026/01/20260106_8823.md"))
+	data, _ := os.ReadFile(filepath.Join(root, "2026/01/20260106_8823_999.md"))
 	content := string(data)
 
 	if !strings.Contains(content, "first fragment") {
@@ -550,5 +550,53 @@ func TestAppendDescriptionWithoutCreateOrTodayErrors(t *testing.T) {
 	_, err := runAppend(t, root, "text", "--type", "todo", "--description", "Oops")
 	if err == nil {
 		t.Fatal("expected error when using --description without --create or --today, got nil")
+	}
+}
+
+func TestAppendCreateWithPublic(t *testing.T) {
+	root := copyTestdata(t)
+	out, err := runAppend(t, root, "public content", "--type", "weekly", "--create", "--public")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	data, err := os.ReadFile(out)
+	if err != nil {
+		t.Fatalf("cannot read created file: %v", err)
+	}
+	if !strings.Contains(string(data), "public: true") {
+		t.Errorf("expected public: true in frontmatter, got:\n%s", string(data))
+	}
+}
+
+func TestAppendCreatePrivateOverridesPublic(t *testing.T) {
+	root := copyTestdata(t)
+	out, err := runAppend(t, root, "private content", "--type", "weekly", "--create", "--public", "--private")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	data, err := os.ReadFile(out)
+	if err != nil {
+		t.Fatalf("cannot read created file: %v", err)
+	}
+	if strings.Contains(string(data), "public:") {
+		t.Errorf("expected public field absent when --private wins, got:\n%s", string(data))
+	}
+}
+
+func TestAppendPublicWithoutCreateErrors(t *testing.T) {
+	root := copyTestdata(t)
+	_, err := runAppend(t, root, "text", "--type", "todo", "--public")
+	if err == nil {
+		t.Fatal("expected error when using --public without --create or --today, got nil")
+	}
+}
+
+func TestAppendPrivateWithoutCreateErrors(t *testing.T) {
+	root := copyTestdata(t)
+	_, err := runAppend(t, root, "text", "--type", "todo", "--private")
+	if err == nil {
+		t.Fatal("expected error when using --private without --create or --today, got nil")
 	}
 }
