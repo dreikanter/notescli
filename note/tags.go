@@ -12,7 +12,8 @@ import (
 // ExtractTags scans the note store under root and returns a sorted,
 // deduplicated list of tags. Sources: frontmatter `tags:` fields and body
 // hashtags (#word) in the prose. File reads run concurrently across
-// runtime.NumCPU() workers.
+// runtime.NumCPU() workers. Returns a nil slice for an empty store. If any
+// file read fails, the first such error is returned after all workers drain.
 func ExtractTags(root string) ([]string, error) {
 	notes, err := Scan(root)
 	if err != nil {
@@ -37,14 +38,14 @@ func ExtractTags(root string) ([]string, error) {
 		go func() {
 			defer wg.Done()
 			local := make(map[string]struct{})
+			var workerErr error
 			for n := range jobs {
 				data, err := os.ReadFile(filepath.Join(root, n.RelPath))
 				if err != nil {
-					select {
-					case errCh <- err:
-					default:
+					if workerErr == nil {
+						workerErr = err
 					}
-					return
+					continue
 				}
 				for _, t := range ParseFrontmatterFields(data).Tags {
 					if t != "" {
@@ -56,6 +57,7 @@ func ExtractTags(root string) ([]string, error) {
 				}
 			}
 			results <- local
+			errCh <- workerErr
 		}()
 	}
 
@@ -67,8 +69,10 @@ func ExtractTags(root string) ([]string, error) {
 	close(results)
 	close(errCh)
 
-	if err := <-errCh; err != nil {
-		return nil, err
+	for err := range errCh {
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	merged := make(map[string]struct{})
@@ -88,15 +92,22 @@ func ExtractTags(root string) ([]string, error) {
 
 // extractHashtags scans body text and returns hashtag tokens (without the
 // leading '#'), preserving source order and including duplicates. Rules:
-//   - Lines whose first non-whitespace character is '#' are skipped (headings).
+//   - Lines whose first non-whitespace content is a run of '#' followed by
+//     whitespace or end-of-line are Markdown headings and are skipped entirely.
 //   - Fenced code blocks (``` on a line, optionally indented, with optional
-//     info string) are skipped until the next fence line.
-//   - Inline backtick spans on a single line are skipped.
-//   - A '#' preceded by a word character ([A-Za-z0-9_]) is not a tag.
-//   - Tag characters are [A-Za-z0-9_-]; other characters terminate a tag.
+//     info string) are skipped until the next fence line. Tilde fences (~~~)
+//     are not recognised.
+//   - Inline backtick spans on a single line are skipped. An unclosed
+//     backtick suppresses hashtags for the remainder of its line.
+//   - A '#' preceded by a word byte ([A-Za-z0-9_]) is not a tag. The check is
+//     byte-level, so hashtags adjacent to non-ASCII prose (e.g. `café#bar`)
+//     may still be extracted.
+//   - Tag characters are [A-Za-z0-9_-]; other bytes terminate a tag. A bare
+//     '#' with no following tag byte produces no output.
 func extractHashtags(body []byte) []string {
 	var out []string
 	inFence := false
+	fence := []byte("```")
 
 	for len(body) > 0 {
 		nl := bytes.IndexByte(body, '\n')
@@ -108,13 +119,14 @@ func extractHashtags(body []byte) []string {
 			line = body[:nl]
 			body = body[nl+1:]
 		}
+		line = bytes.TrimRight(line, "\r")
 
 		trim := 0
 		for trim < len(line) && (line[trim] == ' ' || line[trim] == '\t') {
 			trim++
 		}
 
-		if trim+3 <= len(line) && line[trim] == '`' && line[trim+1] == '`' && line[trim+2] == '`' {
+		if bytes.HasPrefix(line[trim:], fence) {
 			inFence = !inFence
 			continue
 		}

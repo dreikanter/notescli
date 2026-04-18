@@ -10,7 +10,6 @@ import (
 
 func runTags(t *testing.T, root string, args ...string) (string, error) {
 	t.Helper()
-	tagsCmd.ResetFlags()
 
 	buf := new(bytes.Buffer)
 	rootCmd.SetOut(buf)

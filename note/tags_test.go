@@ -80,6 +80,25 @@ func TestExtractHashtagsFencedBlockWithInfoString(t *testing.T) {
 	}
 }
 
+func TestExtractHashtagsCRLF(t *testing.T) {
+	in := "before #a\r\n```\r\n#hidden\r\n```\r\nafter #b\r\n"
+	want := []string{"a", "b"}
+	got := extractHashtags([]byte(in))
+	if !reflect.DeepEqual(got, want) {
+		t.Fatalf("got %v, want %v", got, want)
+	}
+}
+
+func TestExtractHashtagsBareHash(t *testing.T) {
+	cases := []string{"#", "text # and #", "line #\nnext #"}
+	for _, in := range cases {
+		got := extractHashtags([]byte(in))
+		if len(got) != 0 {
+			t.Errorf("input %q: expected no tags, got %v", in, got)
+		}
+	}
+}
+
 func writeNote(t *testing.T, root, rel, content string) {
 	t.Helper()
 	full := filepath.Join(root, rel)
@@ -148,6 +167,24 @@ func TestExtractTagsMergedAndDeduped(t *testing.T) {
 		t.Fatalf("unexpected error: %v", err)
 	}
 	want := []string{"another", "body-only", "shared", "work"}
+	if !reflect.DeepEqual(got, want) {
+		t.Fatalf("got %v, want %v", got, want)
+	}
+}
+
+func TestExtractTagsFrontmatterUniqueAcrossStore(t *testing.T) {
+	// The unique tag comes only from frontmatter; body hashtag coverage
+	// differs. A regression in ParseFrontmatterFields integration would
+	// drop fm-unique and fail this test.
+	root := t.TempDir()
+	writeNote(t, root, "2026/01/20260101_1001.md",
+		"---\ntags: [fm-unique]\n---\n\nbody mentions #body-unique only.\n")
+
+	got, err := ExtractTags(root)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	want := []string{"body-unique", "fm-unique"}
 	if !reflect.DeepEqual(got, want) {
 		t.Fatalf("got %v, want %v", got, want)
 	}
