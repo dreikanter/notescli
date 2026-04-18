@@ -7,8 +7,8 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var tagCmd = &cobra.Command{
-	Use:   "tag",
+var tagsCmd = &cobra.Command{
+	Use:   "tags",
 	Short: "List all tags from frontmatter and body hashtags",
 	Args:  cobra.NoArgs,
 	RunE: func(cmd *cobra.Command, args []string) error {
@@ -26,5 +26,5 @@ var tagCmd = &cobra.Command{
 }
 
 func init() {
-	rootCmd.AddCommand(tagCmd)
+	rootCmd.AddCommand(tagsCmd)
 }

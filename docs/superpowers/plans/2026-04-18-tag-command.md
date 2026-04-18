@@ -1,10 +1,10 @@
-# Tag Command Implementation Plan
+# Tags Command Implementation Plan
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Add `notes tag` command that prints the sorted, deduplicated union of frontmatter `tags:` and body hashtags from every note in the store.
+**Goal:** Add `notes tags` command that prints the sorted, deduplicated union of frontmatter `tags:` and body hashtags from every note in the store.
 
-**Architecture:** Two-layer split. `note/tag.go` owns extraction: `extractHashtags(body []byte) []string` is a hand-rolled byte scanner that handles heading/code-block/inline-code/word-boundary rules; `ExtractTags(root string) ([]string, error)` fans note reads out over a `runtime.NumCPU()` worker pool, merges per-worker sets, sorts, and returns. `internal/cli/tag.go` is a thin cobra wrapper that calls `ExtractTags` and prints one tag per line.
+**Architecture:** Two-layer split. `note/tags.go` owns extraction: `extractHashtags(body []byte) []string` is a hand-rolled byte scanner that handles heading/code-block/inline-code/word-boundary rules; `ExtractTags(root string) ([]string, error)` fans note reads out over a `runtime.NumCPU()` worker pool, merges per-worker sets, sorts, and returns. `internal/cli/tags.go` is a thin cobra wrapper that calls `ExtractTags` and prints one tag per line.
 
 **Tech Stack:** Go 1.x, cobra (existing CLI), standard library only (no regex; byte-level scan for perf).
 
@@ -14,10 +14,10 @@
 
 | Path | Purpose |
 |------|---------|
-| `note/tag.go` | `ExtractTags` (parallel scan + merge) and `extractHashtags` (byte scanner). |
-| `note/tag_test.go` | Unit tests for `extractHashtags` and `ExtractTags`. |
-| `internal/cli/tag.go` | Cobra command: no args, no flags, prints sorted tag list. |
-| `internal/cli/tag_test.go` | Integration tests that drive the cobra command against a temp store. |
+| `note/tags.go` | `ExtractTags` (parallel scan + merge) and `extractHashtags` (byte scanner). |
+| `note/tags_test.go` | Unit tests for `extractHashtags` and `ExtractTags`. |
+| `internal/cli/tags.go` | Cobra command: no args, no flags, prints sorted tag list. |
+| `internal/cli/tags_test.go` | Integration tests that drive the cobra command against a temp store. |
 | `CHANGELOG.md` | One entry under the next patch version. |
 | `README.md` | One usage example under the Usage block. |
 
@@ -26,12 +26,12 @@
 ## Task 1: Byte scanner for body hashtags
 
 **Files:**
-- Create: `note/tag.go`
-- Create: `note/tag_test.go`
+- Create: `note/tags.go`
+- Create: `note/tags_test.go`
 
 - [ ] **Step 1: Write failing tests for `extractHashtags`**
 
-Create `note/tag_test.go`:
+Create `note/tags_test.go`:
 
 ```go
 package note
@@ -120,9 +120,9 @@ func TestExtractHashtagsFencedBlockWithInfoString(t *testing.T) {
 Run: `go test ./note/ -run TestExtractHashtags -v`
 Expected: compile error — `undefined: extractHashtags`.
 
-- [ ] **Step 3: Implement `extractHashtags` in `note/tag.go`**
+- [ ] **Step 3: Implement `extractHashtags` in `note/tags.go`**
 
-Create `note/tag.go`:
+Create `note/tags.go`:
 
 ```go
 package note
@@ -218,7 +218,7 @@ Expected: all `TestExtractHashtags*` subtests PASS.
 - [ ] **Step 5: Commit**
 
 ```bash
-git add note/tag.go note/tag_test.go
+git add note/tags.go note/tags_test.go
 git commit -m "Add hashtag byte scanner"
 ```
 
@@ -227,12 +227,12 @@ git commit -m "Add hashtag byte scanner"
 ## Task 2: `ExtractTags` — parallel store scan
 
 **Files:**
-- Modify: `note/tag.go` (append `ExtractTags`)
-- Modify: `note/tag_test.go` (append new tests)
+- Modify: `note/tags.go` (append `ExtractTags`)
+- Modify: `note/tags_test.go` (append new tests)
 
 - [ ] **Step 1: Write failing tests for `ExtractTags`**
 
-Append to `note/tag_test.go`:
+Append to `note/tags_test.go`:
 
 ```go
 import (
@@ -342,9 +342,9 @@ func TestExtractTagsNonexistentRoot(t *testing.T) {
 Run: `go test ./note/ -run TestExtractTags -v`
 Expected: compile error — `undefined: ExtractTags`.
 
-- [ ] **Step 3: Implement `ExtractTags` in `note/tag.go`**
+- [ ] **Step 3: Implement `ExtractTags` in `note/tags.go`**
 
-Append to `note/tag.go`:
+Append to `note/tags.go`:
 
 ```go
 import (
@@ -434,7 +434,7 @@ func ExtractTags(root string) ([]string, error) {
 }
 ```
 
-Note: the `import` block shown above is the full set needed by `tag.go` after this task; merge it with the `import "bytes"` from Task 1 into one block.
+Note: the `import` block shown above is the full set needed by `tags.go` after this task; merge it with the `import "bytes"` from Task 1 into one block.
 
 - [ ] **Step 4: Run tests to verify they pass**
 
@@ -449,21 +449,21 @@ Expected: all existing + new tests PASS.
 - [ ] **Step 6: Commit**
 
 ```bash
-git add note/tag.go note/tag_test.go
+git add note/tags.go note/tags_test.go
 git commit -m "Add ExtractTags for parallel store scan"
 ```
 
 ---
 
-## Task 3: `tag` CLI command
+## Task 3: `tags` CLI command
 
 **Files:**
-- Create: `internal/cli/tag.go`
-- Create: `internal/cli/tag_test.go`
+- Create: `internal/cli/tags.go`
+- Create: `internal/cli/tags_test.go`
 
 - [ ] **Step 1: Write failing integration tests**
 
-Create `internal/cli/tag_test.go`:
+Create `internal/cli/tags_test.go`:
 
 ```go
 package cli
@@ -476,9 +476,9 @@ import (
 	"testing"
 )
 
-func runTag(t *testing.T, root string, args ...string) (string, error) {
+func runTags(t *testing.T, root string, args ...string) (string, error) {
 	t.Helper()
-	tagCmd.ResetFlags()
+	tagsCmd.ResetFlags()
 
 	buf := new(bytes.Buffer)
 	rootCmd.SetOut(buf)
@@ -489,7 +489,7 @@ func runTag(t *testing.T, root string, args ...string) (string, error) {
 	return strings.TrimSpace(buf.String()), err
 }
 
-func writeTagTestNote(t *testing.T, root, rel, content string) {
+func writeTagsTestNote(t *testing.T, root, rel, content string) {
 	t.Helper()
 	full := filepath.Join(root, rel)
 	if err := os.MkdirAll(filepath.Dir(full), 0o755); err != nil {
@@ -500,9 +500,9 @@ func writeTagTestNote(t *testing.T, root, rel, content string) {
 	}
 }
 
-func TestTagEmptyStore(t *testing.T) {
+func TestTagsEmptyStore(t *testing.T) {
 	root := t.TempDir()
-	out, err := runTag(t, root)
+	out, err := runTags(t, root)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -511,14 +511,14 @@ func TestTagEmptyStore(t *testing.T) {
 	}
 }
 
-func TestTagMergedSourcesSorted(t *testing.T) {
+func TestTagsMergedSourcesSorted(t *testing.T) {
 	root := t.TempDir()
-	writeTagTestNote(t, root, "2026/01/20260101_1001.md",
+	writeTagsTestNote(t, root, "2026/01/20260101_1001.md",
 		"---\ntags: [work, planning]\n---\n\nHere is #coffee and #work again.\n")
-	writeTagTestNote(t, root, "2026/01/20260102_1002.md",
+	writeTagsTestNote(t, root, "2026/01/20260102_1002.md",
 		"no fm, just #tea and #work.\n")
 
-	out, err := runTag(t, root)
+	out, err := runTags(t, root)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -534,12 +534,12 @@ func TestTagMergedSourcesSorted(t *testing.T) {
 	}
 }
 
-func TestTagIgnoresCodeBlocks(t *testing.T) {
+func TestTagsIgnoresCodeBlocks(t *testing.T) {
 	root := t.TempDir()
-	writeTagTestNote(t, root, "2026/01/20260101_1001.md",
+	writeTagsTestNote(t, root, "2026/01/20260101_1001.md",
 		"kept #real\n```\n#should-not-appear\n```\nalso #done\n")
 
-	out, err := runTag(t, root)
+	out, err := runTags(t, root)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -554,12 +554,12 @@ func TestTagIgnoresCodeBlocks(t *testing.T) {
 
 - [ ] **Step 2: Run tests to verify they fail**
 
-Run: `go test ./internal/cli/ -run TestTag -v`
-Expected: compile error — `undefined: tagCmd`.
+Run: `go test ./internal/cli/ -run TestTags -v`
+Expected: compile error — `undefined: tagsCmd`.
 
-- [ ] **Step 3: Implement the command in `internal/cli/tag.go`**
+- [ ] **Step 3: Implement the command in `internal/cli/tags.go`**
 
-Create `internal/cli/tag.go`:
+Create `internal/cli/tags.go`:
 
 ```go
 package cli
@@ -571,7 +571,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var tagCmd = &cobra.Command{
+var tagsCmd = &cobra.Command{
 	Use:   "tag",
 	Short: "List all tags from frontmatter and body hashtags",
 	Args:  cobra.NoArgs,
@@ -590,14 +590,14 @@ var tagCmd = &cobra.Command{
 }
 
 func init() {
-	rootCmd.AddCommand(tagCmd)
+	rootCmd.AddCommand(tagsCmd)
 }
 ```
 
 - [ ] **Step 4: Run tests to verify they pass**
 
-Run: `go test ./internal/cli/ -run TestTag -v`
-Expected: all `TestTag*` subtests PASS.
+Run: `go test ./internal/cli/ -run TestTags -v`
+Expected: all `TestTags*` subtests PASS.
 
 - [ ] **Step 5: Run the full CLI test suite**
 
@@ -607,8 +607,8 @@ Expected: all existing + new tests PASS.
 - [ ] **Step 6: Commit**
 
 ```bash
-git add internal/cli/tag.go internal/cli/tag_test.go
-git commit -m "Add tag command"
+git add internal/cli/tags.go internal/cli/tags_test.go
+git commit -m "Add tags command"
 ```
 
 ---
@@ -633,7 +633,7 @@ At the top of `CHANGELOG.md` (just under the `# Changelog` heading), insert a ne
 
 ### Added
 
-- Add `tag` command that lists unique tags from frontmatter and body hashtags across the store ([#{{PR}}])
+- Add `tags` command that lists unique tags from frontmatter and body hashtags across the store ([#{{PR}}])
 ```
 
 Also add the footer link alongside the other entries at the bottom:
@@ -649,14 +649,14 @@ In `README.md`, find the `# Search note contents` block in the Usage section (`n
 ```markdown
 
 # List all tags (frontmatter + body hashtags)
-notes tag
+notes tags
 ```
 
 - [ ] **Step 4: Commit**
 
 ```bash
 git add CHANGELOG.md README.md
-git commit -m "Document tag command"
+git commit -m "Document tags command"
 ```
 
 ---
@@ -675,7 +675,7 @@ Expected: all tests PASS.
 
 - [ ] **Step 3: Smoke-test against the real store**
 
-Run: `make build && ./notes tag --path ./testdata`
+Run: `make build && ./notes tags --path ./testdata`
 Expected: sorted list including at least `meeting`, `planning`, `work` (from testdata frontmatter).
 
 - [ ] **Step 4: Confirm performance on a synthetic large store**
@@ -694,7 +694,7 @@ for y in 2024 2025 2026; do
     done
   done
 done
-time ./notes tag --path "$root" | wc -l
+time ./notes tags --path "$root" | wc -l
 ```
 
 Expected: finishes in well under a second on a modern machine (3600 notes total), with a plausible tag count printed. This is a manual sanity check — no assertion beyond "feels fast."
@@ -708,10 +708,10 @@ Expected: finishes in well under a second on a modern machine (3600 notes total)
 - Frontmatter tag source → Task 2 (uses `ParseFrontmatterFields`).
 - Body hashtag source with heading / code-block / inline-code / word-boundary rules → Task 1 (`extractHashtags`) + tests.
 - Parallel `runtime.NumCPU()` pipeline, no caching → Task 2 (`ExtractTags`).
-- File layout (`note/tag.go`, `internal/cli/tag.go`) → Tasks 1–3.
+- File layout (`note/tags.go`, `internal/cli/tags.go`) → Tasks 1–3.
 - Unit + integration tests per spec table → Tasks 1–3.
 - CHANGELOG entry under next patch version → Task 4.
 
 **Placeholder scan:** `{{VERSION}}` and `{{PR}}` in Task 4 are the only templates — explicitly explained in-place. No "TBD" / "implement later" / unspecified error handling.
 
-**Type consistency:** `ExtractTags(root string) ([]string, error)` is used identically in Tasks 2 and 3. `extractHashtags([]byte) []string`, `isTagByte(byte) bool`, `isWordByte(byte) bool` — signatures consistent between definition and tests. Cobra variable `tagCmd` used in both `internal/cli/tag.go` and `internal/cli/tag_test.go`.
+**Type consistency:** `ExtractTags(root string) ([]string, error)` is used identically in Tasks 2 and 3. `extractHashtags([]byte) []string`, `isTagByte(byte) bool`, `isWordByte(byte) bool` — signatures consistent between definition and tests. Cobra variable `tagsCmd` used in both `internal/cli/tags.go` and `internal/cli/tags_test.go`.

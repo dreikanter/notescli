@@ -1,4 +1,4 @@
-# Design: Add `tag` command
+# Design: Add `tags` command
 
 **Date:** 2026-04-18
 
@@ -7,7 +7,7 @@
 There's no way to see what tags exist in the note store without grepping
 frontmatter by hand. Users set frontmatter tags (`tags: [a, b]`) and also drop
 inline hashtags (`#foo`) in note bodies, but neither is discoverable from the
-CLI. A `tag` command should list the union of both, so it can be piped into
+CLI. A `tags` command should list the union of both, so it can be piped into
 `fzf`, `grep`, or used as input to other commands.
 
 Performance matters: on a store with 10k+ notes the command must finish quickly
@@ -20,7 +20,7 @@ enough to feel instant when piped.
 New top-level command, no args, no flags:
 
 ```
-notes tag
+notes tags
 ```
 
 Prints unique tags, one per line, sorted alphabetically (byte order). Exits 0
@@ -89,12 +89,12 @@ database, no index" ethos of the rest of the codebase.
 
 ### File layout
 
-- `note/tag.go` — new file. Contains `ExtractTags(root string) ([]string,
+- `note/tags.go` — new file. Contains `ExtractTags(root string) ([]string,
   error)` (parallel scan + merge) and `extractHashtags(body []byte) []string`
-  (byte scanner). Unit tests in `note/tag_test.go`.
-- `internal/cli/tag.go` — new file. Thin cobra wrapper that calls
+  (byte scanner). Unit tests in `note/tags_test.go`.
+- `internal/cli/tags.go` — new file. Thin cobra wrapper that calls
   `note.ExtractTags(mustNotesPath())` and prints results. Tests in
-  `internal/cli/tag_test.go`.
+  `internal/cli/tags_test.go`.
 
 `ExtractTags` lives in the `note` package so it can be reused later (e.g., by
 a future autocomplete or `tag --count` variant) without going through the CLI
@@ -116,7 +116,7 @@ Unit tests for the byte scanner cover:
 | `#foo/bar` | `[foo]` (slash terminates) |
 | `#a-b_c`, `#123` | `[a-b_c, 123]` |
 
-Integration tests (`internal/cli/tag_test.go`) cover:
+Integration tests (`internal/cli/tags_test.go`) cover:
 
 | Case | Expected |
 |------|----------|
@@ -137,5 +137,5 @@ Integration tests (`internal/cli/tag_test.go`) cover:
 ### CHANGELOG
 
 Add an entry under `v0.1.67` (next patch from current `v0.1.66`) referencing
-the PR. Entry text along the lines of: "Add `tag` command to list tags from
+the PR. Entry text along the lines of: "Add `tags` command to list tags from frontmatter and body hashtags
 frontmatter and body hashtags ([#N])."

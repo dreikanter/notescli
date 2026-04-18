@@ -96,7 +96,7 @@ notes grep "search pattern"
 notes rg "search pattern"
 
 # List all tags (frontmatter + body hashtags)
-notes tag
+notes tags
 ```
 
 The notes store path is resolved in this order:

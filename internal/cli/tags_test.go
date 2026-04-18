@@ -8,20 +8,20 @@ import (
 	"testing"
 )
 
-func runTag(t *testing.T, root string, args ...string) (string, error) {
+func runTags(t *testing.T, root string, args ...string) (string, error) {
 	t.Helper()
-	tagCmd.ResetFlags()
+	tagsCmd.ResetFlags()
 
 	buf := new(bytes.Buffer)
 	rootCmd.SetOut(buf)
 	rootCmd.SetErr(buf)
-	rootCmd.SetArgs(append([]string{"tag", "--path", root}, args...))
+	rootCmd.SetArgs(append([]string{"tags", "--path", root}, args...))
 
 	err := rootCmd.Execute()
 	return strings.TrimSpace(buf.String()), err
 }
 
-func writeTagTestNote(t *testing.T, root, rel, content string) {
+func writeTagsTestNote(t *testing.T, root, rel, content string) {
 	t.Helper()
 	full := filepath.Join(root, rel)
 	if err := os.MkdirAll(filepath.Dir(full), 0o755); err != nil {
@@ -32,9 +32,9 @@ func writeTagTestNote(t *testing.T, root, rel, content string) {
 	}
 }
 
-func TestTagEmptyStore(t *testing.T) {
+func TestTagsEmptyStore(t *testing.T) {
 	root := t.TempDir()
-	out, err := runTag(t, root)
+	out, err := runTags(t, root)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -43,14 +43,14 @@ func TestTagEmptyStore(t *testing.T) {
 	}
 }
 
-func TestTagMergedSourcesSorted(t *testing.T) {
+func TestTagsMergedSourcesSorted(t *testing.T) {
 	root := t.TempDir()
-	writeTagTestNote(t, root, "2026/01/20260101_1001.md",
+	writeTagsTestNote(t, root, "2026/01/20260101_1001.md",
 		"---\ntags: [work, planning]\n---\n\nHere is #coffee and #work again.\n")
-	writeTagTestNote(t, root, "2026/01/20260102_1002.md",
+	writeTagsTestNote(t, root, "2026/01/20260102_1002.md",
 		"no fm, just #tea and #work.\n")
 
-	out, err := runTag(t, root)
+	out, err := runTags(t, root)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -66,12 +66,12 @@ func TestTagMergedSourcesSorted(t *testing.T) {
 	}
 }
 
-func TestTagIgnoresCodeBlocks(t *testing.T) {
+func TestTagsIgnoresCodeBlocks(t *testing.T) {
 	root := t.TempDir()
-	writeTagTestNote(t, root, "2026/01/20260101_1001.md",
+	writeTagsTestNote(t, root, "2026/01/20260101_1001.md",
 		"kept #real\n```\n#should-not-appear\n```\nalso #done\n")
 
-	out, err := runTag(t, root)
+	out, err := runTags(t, root)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
