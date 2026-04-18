@@ -45,9 +45,11 @@ Two sources, merged into one deduplicated set:
 A hashtag is `#` followed by one or more characters from `[A-Za-z0-9_-]`,
 subject to:
 
-- **Not at start of line** — skip Markdown headings (`# foo`, `## foo`).
-  A `#` that is the first non-whitespace character of a line is never a tag,
-  regardless of how many `#` characters precede the space.
+- **Not a Markdown heading** — a line is treated as a heading (and skipped
+  entirely) when its first non-whitespace content is a run of one or more
+  `#` characters followed by whitespace or end-of-line (`# foo`, `## foo`,
+  `   # foo`). A leading `#` with no space after it (e.g. `#alpha and
+  #beta`) is not a heading and its hashtags are extracted normally.
 - **Not preceded by a word character** — so `foo#bar` is not a tag, but
   `(foo) #bar` is. "Word character" means `[A-Za-z0-9_]`.
 - **Not inside a fenced code block** — any region bounded by a line whose
