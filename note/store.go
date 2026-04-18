@@ -107,26 +107,10 @@ func ResolveRefDate(root, query, date string) (*Note, error) {
 	}
 
 	// Step 3: path (absolute, or relative containing a separator) — exact match
-	if filepath.IsAbs(query) || strings.ContainsAny(query, `/\`) {
-		queryPath := query
-		if !filepath.IsAbs(queryPath) {
-			abs, err := filepath.Abs(queryPath)
-			if err != nil {
-				return nil, fmt.Errorf("cannot resolve path: %w", err)
-			}
-			queryPath = abs
-		}
-		absRoot, err := filepath.EvalSymlinks(root)
+	if filepath.IsAbs(query) || strings.ContainsAny(query, "/\\") {
+		rel, err := resolveRelPath(root, query)
 		if err != nil {
-			return nil, fmt.Errorf("cannot resolve notes path: %w", err)
-		}
-		absQuery, err := filepath.EvalSymlinks(queryPath)
-		if err != nil {
-			return nil, fmt.Errorf("note not found: %s", query)
-		}
-		rel, err := filepath.Rel(absRoot, absQuery)
-		if err != nil || strings.HasPrefix(rel, "..") {
-			return nil, fmt.Errorf("path is outside notes directory: %s", query)
+			return nil, err
 		}
 		for i := range notes {
 			if notes[i].RelPath == rel {
@@ -144,6 +128,32 @@ func ResolveRefDate(root, query, date string) (*Note, error) {
 	}
 
 	return nil, fmt.Errorf("note not found: %s", query)
+}
+
+// resolveRelPath converts a path-like query to a note RelPath under root.
+// Returns an error if the path does not exist or escapes root.
+func resolveRelPath(root, query string) (string, error) {
+	queryPath := query
+	if !filepath.IsAbs(queryPath) {
+		abs, err := filepath.Abs(queryPath)
+		if err != nil {
+			return "", fmt.Errorf("cannot resolve path: %w", err)
+		}
+		queryPath = abs
+	}
+	absRoot, err := filepath.EvalSymlinks(root)
+	if err != nil {
+		return "", fmt.Errorf("cannot resolve notes path: %w", err)
+	}
+	absQuery, err := filepath.EvalSymlinks(queryPath)
+	if err != nil {
+		return "", fmt.Errorf("note not found: %s", query)
+	}
+	rel, err := filepath.Rel(absRoot, absQuery)
+	if err != nil || strings.HasPrefix(rel, "..") {
+		return "", fmt.Errorf("path is outside notes directory: %s", query)
+	}
+	return rel, nil
 }
 
 // Filter returns all notes whose filename contains the fragment (case-insensitive).

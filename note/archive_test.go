@@ -82,6 +82,8 @@ func TestResolveRef(t *testing.T) {
 		{"by slug fragment", "letter_opener", "6973", false},
 		{"by partial slug", "meeting", "8818", false},
 		{"by absolute path", absPath, "8823", false},
+		{"absolute path with trailing slash errors", absPath + "/", "", true},
+		{"empty query returns most recent", "", "8823", false},
 		{"numeric non-id errors", "999", "", true},
 		{"numeric date fragment errors", "202601", "", true},
 		{"basename query does not substring-match path", "20260106_8823_999", "", true},
@@ -108,6 +110,17 @@ func TestResolveRef(t *testing.T) {
 				t.Errorf("ResolveRef(%q).ID = %q, want %q", tt.query, got.ID, tt.wantID)
 			}
 		})
+	}
+}
+
+func TestResolveRefDateEmptyQueryFiltersByDate(t *testing.T) {
+	root := testdataPath(t)
+	got, err := ResolveRefDate(root, "", "20260104")
+	if err != nil {
+		t.Fatalf("ResolveRefDate empty query error: %v", err)
+	}
+	if got.ID != "8818" {
+		t.Errorf("ResolveRefDate empty + date 20260104 = %q, want 8818", got.ID)
 	}
 }
 
