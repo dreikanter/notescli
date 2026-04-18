@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.1.68] - 2026-04-18
+
+### Changed
+
+- Make note resolution less surprising: all-digit queries only match IDs (no fallthrough), and substring matching targets the slug only ([#107])
+
 ## [0.1.67] - 2026-04-18
 
 ### Changed
@@ -410,3 +416,4 @@
 [#100]: https://github.com/dreikanter/notes-cli/pull/100
 [#102]: https://github.com/dreikanter/notes-cli/pull/102
 [#106]: https://github.com/dreikanter/notes-cli/pull/106
+[#107]: https://github.com/dreikanter/notes-cli/pull/107

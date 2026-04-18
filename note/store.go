@@ -65,9 +65,10 @@ func Scan(root string) ([]Note, error) {
 }
 
 // ResolveRef resolves a note reference to a Note using the following priority:
-//  1. Numeric ID — exact match
+//  1. Numeric ID — exact match; all-digit queries never fall through
 //  2. Type — most recent note of a known type (todo, backlog, weekly)
-//  3. Path substring — most recent note whose relative path contains the query
+//  3. Path — absolute or relative path with separator, exact match under root
+//  4. Slug substring — most recent note whose slug contains the query
 func ResolveRef(root, query string) (*Note, error) {
 	return ResolveRefDate(root, query, "")
 }
@@ -86,13 +87,14 @@ func ResolveRefDate(root, query, date string) (*Note, error) {
 		notes = FilterByDate(notes, date)
 	}
 
-	// Step 1: numeric ID
+	// Step 1: numeric ID — strict, no fallthrough
 	if query != "" && isDigits(query) {
 		for i := range notes {
 			if notes[i].ID == query {
 				return &notes[i], nil
 			}
 		}
+		return nil, fmt.Errorf("note not found: %s", query)
 	}
 
 	// Step 2: type — most recent match
@@ -104,32 +106,54 @@ func ResolveRefDate(root, query, date string) (*Note, error) {
 		}
 	}
 
-	// Step 3: path substring — most recent match
-	// For absolute paths, convert to a relative path under root first.
-	fragment := query
-	if filepath.IsAbs(query) {
-		absRoot, err := filepath.EvalSymlinks(root)
+	// Step 3: path (absolute, or relative containing a separator) — exact match
+	if filepath.IsAbs(query) || strings.ContainsAny(query, "/\\") {
+		rel, err := resolveRelPath(root, query)
 		if err != nil {
-			return nil, fmt.Errorf("cannot resolve notes path: %w", err)
+			return nil, err
 		}
-		absQuery, err := filepath.EvalSymlinks(query)
-		if err != nil {
-			return nil, fmt.Errorf("note not found: %s", query)
+		for i := range notes {
+			if notes[i].RelPath == rel {
+				return &notes[i], nil
+			}
 		}
-		rel, err := filepath.Rel(absRoot, absQuery)
-		if err != nil || strings.HasPrefix(rel, "..") {
-			return nil, fmt.Errorf("path is outside notes directory: %s", query)
-		}
-		fragment = rel
+		return nil, fmt.Errorf("note not found: %s", query)
 	}
 
+	// Step 4: slug substring — most recent match
 	for i := range notes {
-		if strings.Contains(notes[i].RelPath, fragment) {
+		if strings.Contains(notes[i].Slug, query) {
 			return &notes[i], nil
 		}
 	}
 
 	return nil, fmt.Errorf("note not found: %s", query)
+}
+
+// resolveRelPath converts a path-like query to a note RelPath under root.
+// Returns an error if the path does not exist or escapes root.
+func resolveRelPath(root, query string) (string, error) {
+	queryPath := query
+	if !filepath.IsAbs(queryPath) {
+		abs, err := filepath.Abs(queryPath)
+		if err != nil {
+			return "", fmt.Errorf("cannot resolve path: %w", err)
+		}
+		queryPath = abs
+	}
+	absRoot, err := filepath.EvalSymlinks(root)
+	if err != nil {
+		return "", fmt.Errorf("cannot resolve notes path: %w", err)
+	}
+	absQuery, err := filepath.EvalSymlinks(queryPath)
+	if err != nil {
+		return "", fmt.Errorf("note not found: %s", query)
+	}
+	rel, err := filepath.Rel(absRoot, absQuery)
+	if err != nil || strings.HasPrefix(rel, "..") {
+		return "", fmt.Errorf("path is outside notes directory: %s", query)
+	}
+	return rel, nil
 }
 
 // Filter returns all notes whose filename contains the fragment (case-insensitive).

@@ -17,10 +17,11 @@ var resolveCmd = &cobra.Command{
 With no arguments or flags, returns the most recent note.
 
 With a positional argument, resolution follows this priority:
-  1. Exact numeric ID (e.g. "8823")
+  1. Exact numeric ID (e.g. "8823") — all-digit queries match IDs only;
+     an unknown numeric query errors instead of falling through
   2. Exact note type (todo, backlog, weekly) — most recent match
-  3. Path substring — most recent note whose path contains the query
-     (covers slugs, basenames, date fragments, relative paths, etc.)
+  3. Path (absolute or relative containing a separator) — exact match
+  4. Slug substring — most recent note whose slug contains the query
 
 Alternatively, use filter flags (--type, --slug, --tag, --today) for
 explicit attribute-based lookup. Flags cannot be combined with a
