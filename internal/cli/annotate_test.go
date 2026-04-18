@@ -174,3 +174,53 @@ func TestParseAnnotationErrorFlag(t *testing.T) {
 		t.Errorf("error message should include server-side message: %v", err)
 	}
 }
+
+func TestMergeAnnotationFillsEmpty(t *testing.T) {
+	existing := note.FrontmatterFields{Slug: "meeting", Public: true}
+	gen := annotateResult{
+		Title:       "New",
+		Description: "Generated desc",
+		Tags:        []string{"a", "b"},
+	}
+	merged := mergeAnnotation(existing, gen)
+
+	if merged.Title != "New" {
+		t.Errorf("title = %q", merged.Title)
+	}
+	if merged.Description != "Generated desc" {
+		t.Errorf("description = %q", merged.Description)
+	}
+	if !equalStrings(merged.Tags, []string{"a", "b"}) {
+		t.Errorf("tags = %v", merged.Tags)
+	}
+	if merged.Slug != "meeting" {
+		t.Errorf("slug should be preserved, got %q", merged.Slug)
+	}
+	if !merged.Public {
+		t.Error("public should be preserved")
+	}
+}
+
+func TestMergeAnnotationPreservesFilledFields(t *testing.T) {
+	existing := note.FrontmatterFields{
+		Title:       "Existing title",
+		Description: "Existing desc",
+		Tags:        []string{"keep"},
+	}
+	gen := annotateResult{
+		Title:       "Should not win",
+		Description: "Should not win",
+		Tags:        []string{"bad"},
+	}
+	merged := mergeAnnotation(existing, gen)
+
+	if merged.Title != "Existing title" {
+		t.Errorf("title overwritten: %q", merged.Title)
+	}
+	if merged.Description != "Existing desc" {
+		t.Errorf("description overwritten: %q", merged.Description)
+	}
+	if !equalStrings(merged.Tags, []string{"keep"}) {
+		t.Errorf("tags overwritten: %v", merged.Tags)
+	}
+}

@@ -113,6 +113,22 @@ func parseAnnotation(raw []byte) (annotateResult, error) {
 	return res, nil
 }
 
+// mergeAnnotation fills empty fields in existing from gen.
+// Non-empty fields in existing are preserved.
+func mergeAnnotation(existing note.FrontmatterFields, gen annotateResult) note.FrontmatterFields {
+	merged := existing
+	if merged.Title == "" {
+		merged.Title = gen.Title
+	}
+	if merged.Description == "" {
+		merged.Description = gen.Description
+	}
+	if len(merged.Tags) == 0 && len(gen.Tags) > 0 {
+		merged.Tags = gen.Tags
+	}
+	return merged
+}
+
 func init() {
 	annotateCmd.Flags().String("model", annotateDefaultModel, "Claude model to use")
 	rootCmd.AddCommand(annotateCmd)
