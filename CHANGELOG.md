@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.1.67] - 2026-04-18
+
+### Changed
+
+- Change daily task tag format from `[daily]` to `#daily` ([#106])
+
 ## [0.1.66] - 2026-04-09
 
 ### Changed
@@ -403,3 +409,4 @@
 [#99]: https://github.com/dreikanter/notes-cli/pull/99
 [#100]: https://github.com/dreikanter/notes-cli/pull/100
 [#102]: https://github.com/dreikanter/notes-cli/pull/102
+[#106]: https://github.com/dreikanter/notes-cli/pull/106

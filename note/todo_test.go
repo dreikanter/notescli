@@ -19,8 +19,8 @@ func TestParseTask(t *testing.T) {
 		{"pending indented", "  [ ] Buy milk", false, " ", false, false},
 		{"pending indented bullet", "  - [ ] Buy milk", false, " ", false, false},
 		{"completed", "[+] Done task", false, "+", false, false},
-		{"daily", "[ ] Standup [daily]", false, " ", true, false},
-		{"daily completed", "[+] Standup [daily]", false, "+", true, false},
+		{"daily", "[ ] Standup #daily", false, " ", true, false},
+		{"daily completed", "[+] Standup #daily", false, "+", true, false},
 		{"moved", "- [ ] (moved) Buy milk", false, " ", false, true},
 		{"moved with other tag", "- [ ] (moved) (private) Do thing", false, " ", false, true},
 		{"not a task", "Just a regular line", true, "", false, false},
@@ -105,7 +105,7 @@ slug: todo
 
 [+] Completed task
 
-[ ] Standup [daily]`, "\n")
+[ ] Standup #daily`, "\n")
 
 	result := RolloverTasks(prev)
 
@@ -187,7 +187,7 @@ func TestRolloverTasksSkipsMoved(t *testing.T) {
 }
 
 func TestRolloverTasksDailyAlwaysCarried(t *testing.T) {
-	prev := strings.Split(`[+] Standup [daily]
+	prev := strings.Split(`[+] Standup #daily
 
 [+] Completed other task`, "\n")
 
@@ -203,7 +203,7 @@ func TestRolloverTasksDailyAlwaysCarried(t *testing.T) {
 
 func TestRolloverTasksNoDuplicates(t *testing.T) {
 	// A daily task that is also pending should appear only once
-	prev := strings.Split(`[ ] Standup [daily]`, "\n")
+	prev := strings.Split(`[ ] Standup #daily`, "\n")
 
 	result := RolloverTasks(prev)
 

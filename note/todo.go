@@ -14,7 +14,7 @@ type Task struct {
 	Prefix     string // everything before the marker character: e.g. "  - ["
 	Marker     string // single char marker: " ", "x", "+", etc.
 	Suffix     string // everything after marker: e.g. "] some task"
-	IsDaily    bool   // whether line contains [daily]
+	IsDaily    bool   // whether line contains #daily
 	IsMoved    bool   // whether line contains (moved)
 	LineNumber int    // 0-based index in the source file lines
 }
@@ -30,7 +30,7 @@ func ParseTask(line string, lineNumber int) *Task {
 		Prefix:     m[1],
 		Marker:     m[2],
 		Suffix:     m[3],
-		IsDaily:    strings.Contains(line, "[daily]"),
+		IsDaily:    strings.Contains(line, "#daily"),
 		IsMoved:    strings.Contains(line, "(moved)"),
 		LineNumber: lineNumber,
 	}
