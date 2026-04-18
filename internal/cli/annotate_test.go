@@ -414,3 +414,123 @@ func TestAnnotateMalformedJSON(t *testing.T) {
 		t.Errorf("file was modified: %q", string(data))
 	}
 }
+
+// writeFakeClaudeRecording writes a fake claude script that dumps its argv
+// one-per-line to argsPath, then echoes envelope to stdout.
+func writeFakeClaudeRecording(t *testing.T, envelope, argsPath string) string {
+	t.Helper()
+	dir := t.TempDir()
+	script := filepath.Join(dir, "claude")
+	body := fmt.Sprintf(`#!/bin/sh
+for a in "$@"; do
+  printf '%%s\n' "$a" >> %q
+done
+cat <<'EOF'
+%s
+EOF
+`, argsPath, envelope)
+	if err := os.WriteFile(script, []byte(body), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	return script
+}
+
+func TestAnnotateModelFlagPropagates(t *testing.T) {
+	root, ref := noteWithOnlyBody(t, "body for model test")
+	argsPath := filepath.Join(t.TempDir(), "args.txt")
+	withClaudeBinary(t, writeFakeClaudeRecording(t, annotateSampleEnvelope, argsPath))
+
+	_, err := runAnnotate(t, root, ref, "--model", "claude-sonnet-4-6")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	data, err := os.ReadFile(argsPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	argv := strings.Split(strings.TrimRight(string(data), "\n"), "\n")
+
+	if !containsPair(argv, "--model", "claude-sonnet-4-6") {
+		t.Errorf("expected --model claude-sonnet-4-6 in argv: %v", argv)
+	}
+}
+
+func TestAnnotateSchemaOnlyContainsEmptyFields(t *testing.T) {
+	// Start with title filled; only description + tags should be in schema.
+	fm := "---\ntitle: Fixed title\n---\n\n"
+	root, ref := noteWithFrontmatter(t, fm, "body for schema test")
+	argsPath := filepath.Join(t.TempDir(), "args.txt")
+	// Envelope only needs to supply the two empty fields.
+	env := `{"type":"result","subtype":"success","is_error":false,"result":"{\"description\":\"d\",\"tags\":[\"t\"]}"}`
+	withClaudeBinary(t, writeFakeClaudeRecording(t, env, argsPath))
+
+	if _, err := runAnnotate(t, root, ref); err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	data, err := os.ReadFile(argsPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	argv := strings.Split(strings.TrimRight(string(data), "\n"), "\n")
+	schema := nextValue(argv, "--json-schema")
+	if schema == "" {
+		t.Fatalf("--json-schema missing from argv: %v", argv)
+	}
+
+	var parsed map[string]any
+	if err := json.Unmarshal([]byte(schema), &parsed); err != nil {
+		t.Fatalf("schema is not valid JSON: %v\n%s", err, schema)
+	}
+	req, _ := parsed["required"].([]any)
+	if len(req) != 2 {
+		t.Errorf("required should have 2 entries, got %v", req)
+	}
+	for _, f := range req {
+		if f == "title" {
+			t.Errorf("title should not be required (already filled): %v", req)
+		}
+	}
+}
+
+func TestAnnotatePreservesBody(t *testing.T) {
+	body := "# heading\n\nparagraph one\n\n- list item 1\n- list item 2\n\nparagraph two with *emphasis* and `code`.\n"
+	root, ref := noteWithOnlyBody(t, body)
+	withClaudeBinary(t, writeFakeClaude(t, annotateSampleEnvelope))
+
+	if _, err := runAnnotate(t, root, ref); err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	data, _ := os.ReadFile(filepath.Join(root, "2026/04/20260418_9000.md"))
+	// After the frontmatter closing "---\n\n", body must be byte-identical.
+	idx := strings.Index(string(data), "\n---\n\n")
+	if idx < 0 {
+		t.Fatalf("could not find frontmatter terminator in:\n%s", string(data))
+	}
+	got := string(data)[idx+len("\n---\n\n"):]
+	if got != body {
+		t.Errorf("body modified.\ngot:\n%q\nwant:\n%q", got, body)
+	}
+}
+
+// containsPair reports whether argv contains flag immediately followed by value.
+func containsPair(argv []string, flag, value string) bool {
+	for i := 0; i < len(argv)-1; i++ {
+		if argv[i] == flag && argv[i+1] == value {
+			return true
+		}
+	}
+	return false
+}
+
+// nextValue returns the element immediately after the first occurrence of flag, or "".
+func nextValue(argv []string, flag string) string {
+	for i := 0; i < len(argv)-1; i++ {
+		if argv[i] == flag {
+			return argv[i+1]
+		}
+	}
+	return ""
+}
