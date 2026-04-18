@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.1.69] - 2026-04-18
+
+### Added
+
+- Add `tags` command that lists unique tags from frontmatter and body hashtags across the store ([#108])
+
 ## [0.1.68] - 2026-04-18
 
 ### Changed
@@ -417,3 +423,4 @@
 [#102]: https://github.com/dreikanter/notes-cli/pull/102
 [#106]: https://github.com/dreikanter/notes-cli/pull/106
 [#107]: https://github.com/dreikanter/notes-cli/pull/107
+[#108]: https://github.com/dreikanter/notes-cli/pull/108

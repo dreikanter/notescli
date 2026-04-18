@@ -94,6 +94,9 @@ notes update 8823 --private
 # Search note contents
 notes grep "search pattern"
 notes rg "search pattern"
+
+# List all tags (frontmatter + body hashtags)
+notes tags
 ```
 
 The notes store path is resolved in this order:
