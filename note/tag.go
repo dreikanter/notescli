@@ -2,7 +2,89 @@ package note
 
 import (
 	"bytes"
+	"os"
+	"path/filepath"
+	"runtime"
+	"sort"
+	"sync"
 )
+
+// ExtractTags scans the note store under root and returns a sorted,
+// deduplicated list of tags. Sources: frontmatter `tags:` fields and body
+// hashtags (#word) in the prose. File reads run concurrently across
+// runtime.NumCPU() workers.
+func ExtractTags(root string) ([]string, error) {
+	notes, err := Scan(root)
+	if err != nil {
+		return nil, err
+	}
+	if len(notes) == 0 {
+		return nil, nil
+	}
+
+	workers := runtime.NumCPU()
+	if workers > len(notes) {
+		workers = len(notes)
+	}
+
+	jobs := make(chan Note)
+	results := make(chan map[string]struct{}, workers)
+	errCh := make(chan error, workers)
+	var wg sync.WaitGroup
+
+	for i := 0; i < workers; i++ {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			local := make(map[string]struct{})
+			for n := range jobs {
+				data, err := os.ReadFile(filepath.Join(root, n.RelPath))
+				if err != nil {
+					select {
+					case errCh <- err:
+					default:
+					}
+					return
+				}
+				for _, t := range ParseFrontmatterFields(data).Tags {
+					if t != "" {
+						local[t] = struct{}{}
+					}
+				}
+				for _, t := range extractHashtags(StripFrontmatter(data)) {
+					local[t] = struct{}{}
+				}
+			}
+			results <- local
+		}()
+	}
+
+	for _, n := range notes {
+		jobs <- n
+	}
+	close(jobs)
+	wg.Wait()
+	close(results)
+	close(errCh)
+
+	if err := <-errCh; err != nil {
+		return nil, err
+	}
+
+	merged := make(map[string]struct{})
+	for local := range results {
+		for t := range local {
+			merged[t] = struct{}{}
+		}
+	}
+
+	out := make([]string, 0, len(merged))
+	for t := range merged {
+		out = append(out, t)
+	}
+	sort.Strings(out)
+	return out, nil
+}
 
 // extractHashtags scans body text and returns hashtag tokens (without the
 // leading '#'), preserving source order and including duplicates. Rules:
