@@ -70,8 +70,8 @@ func TestParseFrontmatterFields(t *testing.T) {
 			want:  FrontmatterFields{Title: "T"},
 		},
 		{
-			name:  "public non-true value means false",
-			input: "---\npublic: yes\n---\n\n# Content\n",
+			name:  "invalid bool value rejected",
+			input: "---\npublic: maybe\n---\n\n# Content\n",
 			want:  FrontmatterFields{},
 		},
 		{
@@ -94,6 +94,21 @@ func TestParseFrontmatterFields(t *testing.T) {
 				Public: true,
 			}) + "body\n",
 			want: FrontmatterFields{Title: "T", Slug: "s", Tags: []string{"a"}, Public: true},
+		},
+		{
+			name:  "roundtrip preserves tag with comma",
+			input: BuildFrontmatter(FrontmatterFields{Tags: []string{"go", "rust, elixir"}}) + "body\n",
+			want:  FrontmatterFields{Tags: []string{"go", "rust, elixir"}},
+		},
+		{
+			name:  "roundtrip preserves tag with bracket and colon",
+			input: BuildFrontmatter(FrontmatterFields{Tags: []string{"foo: bar", "baz]"}}) + "body\n",
+			want:  FrontmatterFields{Tags: []string{"foo: bar", "baz]"}},
+		},
+		{
+			name:  "roundtrip preserves title with colon",
+			input: BuildFrontmatter(FrontmatterFields{Title: "Re: Project update"}) + "body\n",
+			want:  FrontmatterFields{Title: "Re: Project update"},
 		},
 	}
 
