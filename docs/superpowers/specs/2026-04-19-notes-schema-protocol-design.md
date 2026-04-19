@@ -6,9 +6,15 @@ Issue: [#104](https://github.com/dreikanter/notes-cli/issues/104)
 
 ## Context
 
-After [PR #111](https://github.com/dreikanter/notes-cli/pull/111) switched frontmatter (de)serialization to `gopkg.in/yaml.v3`, adding a known field to `FrontmatterFields` is a trivial struct-tag change. Several problems remain:
+After [PR #111](https://github.com/dreikanter/notes-cli/pull/111) and [PR #113](https://github.com/dreikanter/notes-cli/pull/113) the frontmatter API is:
 
-1. **Unknown-field loss.** `ParseFrontmatterFields` walks the YAML mapping with an explicit key switch. Any field notes-cli doesn't know about is silently dropped. A user (or downstream tool) hand-adding `featured: true` loses it on the next `notes update`.
+- Struct: `note.Frontmatter`.
+- Parse: `note.ParseNote(data []byte) (Frontmatter, []byte, error)` — real errors, strict document-level validation.
+- Emit: `note.FormatNote(f Frontmatter, body []byte) []byte`.
+
+Adding a known field to `Frontmatter` is a one-line struct addition. Several problems remain:
+
+1. **Unknown-field loss.** `ParseNote` calls `yaml.Unmarshal` into the `Frontmatter` struct, which silently drops any YAML key that is not a declared field. A user (or downstream tool) hand-adding `featured: true` loses it on the next `notes update`.
 2. **Cross-project drift.** `notes-pub` imports `notes-cli/note` and depends on its typed struct. `notes-view` has its own parser. A new field (`featured`, `aliases`, etc.) that only matters to a downstream project today requires a notes-cli release before any of them can rely on it surviving edits.
 3. **Filename/frontmatter split.** Metadata lives in two places. Slug is duplicated between filename and frontmatter, with no documented rule about which wins. Type (`todo`, `backlog`, `weekly`) is filename-only (encoded as a `.type` dot-suffix) and gated by `KnownTypes`, making new types a code change.
 4. **No published contract.** Downstream projects and future contributors have no single place to look up which frontmatter keys notes-cli reserves, and with what semantics.
@@ -39,10 +45,10 @@ Backward compatibility with existing stores is **not a concern** for this design
 
 ## Data model
 
-### `note.FrontmatterFields`
+### `note.Frontmatter`
 
 ```go
-type FrontmatterFields struct {
+type Frontmatter struct {
     Title       string                `yaml:"title,omitempty"`
     Slug        string                `yaml:"slug,omitempty"`
     Type        string                `yaml:"type,omitempty"`
@@ -57,22 +63,24 @@ type FrontmatterFields struct {
 - `Extra` is new. It holds every mapping pair whose key is not a reserved name. Values are kept as `yaml.Node` so structure (scalar, list, map, nested) survives untouched.
 - `Extra` is intentionally not tagged for yaml. It is populated and emitted by custom code, not by struct (un)marshaling.
 
-### Parser (`ParseFrontmatterFields`)
+### Parser behavior
 
-Extend the explicit-key walk in `note/frontmatter.go`:
+`ParseNote` continues to call `yaml.Unmarshal` into a `Frontmatter` value, so document-level strictness (from PR #113 — duplicate keys rejected, non-mapping top-level documents rejected, control characters rejected) is preserved as-is. To capture unknown keys into `Extra`, `Frontmatter` implements `UnmarshalYAML(node *yaml.Node) error`:
 
-- For each `(key, value)` pair in the YAML mapping:
-  - If `key` matches a reserved name (`title`, `slug`, `type`, `tags`, `description`, `public`), decode the value into the corresponding typed field. Per-field errors are tolerated (existing behavior — a bad value on one field does not drop siblings).
-  - Otherwise, clone the value `yaml.Node` into `Extra[key]`.
-- Duplicate keys: whatever yaml.v3 does for the mapping walk is what we do (typically last-value-wins for decode-into-struct; for `Extra` we write the last-seen value for a duplicated key). Not intended to be a supported pattern; called out in `SCHEMA.md`.
-- An empty or missing frontmatter block yields a zero `FrontmatterFields{}` with `Extra == nil`.
+- If the node is not a mapping, return an error (strictness preserved).
+- Walk the mapping's `Content` in pairs.
+- For each pair, if the key matches a reserved name (`title`, `slug`, `type`, `tags`, `description`, `public`), `node.Decode` the value into the corresponding typed field. On decode error, return the error (keeps document-level strictness — no per-field tolerance).
+- Otherwise, copy the value `yaml.Node` into `Extra[key]`.
+- An empty or missing frontmatter block yields a zero `Frontmatter{}` with `Extra == nil` (handled by `ParseNote` before `UnmarshalYAML` is called).
 
-### Writer (`BuildFrontmatter`)
+### Writer behavior
 
-- Emit reserved fields first in fixed order: `title, slug, type, tags, description, public`.
-- Then emit `Extra` keys, alphabetically sorted by key.
-- Overall serialization still goes through `yaml.Marshal` on a `yaml.Node`-composed document, so string escaping and list formatting follow the same rules PR #111 established.
-- Still skips output entirely if every reserved field is zero AND `Extra` is empty.
+`FormatNote` continues to call `yaml.Marshal(f)`. `Frontmatter` implements `MarshalYAML() (interface{}, error)` that returns a `*yaml.Node` composed manually:
+
+- Reserved fields first in fixed order: `title, slug, type, tags, description, public`.
+- Reserved fields with a zero value are omitted (matches the `omitempty` discipline of the struct-tag form).
+- `Extra` keys after reserved fields, alphabetically sorted by key.
+- `IsZero()` is extended so it returns false as soon as `Extra` is non-empty; otherwise the reflection-based check still covers all reserved fields.
 - Deterministic output: same input always produces the same bytes.
 
 ### Type registry
@@ -101,7 +109,7 @@ Extend the explicit-key walk in `note/frontmatter.go`:
 - Always caches `slug` and `type` into the filename at creation. There is no opt-out flag: the file is being created, there is no existing name to preserve, so cache-at-creation is the single default.
 
 **`notes update`**
-- Preserves `Extra` through the rewrite (because `ParseFrontmatterFields` now returns `Extra` and `BuildFrontmatter` emits it).
+- Preserves `Extra` through the rewrite (because `ParseNote` now populates `Extra` via the custom `UnmarshalYAML`, and `FormatNote` emits it via the custom `MarshalYAML`).
 - **No longer auto-renames the file on `--slug` or `--type` changes.** Updates frontmatter only; filename is untouched. This is a deliberate change from current behavior: the filename cache is not authoritative, so the update command should not pretend it is.
 - New flag: `--sync-filename`. Renames the file so slug/type cache matches frontmatter. Strips suffixes that have no frontmatter counterpart (e.g., if fm.Type is now empty, any `.type` dot-suffix is stripped). Prints the resulting path to stdout.
 - Calling with *only* `--sync-filename` (no content flags) performs the rename only and is idempotent (a no-op if the filename already matches fm).
@@ -122,7 +130,7 @@ A single markdown file at the notes-cli repo root, with one section per reserved
 ```markdown
 # Note frontmatter schema
 
-Reserved keys live in the typed `FrontmatterFields` struct in
+Reserved keys live in the typed `Frontmatter` struct in
 `github.com/dreikanter/notes-cli/note`. Any key not listed here is
 preserved verbatim on read/write and ignored by notes-cli itself.
 
@@ -175,21 +183,21 @@ is called out in CHANGELOG when a new reserved key is added.
 Any other top-level key is preserved untouched by notes-cli.
 Nested structures (mappings, sequences) are preserved intact.
 
-Keys duplicated within the same mapping resolve to the last
-occurrence. Non-string keys and anchors/aliases in the YAML tree
-are preserved as-is but not specifically tested; use at your own
-risk.
+Duplicate top-level keys are rejected at the document level (per
+PR #113). Non-string keys and anchors/aliases in the YAML tree
+are preserved inside `Extra` values as-is but are not specifically
+tested; use at your own risk.
 ```
 
 ### Discipline
 
-Adding a key to `FrontmatterFields` requires updating `SCHEMA.md` in the same PR. Reviewing the PR includes checking the entry. A `CHANGELOG.md` entry references both the PR and the new schema entry.
+Adding a key to `Frontmatter` requires updating `SCHEMA.md` in the same PR. Reviewing the PR includes checking the entry. A `CHANGELOG.md` entry references both the PR and the new schema entry.
 
 ## Rollout
 
 Order of operations within notes-cli:
 
-1. Land `note` package changes: add `Type` and `Extra` to `FrontmatterFields`; extend parser; extend writer; rename `KnownTypes` → `TypesWithSpecialBehavior`; relax `ParseFilename` dot-suffix handling.
+1. Land `note` package changes: add `Type` and `Extra` to `Frontmatter`; extend parser; extend writer; rename `KnownTypes` → `TypesWithSpecialBehavior`; relax `ParseFilename` dot-suffix handling.
 2. Update `notes new` to set `Type` in fm and cache in filename at creation.
 3. Update `notes update`: preserve `Extra`; remove auto-rename; add `--sync-filename` flag.
 4. Add `SCHEMA.md` at repo root.
@@ -206,7 +214,7 @@ Downstream:
 
 - Final names for `TypesWithSpecialBehavior` and `--sync-filename`. The semantics are what matters; names are bikesheddable in the implementation PR.
 - Whether `IsKnownType` stays, is renamed, or is removed in favor of inline checks.
-- Whether the fm-over-filename override should live in a `note`-package helper (e.g., `note.LoadNote(path) (Note, FrontmatterFields, error)`) or inline in each command that needs it. The plan defaults to inline override at call sites; a helper can be introduced later if the pattern repeats.
+- Whether the fm-over-filename override should live in a `note`-package helper (e.g., `note.LoadNote(path) (Note, Frontmatter, error)`) or inline in each command that needs it. The plan defaults to inline override at call sites; a helper can be introduced later if the pattern repeats.
 
 ## Implementation notes
 

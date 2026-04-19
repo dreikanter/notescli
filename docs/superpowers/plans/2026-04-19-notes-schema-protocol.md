@@ -4,17 +4,18 @@
 
 **Goal:** Make the note frontmatter format extensible, round-trip-safe, and clearly contracted across notes-cli / notes-pub / notes-view — implementing the design at `docs/superpowers/specs/2026-04-19-notes-schema-protocol-design.md`.
 
-**Architecture:** All work lives inside notes-cli. The `note` package gains a `Type` field and an `Extra map[string]yaml.Node` on `FrontmatterFields` so unknown frontmatter keys survive edits. `ParseFilename` is relaxed to accept any dot-suffix as a filename-reported type. `KnownTypes`/`IsKnownType` are renamed to reflect their soft-registry semantics. The `new` and `update` commands stop rejecting unknown types and no longer auto-rename files; a new `--sync-filename` flag on `update` is the explicit reconciliation hook. A `SCHEMA.md` at repo root documents the reserved frontmatter keys.
+**Architecture:** All work lives inside notes-cli. The `note` package's `Frontmatter` gains a `Type` field and an `Extra map[string]yaml.Node` so unknown frontmatter keys survive edits. Preservation is implemented by adding custom `UnmarshalYAML` / `MarshalYAML` methods on `Frontmatter`; the public `ParseNote` / `FormatNote` signatures are unchanged. `ParseFilename` is relaxed to accept any dot-suffix as a filename-reported type. `KnownTypes` / `IsKnownType` are renamed to reflect their soft-registry semantics. The `new` and `update` commands stop rejecting unknown types and no longer auto-rename files; a new `--sync-filename` flag on `update` is the explicit reconciliation hook. A `SCHEMA.md` at repo root documents the reserved frontmatter keys.
 
-**Tech Stack:** Go, `gopkg.in/yaml.v3` (already a dependency after PR #111), cobra CLI, standard Go testing.
+**Tech Stack:** Go, `gopkg.in/yaml.v3` (a dependency since PR #111), cobra CLI, standard Go testing.
 
 ---
 
 ## Prereqs
 
 - Run from the worktree at `/Users/alex/src/notes-cli/.claude/worktrees/humming-foraging-wozniak`.
-- Branch is already rebased onto `origin/main` (commit `620b594`).
+- Branch is rebased onto `origin/main` (commit `b30f330`, which is [PR #113](https://github.com/dreikanter/notes-cli/pull/113) — the `ParseNote` / `FormatNote` API refactor).
 - The design spec is already committed on the branch.
+- PR #113 also moved `CHANGELOG.md`'s "next patch" to `[0.1.72]`. This plan's CHANGELOG entry targets `[0.1.73]`.
 
 ---
 
@@ -26,46 +27,46 @@
 
 ### Modified files
 
-- `note/frontmatter.go` — add `Type`, `Extra`; extend parser to preserve unknowns; extend writer to emit them.
-- `note/frontmatter_test.go` — add cases for `Type` round-trip and `Extra` round-trip.
+- `note/frontmatter.go` — add `Type` and `Extra` to the `Frontmatter` struct; implement `UnmarshalYAML` and `MarshalYAML` on `Frontmatter` so `ParseNote` / `FormatNote` preserve unknowns and emit deterministic output; update `IsZero`.
+- `note/frontmatter_test.go` — add cases for `Type` round-trip, `Extra` round-trip, and the preserved strictness guarantees (non-mapping root, duplicate keys, per-field type errors) under the custom marshalers.
 - `note/note.go` — rename `KnownTypes`→`TypesWithSpecialBehavior`, `IsKnownType`→`HasSpecialBehavior`; relax `ParseFilename` to accept any dot-suffix.
 - `note/note_test.go` — update `TestIsKnownType`→`TestHasSpecialBehavior`; update/add `ParseFilename` cases.
 - `note/store.go` — update call site of `IsKnownType` (ResolveRef type-match step).
-- `internal/cli/create.go` — pass `Type` into the new `FrontmatterFields{}` when building a new note.
+- `internal/cli/create.go` — pass `Type` into the `note.Frontmatter{}` literal when building a new note.
 - `internal/cli/new.go` — drop validation gate against `IsKnownType`; continue to cache `slug` and `type` in the filename at creation.
-- `internal/cli/update.go` — drop validation gate; preserve `Extra` through the rewrite; prefer `fm.Type`/`fm.Slug` as canonical input; stop auto-renaming on content changes; add `--sync-filename` flag.
+- `internal/cli/update.go` — drop validation gate; `Extra` preservation is automatic (through `ParseNote`+`FormatNote`); prefer `fm.Type`/`fm.Slug` as canonical input; stop auto-renaming on content changes; add `--sync-filename` flag.
 - `internal/cli/update_test.go` — update for new behavior and new flag.
-- `internal/cli/new_test.go` — update for `Type` being in frontmatter.
-- `CHANGELOG.md` — new entry for the upcoming version.
+- `internal/cli/new_test.go` — add cases for `Type` being in frontmatter.
+- `CHANGELOG.md` — new `[0.1.73]` entry.
 
 ---
 
-## Task 1: Add `Extra` to FrontmatterFields (parser preserves unknown keys; writer emits them sorted)
+## Task 1: Add `Extra` to Frontmatter via custom `UnmarshalYAML` / `MarshalYAML`
 
 **Files:**
 - Modify: `note/frontmatter.go`
 - Test: `note/frontmatter_test.go`
 
-- [ ] **Step 1.1: Write the first failing test — unknown key is captured into Extra on parse**
+**Approach.** The `Frontmatter` struct gains an `Extra map[string]yaml.Node` field. Custom `UnmarshalYAML(node *yaml.Node) error` walks the YAML mapping and routes known keys into the typed fields while copying unknowns into `Extra`. Custom `MarshalYAML() (interface{}, error)` composes a `*yaml.Node` mapping with reserved fields first (in fixed order) and then `Extra` alpha-sorted. `ParseNote` and `FormatNote` are untouched — they continue to call `yaml.Unmarshal` / `yaml.Marshal`, which delegate to our custom methods. `IsZero` is rewritten explicitly so it returns `true` only when every reserved field is zero AND `Extra` is empty.
 
-Add this test case to `TestParseFrontmatterFields` in `note/frontmatter_test.go` (alongside the existing cases):
+**Strictness preserved.** The existing `TestParseNoteErrors` cases (non-mapping root, duplicate keys, per-field type errors, control characters, alias bomb) must keep passing. Our `UnmarshalYAML` rejects non-mapping nodes explicitly and tracks seen keys to reject duplicates. Per-field decode errors propagate out. Parser-level issues (control chars, alias bomb) continue to be rejected by yaml.v3 before our method is invoked.
 
-```go
-{
-    name:  "unknown field preserved in Extra",
-    input: "---\ntitle: T\nfeatured: true\n---\n\nbody\n",
-    want:  FrontmatterFields{Title: "T"}, // typed fields
-},
-```
+- [ ] **Step 1.1: Write the failing parse test — unknown key is captured into Extra**
 
-Then, below the table-driven test loop in `TestParseFrontmatterFields`, add a dedicated sub-test that checks `Extra` directly (since the table struct doesn't cover it):
+Append these sub-tests to `note/frontmatter_test.go`. The file currently uses table-driven `TestParseNoteSuccess` / `TestParseNoteErrors` / `TestFormatNote*` etc.; sub-tests can live at the end of the file as standalone `TestXxx` functions. Use standalone functions (not nested `t.Run`) to match the file's existing style:
 
 ```go
-t.Run("Extra preserves unknown keys", func(t *testing.T) {
-    in := "---\ntitle: T\nfeatured: true\ncustom: hello\n---\n\nbody\n"
-    fm := ParseFrontmatterFields([]byte(in))
+func TestParseNoteExtraPreservesUnknownKeys(t *testing.T) {
+    in := []byte("---\ntitle: T\nfeatured: true\ncustom: hello\n---\n\nbody\n")
+    fm, body, err := ParseNote(in)
+    if err != nil {
+        t.Fatalf("ParseNote: %v", err)
+    }
     if fm.Title != "T" {
-        t.Fatalf("Title = %q, want %q", fm.Title, "T")
+        t.Errorf("Title = %q, want %q", fm.Title, "T")
+    }
+    if string(body) != "body\n" {
+        t.Errorf("body = %q, want %q", string(body), "body\n")
     }
     if _, ok := fm.Extra["featured"]; !ok {
         t.Error("Extra missing key 'featured'")
@@ -73,27 +74,28 @@ t.Run("Extra preserves unknown keys", func(t *testing.T) {
     if _, ok := fm.Extra["custom"]; !ok {
         t.Error("Extra missing key 'custom'")
     }
+    featuredNode := fm.Extra["featured"]
     var featured bool
-    if err := fm.Extra["featured"].Decode(&featured); err != nil {
-        t.Errorf("decode featured: %v", err)
+    if err := featuredNode.Decode(&featured); err != nil {
+        t.Fatalf("decode featured: %v", err)
     }
     if !featured {
-        t.Errorf("featured value = %v, want true", featured)
+        t.Errorf("featured = %v, want true", featured)
     }
-})
+}
 ```
 
-- [ ] **Step 1.2: Run tests to verify failure**
+- [ ] **Step 1.2: Run test to verify failure**
 
-Run: `go test ./note/ -run TestParseFrontmatterFields -v`
-Expected: `FAIL` — the `Extra` field does not yet exist on `FrontmatterFields`; compile error.
+Run: `go test ./note/ -run TestParseNoteExtraPreservesUnknownKeys -v`
+Expected: compile error — `fm.Extra` doesn't exist on `Frontmatter`.
 
-- [ ] **Step 1.3: Add the Extra field to FrontmatterFields**
+- [ ] **Step 1.3: Add the `Extra` field to `Frontmatter`**
 
-In `note/frontmatter.go`, modify the struct:
+In `note/frontmatter.go`, modify the struct. The `yaml:"-"` tag keeps the default (un)marshaler from touching it; custom methods will handle Extra explicitly.
 
 ```go
-type FrontmatterFields struct {
+type Frontmatter struct {
     Title       string               `yaml:"title,omitempty"`
     Slug        string               `yaml:"slug,omitempty"`
     Tags        []string             `yaml:"tags,omitempty"`
@@ -103,113 +105,178 @@ type FrontmatterFields struct {
 }
 ```
 
-- [ ] **Step 1.4: Extend the parser to populate Extra**
+- [ ] **Step 1.4: Rewrite `IsZero` to account for Extra**
 
-In `note/frontmatter.go`, inside `ParseFrontmatterFields`, modify the mapping walk so unknown keys land in `Extra`:
+In `note/frontmatter.go`, replace the reflection-based `IsZero`:
 
 ```go
-var f FrontmatterFields
-for i := 0; i+1 < len(mapping.Content); i += 2 {
-    key, value := mapping.Content[i], mapping.Content[i+1]
-    switch key.Value {
-    case "title":
-        _ = value.Decode(&f.Title)
-    case "slug":
-        _ = value.Decode(&f.Slug)
-    case "tags":
-        _ = value.Decode(&f.Tags)
-    case "description":
-        _ = value.Decode(&f.Description)
-    case "public":
-        _ = value.Decode(&f.Public)
-    default:
-        if f.Extra == nil {
-            f.Extra = make(map[string]yaml.Node)
+// IsZero reports whether f has no fields set, including Extra.
+func (f Frontmatter) IsZero() bool {
+    return f.Title == "" && f.Slug == "" && len(f.Tags) == 0 &&
+        f.Description == "" && !f.Public && len(f.Extra) == 0
+}
+```
+
+Remove the `reflect` import (check all its uses in the file first — `grep -n reflect note/frontmatter.go`).
+
+- [ ] **Step 1.5: Add `UnmarshalYAML` on `*Frontmatter`**
+
+Append to `note/frontmatter.go`. This replaces the implicit struct unmarshaler that yaml.v3 would otherwise use; when `yaml.Unmarshal` is called in `ParseNote`, it now dispatches to this method:
+
+```go
+// UnmarshalYAML decodes a mapping node into f. Reserved keys populate the
+// typed fields; unknown keys are captured in f.Extra as yaml.Node values.
+// Duplicate top-level keys are rejected (matching PR #113's strictness).
+func (f *Frontmatter) UnmarshalYAML(node *yaml.Node) error {
+    if node.Kind != yaml.MappingNode {
+        return fmt.Errorf("frontmatter: expected mapping, got kind %d", node.Kind)
+    }
+    seen := make(map[string]bool, len(node.Content)/2)
+    for i := 0; i+1 < len(node.Content); i += 2 {
+        key, value := node.Content[i], node.Content[i+1]
+        if seen[key.Value] {
+            return fmt.Errorf("frontmatter: duplicate key %q", key.Value)
         }
-        f.Extra[key.Value] = *value
+        seen[key.Value] = true
+        switch key.Value {
+        case "title":
+            if err := value.Decode(&f.Title); err != nil {
+                return fmt.Errorf("frontmatter title: %w", err)
+            }
+        case "slug":
+            if err := value.Decode(&f.Slug); err != nil {
+                return fmt.Errorf("frontmatter slug: %w", err)
+            }
+        case "tags":
+            if err := value.Decode(&f.Tags); err != nil {
+                return fmt.Errorf("frontmatter tags: %w", err)
+            }
+        case "description":
+            if err := value.Decode(&f.Description); err != nil {
+                return fmt.Errorf("frontmatter description: %w", err)
+            }
+        case "public":
+            if err := value.Decode(&f.Public); err != nil {
+                return fmt.Errorf("frontmatter public: %w", err)
+            }
+        default:
+            if f.Extra == nil {
+                f.Extra = make(map[string]yaml.Node)
+            }
+            f.Extra[key.Value] = *value
+        }
+    }
+    return nil
+}
+```
+
+- [ ] **Step 1.6: Run the parse test + existing error tests to verify**
+
+Run: `go test ./note/ -run "TestParseNoteExtraPreservesUnknownKeys|TestParseNoteErrors|TestParseNote" -v`
+Expected: PASS. In particular, `TestParseNoteErrors` must still pass — including `duplicate keys rejected`, `non-mapping top level`, `invalid bool value`, `alias bomb`. If any of those fail, debug before proceeding.
+
+- [ ] **Step 1.7: Write the failing marshal test — Extra round-trips in alpha order**
+
+Append to `note/frontmatter_test.go`:
+
+```go
+func TestFormatNoteExtraPreservedInAlphaOrder(t *testing.T) {
+    in := []byte("---\ntitle: T\nzebra: striped\nalpha: 1\nfeatured: true\n---\n\nbody\n")
+    fm, body, err := ParseNote(in)
+    if err != nil {
+        t.Fatalf("ParseNote: %v", err)
+    }
+    out := string(FormatNote(fm, body))
+    // Reserved "title" first; Extra keys alpha-sorted: alpha, featured, zebra.
+    want := "---\ntitle: T\nalpha: 1\nfeatured: true\nzebra: striped\n---\n\nbody\n"
+    if out != want {
+        t.Errorf("FormatNote =\n%q\nwant:\n%q", out, want)
     }
 }
-return f
-```
 
-Note: `*value` takes the pointed-to `yaml.Node` struct as a value so the map entry is independent.
-
-- [ ] **Step 1.5: Run the parse tests to verify they now pass**
-
-Run: `go test ./note/ -run TestParseFrontmatterFields -v`
-Expected: PASS (all cases, including the new `"unknown field preserved in Extra"` entry and the `"Extra preserves unknown keys"` sub-test).
-
-- [ ] **Step 1.6: Write a failing round-trip test for the writer**
-
-Add to `TestBuildFrontmatter` in `note/frontmatter_test.go` (or immediately after, as a sub-test):
-
-```go
-t.Run("round-trip preserves Extra keys in alpha order", func(t *testing.T) {
-    in := "---\ntitle: T\nzebra: striped\nalpha: 1\nfeatured: true\n---\n\nbody\n"
-    fm := ParseFrontmatterFields([]byte(in))
-    out := BuildFrontmatter(fm)
-    // Reserved "title" must come before any Extra keys.
-    // Extra keys must be alpha-sorted: alpha, featured, zebra.
-    want := "---\ntitle: T\nalpha: 1\nfeatured: true\nzebra: striped\n---\n\n"
-    if out != want {
-        t.Errorf("BuildFrontmatter =\n%q\nwant:\n%q", out, want)
-    }
-})
-
-t.Run("empty struct with no Extra emits nothing", func(t *testing.T) {
-    if got := BuildFrontmatter(FrontmatterFields{}); got != "" {
-        t.Errorf("BuildFrontmatter(empty) = %q, want empty", got)
-    }
-})
-
-t.Run("Extra alone emits a valid block", func(t *testing.T) {
-    fm := FrontmatterFields{Extra: map[string]yaml.Node{
+func TestFormatNoteEmptyFrontmatterWithExtraOnly(t *testing.T) {
+    fm := Frontmatter{Extra: map[string]yaml.Node{
         "featured": {Kind: yaml.ScalarNode, Value: "true", Tag: "!!bool"},
     }}
-    out := BuildFrontmatter(fm)
-    want := "---\nfeatured: true\n---\n\n"
-    if out != want {
-        t.Errorf("BuildFrontmatter(Extra only) = %q, want %q", out, want)
+    want := "---\nfeatured: true\n---\n\nbody\n"
+    got := string(FormatNote(fm, []byte("body\n")))
+    if got != want {
+        t.Errorf("got %q, want %q", got, want)
     }
-})
+}
+
+func TestIsZeroIncludesExtra(t *testing.T) {
+    if (Frontmatter{}).IsZero() == false {
+        t.Error("empty Frontmatter should be zero")
+    }
+    fm := Frontmatter{Extra: map[string]yaml.Node{
+        "featured": {Kind: yaml.ScalarNode, Value: "true", Tag: "!!bool"},
+    }}
+    if fm.IsZero() {
+        t.Error("Frontmatter with Extra should not be zero")
+    }
+}
 ```
 
-- [ ] **Step 1.7: Run the writer test to verify failure**
+- [ ] **Step 1.8: Run the marshal tests to verify failure**
 
-Run: `go test ./note/ -run TestBuildFrontmatter -v`
-Expected: FAIL on the round-trip sub-test — current `BuildFrontmatter` uses `yaml.Marshal(f)` which honors the `yaml:"-"` tag and drops Extra; also ignores ordering.
+Run: `go test ./note/ -run "TestFormatNoteExtra|TestIsZero|TestFormatNoteEmpty" -v`
+Expected: `TestFormatNoteExtraPreservedInAlphaOrder` and `TestFormatNoteEmptyFrontmatterWithExtraOnly` FAIL — yaml.v3's default struct marshaler (without `MarshalYAML` defined) emits only the reserved fields, dropping Extra entirely. `TestIsZeroIncludesExtra` passes (IsZero was updated in Step 1.4).
 
-- [ ] **Step 1.8: Rewrite BuildFrontmatter to emit reserved fields then sorted Extra**
+- [ ] **Step 1.9: Add `MarshalYAML` on `Frontmatter`**
 
-Replace `BuildFrontmatter` in `note/frontmatter.go`:
+Append to `note/frontmatter.go`. This composes a `*yaml.Node` manually so field order is controlled and Extra is emitted alpha-sorted:
 
 ```go
-func BuildFrontmatter(f FrontmatterFields) string {
-    if f.Title == "" && f.Slug == "" && len(f.Tags) == 0 &&
-        f.Description == "" && !f.Public && len(f.Extra) == 0 {
-        return ""
+// MarshalYAML composes a mapping node with reserved fields first (in fixed
+// order) and Extra keys alpha-sorted. Zero-valued reserved fields are omitted,
+// matching the `omitempty` struct-tag discipline.
+func (f Frontmatter) MarshalYAML() (interface{}, error) {
+    node := &yaml.Node{Kind: yaml.MappingNode}
+
+    appendString := func(key, value string) {
+        if value == "" {
+            return
+        }
+        valNode := &yaml.Node{}
+        if err := valNode.Encode(value); err == nil {
+            node.Content = append(node.Content,
+                &yaml.Node{Kind: yaml.ScalarNode, Value: key},
+                valNode,
+            )
+        }
+    }
+    appendList := func(key string, value []string) {
+        if len(value) == 0 {
+            return
+        }
+        valNode := &yaml.Node{}
+        if err := valNode.Encode(value); err == nil {
+            node.Content = append(node.Content,
+                &yaml.Node{Kind: yaml.ScalarNode, Value: key},
+                valNode,
+            )
+        }
+    }
+    appendBool := func(key string, value bool) {
+        if !value {
+            return
+        }
+        valNode := &yaml.Node{}
+        if err := valNode.Encode(value); err == nil {
+            node.Content = append(node.Content,
+                &yaml.Node{Kind: yaml.ScalarNode, Value: key},
+                valNode,
+            )
+        }
     }
 
-    // Marshal reserved fields via struct tags to keep yaml.v3 formatting consistent.
-    reserved, err := yaml.Marshal(struct {
-        Title       string   `yaml:"title,omitempty"`
-        Slug        string   `yaml:"slug,omitempty"`
-        Tags        []string `yaml:"tags,omitempty"`
-        Description string   `yaml:"description,omitempty"`
-        Public      bool     `yaml:"public,omitempty"`
-    }{
-        Title:       f.Title,
-        Slug:        f.Slug,
-        Tags:        f.Tags,
-        Description: f.Description,
-        Public:      f.Public,
-    })
-    if err != nil {
-        return ""
-    }
+    appendString("title", f.Title)
+    appendString("slug", f.Slug)
+    appendList("tags", f.Tags)
+    appendString("description", f.Description)
+    appendBool("public", f.Public)
 
-    // Emit Extra entries in alpha order, each as its own yaml mapping line(s).
-    var extra bytes.Buffer
     if len(f.Extra) > 0 {
         keys := make([]string, 0, len(f.Extra))
         for k := range f.Extra {
@@ -217,48 +284,37 @@ func BuildFrontmatter(f FrontmatterFields) string {
         }
         sort.Strings(keys)
         for _, k := range keys {
-            node := f.Extra[k]
-            single := map[string]*yaml.Node{k: &node}
-            kv, err := yaml.Marshal(single)
-            if err != nil {
-                continue
-            }
-            extra.Write(kv)
+            v := f.Extra[k]
+            node.Content = append(node.Content,
+                &yaml.Node{Kind: yaml.ScalarNode, Value: k},
+                &v,
+            )
         }
     }
 
-    return "---\n" + string(reserved) + extra.String() + "---\n\n"
+    return node, nil
 }
 ```
 
-Add the required imports at the top of the file:
+Add the `sort` import at the top of the file if not already present.
 
-```go
-import (
-    "bytes"
-    "sort"
-
-    "gopkg.in/yaml.v3"
-)
-```
-
-`bytes` is already imported; add `sort` if not present. `yaml.v3` is already imported.
-
-- [ ] **Step 1.9: Run all note-package tests to verify the round-trip and existing cases all pass**
+- [ ] **Step 1.10: Run the full test suite to verify**
 
 Run: `go test ./note/ -v`
-Expected: PASS on all existing frontmatter tests and the three new sub-tests.
+Expected: PASS on all existing `TestParseNoteSuccess`, `TestParseNoteErrors`, `TestFormatNoteSnapshotAllFields`, `TestFormatNoteEmptyFrontmatter`, `TestRoundtrip`, and the three new tests from this task.
 
-- [ ] **Step 1.10: Run `make lint` to catch any issues**
+Watch especially for `TestFormatNoteSnapshotAllFields` — the existing snapshot `"---\ntitle: T\nslug: s\ntags:\n    - a\ndescription: D\npublic: true\n---\n\nbody\n"` must still match under the new marshaler. The `appendList` helper uses `valNode.Encode([]string{...})`, which yaml.v3 renders in block style with 4-space indent by default, matching the existing snapshot. If your local yaml.v3 renders it differently, surface as a BLOCKED status — something about the encoder options in the existing code differs from what `Encode` gives us.
+
+- [ ] **Step 1.11: Run `make lint`**
 
 Run: `make lint`
 Expected: clean.
 
-- [ ] **Step 1.11: Commit**
+- [ ] **Step 1.12: Commit**
 
 ```bash
 git add note/frontmatter.go note/frontmatter_test.go
-git commit -m "Preserve unknown frontmatter keys in FrontmatterFields.Extra"
+git commit -m "Preserve unknown frontmatter keys in Frontmatter.Extra"
 ```
 
 ---
@@ -269,50 +325,53 @@ git commit -m "Preserve unknown frontmatter keys in FrontmatterFields.Extra"
 - Modify: `note/frontmatter.go`
 - Test: `note/frontmatter_test.go`
 
-- [ ] **Step 2.1: Write the failing test — Type round-trips through parse and write**
+**Approach.** Add `Type string` to the `Frontmatter` struct between `Slug` and `Tags`. Add a `case "type":` branch in `UnmarshalYAML`. Add `appendString("type", f.Type)` in `MarshalYAML` between the slug and tags emitters. Update `IsZero` to check `Type` too.
 
-Add these sub-tests to `note/frontmatter_test.go`:
+- [ ] **Step 2.1: Write the failing tests — Type round-trips and field order**
+
+Append to `note/frontmatter_test.go`:
 
 ```go
-t.Run("type round-trips as a typed frontmatter field", func(t *testing.T) {
-    in := "---\ntitle: T\ntype: meeting\n---\n\nbody\n"
-    fm := ParseFrontmatterFields([]byte(in))
+func TestTypeRoundTrips(t *testing.T) {
+    in := []byte("---\ntitle: T\ntype: meeting\n---\n\nbody\n")
+    fm, body, err := ParseNote(in)
+    if err != nil {
+        t.Fatalf("ParseNote: %v", err)
+    }
     if fm.Type != "meeting" {
         t.Errorf("Type = %q, want meeting", fm.Type)
     }
-    out := BuildFrontmatter(fm)
-    want := "---\ntitle: T\ntype: meeting\n---\n\n"
+    out := string(FormatNote(fm, body))
+    want := "---\ntitle: T\ntype: meeting\n---\n\nbody\n"
     if out != want {
         t.Errorf("out = %q, want %q", out, want)
     }
-})
+}
 
-t.Run("type field order is title, slug, type, tags, description, public", func(t *testing.T) {
-    fm := FrontmatterFields{
+func TestTypeFieldOrder(t *testing.T) {
+    fm := Frontmatter{
         Title: "T", Slug: "s", Type: "meeting",
         Tags: []string{"a"}, Description: "D", Public: true,
     }
-    got := BuildFrontmatter(fm)
-    want := "---\ntitle: T\nslug: s\ntype: meeting\ntags:\n    - a\ndescription: D\npublic: true\n---\n\n"
+    got := string(FormatNote(fm, []byte("body\n")))
+    want := "---\ntitle: T\nslug: s\ntype: meeting\ntags:\n    - a\ndescription: D\npublic: true\n---\n\nbody\n"
     if got != want {
-        t.Errorf("BuildFrontmatter =\n%q\nwant:\n%q", got, want)
+        t.Errorf("FormatNote =\n%q\nwant:\n%q", got, want)
     }
-})
+}
 ```
-
-Place these inside `TestParseFrontmatterFields` and `TestBuildFrontmatter` respectively, or as separate top-level sub-tests — either works.
 
 - [ ] **Step 2.2: Run to verify failure**
 
-Run: `go test ./note/ -run "TestParseFrontmatterFields|TestBuildFrontmatter" -v`
-Expected: FAIL / compile error — `Type` field does not exist.
+Run: `go test ./note/ -run "TestTypeRoundTrips|TestTypeFieldOrder" -v`
+Expected: compile error — `Type` field does not exist on `Frontmatter`.
 
-- [ ] **Step 2.3: Add `Type` to `FrontmatterFields`**
+- [ ] **Step 2.3: Add `Type` to `Frontmatter`**
 
 In `note/frontmatter.go`, reorder the struct fields so `Type` sits between `Slug` and `Tags`:
 
 ```go
-type FrontmatterFields struct {
+type Frontmatter struct {
     Title       string               `yaml:"title,omitempty"`
     Slug        string               `yaml:"slug,omitempty"`
     Type        string               `yaml:"type,omitempty"`
@@ -323,59 +382,54 @@ type FrontmatterFields struct {
 }
 ```
 
-- [ ] **Step 2.4: Extend the parser to decode `type`**
+- [ ] **Step 2.4: Extend `UnmarshalYAML` to decode `type`**
 
-In `ParseFrontmatterFields`, add a case:
+Add a `case "type":` branch in the switch, next to the other scalar-string cases:
 
 ```go
 case "type":
-    _ = value.Decode(&f.Type)
+    if err := value.Decode(&f.Type); err != nil {
+        return fmt.Errorf("frontmatter type: %w", err)
+    }
 ```
 
-...in the `switch key.Value` block, alphabetically placed is fine (order inside the switch doesn't matter).
+- [ ] **Step 2.5: Extend `MarshalYAML` to emit `type`**
 
-- [ ] **Step 2.5: Extend the writer to emit `type`**
-
-In `BuildFrontmatter`, update both the empty-check and the anonymous struct:
+Insert `appendString("type", f.Type)` between the `slug` and `tags` emitters, matching the field order:
 
 ```go
-if f.Title == "" && f.Slug == "" && f.Type == "" && len(f.Tags) == 0 &&
-    f.Description == "" && !f.Public && len(f.Extra) == 0 {
-    return ""
-}
-
-reserved, err := yaml.Marshal(struct {
-    Title       string   `yaml:"title,omitempty"`
-    Slug        string   `yaml:"slug,omitempty"`
-    Type        string   `yaml:"type,omitempty"`
-    Tags        []string `yaml:"tags,omitempty"`
-    Description string   `yaml:"description,omitempty"`
-    Public      bool     `yaml:"public,omitempty"`
-}{
-    Title:       f.Title,
-    Slug:        f.Slug,
-    Type:        f.Type,
-    Tags:        f.Tags,
-    Description: f.Description,
-    Public:      f.Public,
-})
+appendString("title", f.Title)
+appendString("slug", f.Slug)
+appendString("type", f.Type)
+appendList("tags", f.Tags)
+appendString("description", f.Description)
+appendBool("public", f.Public)
 ```
 
-- [ ] **Step 2.6: Run tests to verify pass**
+- [ ] **Step 2.6: Update `IsZero` to include `Type`**
+
+```go
+func (f Frontmatter) IsZero() bool {
+    return f.Title == "" && f.Slug == "" && f.Type == "" && len(f.Tags) == 0 &&
+        f.Description == "" && !f.Public && len(f.Extra) == 0
+}
+```
+
+- [ ] **Step 2.7: Run tests to verify pass**
 
 Run: `go test ./note/ -v`
 Expected: PASS on all existing and new cases.
 
-- [ ] **Step 2.7: Lint**
+- [ ] **Step 2.8: Lint**
 
 Run: `make lint`
 Expected: clean.
 
-- [ ] **Step 2.8: Commit**
+- [ ] **Step 2.9: Commit**
 
 ```bash
 git add note/frontmatter.go note/frontmatter_test.go
-git commit -m "Add Type to FrontmatterFields"
+git commit -m "Add Type to Frontmatter"
 ```
 
 ---
@@ -632,20 +686,34 @@ Also remove the now-unused `strings` import if it isn't used elsewhere in the fi
 
 - [ ] **Step 5.4: Include `Type` in the frontmatter in `createNote`**
 
-In `internal/cli/create.go`, update the `BuildFrontmatter` call:
+In `internal/cli/create.go`, update the `note.Frontmatter{}` literal passed to `FormatNote`. The current code (as of `b30f330`):
 
 ```go
-content := note.BuildFrontmatter(note.FrontmatterFields{
+fm := note.Frontmatter{
+    Title:       p.Title,
+    Slug:        p.Slug,
+    Tags:        p.Tags,
+    Description: p.Description,
+    Public:      p.Public,
+}
+content := note.FormatNote(fm, []byte(p.Body))
+```
+
+Add `Type: p.Type` between `Slug` and `Tags`:
+
+```go
+fm := note.Frontmatter{
     Title:       p.Title,
     Slug:        p.Slug,
     Type:        p.Type,
     Tags:        p.Tags,
     Description: p.Description,
     Public:      p.Public,
-})
+}
+content := note.FormatNote(fm, []byte(p.Body))
 ```
 
-The `Type` field in `createNoteParams` already exists (line 16); it was only being written to the filename, not the frontmatter.
+The `Type` field in `createNoteParams` already exists; it was only being written to the filename, not the frontmatter.
 
 - [ ] **Step 5.5: Run tests to verify pass**
 
@@ -946,8 +1014,10 @@ var updateCmd = &cobra.Command{
             return fmt.Errorf("cannot read note: %w", err)
         }
 
-        existing := note.ParseFrontmatterFields(data)
-        body := note.StripFrontmatter(data)
+        existing, body, err := note.ParseNote(data)
+        if err != nil {
+            return fmt.Errorf("%s: %w", oldPath, err)
+        }
 
         // frontmatter is canonical; filename values are fallbacks only.
         if existing.Slug == "" {
@@ -996,8 +1066,8 @@ var updateCmd = &cobra.Command{
             cmd.Flags().Changed("public") || updatePrivate
 
         if contentChanged {
-            newContent := note.BuildFrontmatter(updated) + string(body)
-            if err := writeAtomic(oldPath, []byte(newContent)); err != nil {
+            newContent := note.FormatNote(updated, body)
+            if err := writeAtomic(oldPath, newContent); err != nil {
                 return err
             }
         }
@@ -1093,9 +1163,9 @@ Write `SCHEMA.md` at the repo root with this content:
 ```markdown
 # Note frontmatter schema
 
-Reserved keys are the fields declared on `FrontmatterFields` in
+Reserved keys are the fields declared on `Frontmatter` in
 `github.com/dreikanter/notes-cli/note`. Any key not listed below is
-preserved verbatim on read/write (stored in `FrontmatterFields.Extra`)
+preserved verbatim on read/write (stored in `Frontmatter.Extra`)
 and ignored by notes-cli itself.
 
 Downstream projects (notes-pub, notes-view) and users are free to
@@ -1149,14 +1219,14 @@ is called out in `CHANGELOG.md` when a new reserved key is added.
 Any other top-level key is preserved untouched by notes-cli. Nested
 structures (mappings, sequences) are preserved intact.
 
-Keys duplicated within the same mapping resolve per yaml.v3 defaults
-(typically last-value-wins). Non-string keys and anchors/aliases in
-the YAML tree are preserved as-is but are not specifically tested
-in notes-cli; use at your own risk.
+Duplicate top-level keys are rejected at the document level (per
+PR #113). Non-string keys and anchors/aliases in the YAML tree
+are preserved inside `Extra` values as-is but are not specifically
+tested in notes-cli; use at your own risk.
 
 ## Process
 
-Adding a key to `FrontmatterFields` requires updating this file in
+Adding a key to `Frontmatter` requires updating this file in
 the same PR. `CHANGELOG.md` entries reference both the PR and the
 new schema entry.
 ```
@@ -1177,40 +1247,39 @@ git commit -m "Add SCHEMA.md documenting reserved frontmatter keys"
 
 - [ ] **Step 8.1: Determine the next version**
 
-Run: `git describe --tags`
-Expected: something like `v0.1.71` (most recent tag). The next PR merge will bump the patch to `v0.1.72`. If the output shows a higher version already, use whatever the next patch is.
+Run: `git describe --tags` and inspect the top of `CHANGELOG.md` — the highest-numbered `[0.1.x]` heading plus one is the next version. As of `b30f330` the CHANGELOG top entry is `[0.1.72]`, so this plan's entry is `[0.1.73]`. If the changelog has moved further, use the actual next patch.
 
-- [ ] **Step 8.2: Add a `[0.1.72]` entry at the top of the `## [0.1.71]` block**
+- [ ] **Step 8.2: Add a `[0.1.73]` entry at the top**
 
-Insert above the existing `## [0.1.71] - 2026-04-19` heading in `CHANGELOG.md`:
+Insert above the existing `## [0.1.72]` heading in `CHANGELOG.md`:
 
 ```markdown
-## [0.1.72] - 2026-04-19
+## [0.1.73] - 2026-04-19
 
 ### Changed
 
-- Note frontmatter format: unknown keys are now preserved through `notes update` and any future format-rewriting command (`FrontmatterFields.Extra`), enabling downstream tools and users to add custom fields without waiting for a notes-cli release. `type` moves from filename-only to a typed frontmatter field (filename still cached as a `.type` dot-suffix). `KnownTypes`/`IsKnownType` renamed to `TypesWithSpecialBehavior`/`HasSpecialBehavior` — the list is now a soft registry, not a validation gate; any string is a valid `type` value. `notes update` no longer auto-renames on `--slug`/`--type` changes; use the new `--sync-filename` flag to explicitly reconcile the filename with frontmatter. A repo-root `SCHEMA.md` documents reserved frontmatter keys. See [design spec](docs/superpowers/specs/2026-04-19-notes-schema-protocol-design.md) and [#104]. ([#TBD])
+- Note frontmatter format: unknown keys are now preserved through `notes update` and any other format-rewriting command (via `Frontmatter.Extra`), enabling downstream tools and users to add custom fields without waiting for a notes-cli release. `type` moves from filename-only to a typed frontmatter field (filename still cached as a `.type` dot-suffix). `KnownTypes`/`IsKnownType` renamed to `TypesWithSpecialBehavior`/`HasSpecialBehavior` — the list is now a soft registry, not a validation gate; any string is a valid `type` value. `notes update` no longer auto-renames on `--slug`/`--type` changes; use the new `--sync-filename` flag to explicitly reconcile the filename with frontmatter. A repo-root `SCHEMA.md` documents reserved frontmatter keys. See [design spec](docs/superpowers/specs/2026-04-19-notes-schema-protocol-design.md) and [#104]. ([#TBD])
 ```
 
-(Replace `#TBD` with the PR number once the PR is opened; this is a plan-time placeholder that the engineer fills in when creating the PR.)
+(Replace `#TBD` with the PR number once the PR is opened; this is a plan-time placeholder.)
 
-Also add the bottom-of-file link reference. Find the existing link-reference block (e.g., `[#110]: https://github.com/...`) and add a line for the new PR number when it exists. At plan execution time, leave a placeholder or add the link in the PR-creation step.
+Also add a link-reference line at the bottom of the file for the new PR, matching the `[#110]: https://github.com/...` style.
 
 - [ ] **Step 8.3: Verify the format matches existing entries**
 
 Run: `head -15 CHANGELOG.md`
-Expected: the new `## [0.1.72]` entry sits at the top, in the same shape as `## [0.1.71]`.
+Expected: the new `## [0.1.73]` entry sits at the top, in the same shape as `## [0.1.72]`.
 
-- [ ] **Step 8.4: Lint / test (sanity — no code changed, but catch typos)**
+- [ ] **Step 8.4: Lint / test (sanity)**
 
 Run: `make test`
-Expected: PASS (no regressions).
+Expected: PASS.
 
 - [ ] **Step 8.5: Commit**
 
 ```bash
 git add CHANGELOG.md
-git commit -m "CHANGELOG: v0.1.72 — schema protocol"
+git commit -m "CHANGELOG: v0.1.73 — schema protocol"
 ```
 
 ---
@@ -1273,9 +1342,9 @@ Then update `CHANGELOG.md` to replace `#TBD` with the actual PR number, and push
 
 Run through the spec once the plan is complete:
 
-- [x] **Data model — `Type` and `Extra` added.** Covered by Task 1 (Extra) and Task 2 (Type).
-- [x] **Parser preserves unknowns.** Task 1 Step 1.4.
-- [x] **Writer emits reserved fields first, then Extra alpha-sorted.** Task 1 Step 1.8.
+- [x] **Data model — `Type` and `Extra` added.** Covered by Task 1 (Extra via custom marshalers) and Task 2 (Type).
+- [x] **Parser preserves unknowns.** Task 1 Step 1.5 (`UnmarshalYAML` default case).
+- [x] **Writer emits reserved fields first, then Extra alpha-sorted.** Task 1 Step 1.9 (`MarshalYAML` composes a node).
 - [x] **KnownTypes renamed to TypesWithSpecialBehavior (soft registry, not a gate).** Task 3, Task 5 (drops gate in `new`), Task 6 (drops gate in `update`).
 - [x] **ParseFilename accepts any dot-suffix.** Task 4.
 - [x] **notes new writes Type to fm; always caches slug/type in filename.** Task 5.
