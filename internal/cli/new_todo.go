@@ -66,9 +66,10 @@ var newTodoCmd = &cobra.Command{
 		}
 
 		fullPath := filepath.Join(dir, filename)
-		content := note.FormatTodoContent(carriedTasks)
+		body := []byte(note.FormatTodoContent(carriedTasks))
+		content := note.FormatNote(note.Frontmatter{Type: "todo"}, body)
 
-		if err := os.WriteFile(fullPath, []byte(content), 0o644); err != nil {
+		if err := os.WriteFile(fullPath, content, 0o644); err != nil {
 			return fmt.Errorf("cannot write todo: %w", err)
 		}
 

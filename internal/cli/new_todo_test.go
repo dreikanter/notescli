@@ -120,6 +120,21 @@ func TestNewTodoNoPreviousCreatesEmpty(t *testing.T) {
 	}
 }
 
+func TestNewTodoWritesTypeFrontmatter(t *testing.T) {
+	root := copyTestdata(t)
+	out, err := runNewTodo(t, root)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	data, err := os.ReadFile(out)
+	if err != nil {
+		t.Fatalf("read: %v", err)
+	}
+	if !strings.Contains(string(data), "type: todo") {
+		t.Errorf("expected type: todo in frontmatter, got:\n%s", string(data))
+	}
+}
+
 func TestNewTodoForceOnlyTodayExists(t *testing.T) {
 	root := emptyNotesRoot(t)
 
