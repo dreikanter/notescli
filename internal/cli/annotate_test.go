@@ -17,6 +17,7 @@ func runAnnotate(t *testing.T, root string, args ...string) (string, error) {
 
 	annotateCmd.ResetFlags()
 	annotateCmd.Flags().String("model", annotateDefaultModel, "Claude model to use")
+	annotateCmd.Flags().Int("max-chars", 0, "truncate note body to this many characters before annotating (0 = no limit)")
 
 	buf := new(bytes.Buffer)
 	rootCmd.SetOut(buf)
@@ -513,6 +514,51 @@ func TestAnnotatePreservesBody(t *testing.T) {
 	got := string(data)[idx+len("\n---\n\n"):]
 	if got != body {
 		t.Errorf("body modified.\ngot:\n%q\nwant:\n%q", got, body)
+	}
+}
+
+func TestAnnotateMaxCharsTruncates(t *testing.T) {
+	body := strings.Repeat("a", 5000)
+	root, ref := noteWithOnlyBody(t, body)
+	argsPath := filepath.Join(t.TempDir(), "args.txt")
+	withClaudeBinary(t, writeFakeClaudeRecording(t, annotateSampleEnvelope, argsPath))
+
+	_, err := runAnnotate(t, root, ref, "--max-chars", "100")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	data, err := os.ReadFile(argsPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	argv := strings.Split(strings.TrimRight(string(data), "\n"), "\n")
+	// The body is the final positional argv entry.
+	sentBody := argv[len(argv)-1]
+	if len(sentBody) != 100 {
+		t.Errorf("expected body truncated to 100 chars, got %d: %q", len(sentBody), sentBody)
+	}
+}
+
+func TestAnnotateMaxCharsZeroLeavesBodyUntouched(t *testing.T) {
+	body := strings.Repeat("a", 5000)
+	root, ref := noteWithOnlyBody(t, body)
+	argsPath := filepath.Join(t.TempDir(), "args.txt")
+	withClaudeBinary(t, writeFakeClaudeRecording(t, annotateSampleEnvelope, argsPath))
+
+	_, err := runAnnotate(t, root, ref)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	data, err := os.ReadFile(argsPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	argv := strings.Split(strings.TrimRight(string(data), "\n"), "\n")
+	sentBody := argv[len(argv)-1]
+	if len(sentBody) != len(body) {
+		t.Errorf("expected full body (%d chars) sent, got %d", len(body), len(sentBody))
 	}
 }
 

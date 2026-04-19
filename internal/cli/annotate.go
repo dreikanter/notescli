@@ -51,6 +51,7 @@ var annotateCmd = &cobra.Command{
 
 func annotateRunE(cmd *cobra.Command, args []string) error {
 	model, _ := cmd.Flags().GetString("model")
+	maxChars, _ := cmd.Flags().GetInt("max-chars")
 
 	root := mustNotesPath()
 	n, err := note.ResolveRef(root, args[0])
@@ -77,8 +78,16 @@ func annotateRunE(cmd *cobra.Command, args []string) error {
 		return errors.New("note has no body content to annotate")
 	}
 
+	prompt := string(body)
+	if maxChars > 0 {
+		if runes := []rune(prompt); len(runes) > maxChars {
+			prompt = string(runes[:maxChars])
+			fmt.Fprintf(cmd.ErrOrStderr(), "truncated note body to %d chars for annotation\n", maxChars)
+		}
+	}
+
 	schema := buildAnnotateSchema(empty)
-	out, err := runClaude(model, schema, string(body))
+	out, err := runClaude(model, schema, prompt)
 	if err != nil {
 		return err
 	}
@@ -233,5 +242,6 @@ func mergeAnnotation(existing note.FrontmatterFields, gen annotateResult) note.F
 
 func init() {
 	annotateCmd.Flags().String("model", annotateDefaultModel, "Claude model to use")
+	annotateCmd.Flags().Int("max-chars", 0, "truncate note body to this many characters before annotating (0 = no limit)")
 	rootCmd.AddCommand(annotateCmd)
 }
