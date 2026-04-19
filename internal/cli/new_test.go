@@ -14,7 +14,7 @@ func runNew(t *testing.T, root string, stdin string, args ...string) (string, er
 
 	newCmd.ResetFlags()
 	newCmd.Flags().String("slug", "", "descriptive slug appended to filename")
-	newCmd.Flags().String("type", "", "note type (todo, backlog, weekly)")
+	newCmd.Flags().String("type", "", "note type (free-form; todo/backlog/weekly get special behavior)")
 	newCmd.Flags().StringSlice("tag", nil, "tag for frontmatter (repeatable)")
 	newCmd.Flags().String("description", "", "description for frontmatter")
 	newCmd.Flags().String("title", "", "title for frontmatter")
@@ -85,14 +85,6 @@ func TestNewWithType(t *testing.T) {
 	}
 	if !strings.Contains(filepath.Base(out), ".todo.") {
 		t.Errorf("expected type in filename, got %q", filepath.Base(out))
-	}
-}
-
-func TestNewInvalidTypeErrors(t *testing.T) {
-	root := copyTestdata(t)
-	_, err := runNew(t, root, "", "--type", "invalid")
-	if err == nil {
-		t.Fatal("expected error for unknown type, got nil")
 	}
 }
 
@@ -249,5 +241,38 @@ func TestNewWithoutUpsertAlwaysCreates(t *testing.T) {
 
 	if first == second {
 		t.Error("expected different paths without --upsert, got same path")
+	}
+}
+
+func TestNewWithCustomType(t *testing.T) {
+	root := copyTestdata(t)
+	out, err := runNew(t, root, "", "--type", "meeting", "--slug", "sync")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if !strings.Contains(filepath.Base(out), "sync.meeting.md") {
+		t.Errorf("expected slug+type cache in filename, got %q", filepath.Base(out))
+	}
+	data, err := os.ReadFile(out)
+	if err != nil {
+		t.Fatalf("read: %v", err)
+	}
+	if !strings.Contains(string(data), "type: meeting") {
+		t.Errorf("expected type: meeting in frontmatter, got:\n%s", string(data))
+	}
+}
+
+func TestNewWithKnownTypeStillWrites(t *testing.T) {
+	root := copyTestdata(t)
+	out, err := runNew(t, root, "", "--type", "todo")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if !strings.HasSuffix(filepath.Base(out), ".todo.md") {
+		t.Errorf("expected .todo.md suffix, got %q", filepath.Base(out))
+	}
+	data, _ := os.ReadFile(out)
+	if !strings.Contains(string(data), "type: todo") {
+		t.Errorf("expected type: todo in frontmatter, got:\n%s", string(data))
 	}
 }

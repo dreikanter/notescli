@@ -43,6 +43,7 @@ func createNote(p createNoteParams) (string, error) {
 	fm := note.Frontmatter{
 		Title:       p.Title,
 		Slug:        p.Slug,
+		Type:        p.Type,
 		Tags:        p.Tags,
 		Description: p.Description,
 		Public:      p.Public,

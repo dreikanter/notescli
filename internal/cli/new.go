@@ -5,7 +5,6 @@ import (
 	"io"
 	"os"
 	"path/filepath"
-	"strings"
 	"time"
 
 	"github.com/dreikanter/notes-cli/note"
@@ -25,10 +24,6 @@ var newCmd = &cobra.Command{
 		publicFlag, _ := cmd.Flags().GetBool("public")
 		privateFlag, _ := cmd.Flags().GetBool("private")
 		upsert, _ := cmd.Flags().GetBool("upsert")
-
-		if noteType != "" && !note.HasSpecialBehavior(noteType) {
-			return fmt.Errorf("unknown note type %q (valid types: %s)", noteType, strings.Join(note.TypesWithSpecialBehavior, ", "))
-		}
 
 		if err := note.ValidateSlug(slug); err != nil {
 			return err
@@ -99,7 +94,7 @@ func isTerminal(f *os.File) bool {
 
 func init() {
 	newCmd.Flags().String("slug", "", "descriptive slug appended to filename")
-	newCmd.Flags().String("type", "", "note type (todo, backlog, weekly)")
+	newCmd.Flags().String("type", "", "note type (free-form; todo/backlog/weekly get special behavior)")
 	newCmd.Flags().StringSlice("tag", nil, "tag for frontmatter (repeatable)")
 	newCmd.Flags().String("description", "", "description for frontmatter")
 	newCmd.Flags().String("title", "", "title for frontmatter")
