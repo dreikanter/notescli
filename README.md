@@ -85,7 +85,7 @@ echo "text" | notes append --type todo --today
 notes rm 8823
 notes rm meeting --today
 
-# Update frontmatter and rename a note
+# Update frontmatter (does not rename the file — see --sync-filename below)
 notes update 8823 --title "New Title"
 notes update 8823 --tag work --tag planning
 notes update 8823 --slug meeting
@@ -95,6 +95,10 @@ notes update 8823 --no-type
 notes update 8823 --no-tags
 notes update 8823 --public
 notes update 8823 --private
+
+# Reconcile filename with frontmatter (slug/type cache)
+notes update 8823 --sync-filename                     # rename to match current fm
+notes update 8823 --slug meeting --sync-filename      # fm change + rename
 
 # Search note contents
 notes grep "search pattern"

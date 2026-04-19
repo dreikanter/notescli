@@ -56,7 +56,7 @@ func applyFilters(notes []note.Note, root string, f filterOpts) ([]note.Note, er
 // addFilterFlags registers the common filter flags on a command.
 func addFilterFlags(cmd *cobra.Command) {
 	cmd.Flags().Bool("today", false, "only match notes created today")
-	cmd.Flags().StringSlice("type", nil, "filter by note type (repeatable)")
+	cmd.Flags().StringSlice("type", nil, "filter by note type from filename suffix (repeatable; use update --sync-filename to reconcile after fm edits)")
 	cmd.Flags().String("slug", "", "filter by slug")
 	cmd.Flags().StringSlice("tag", nil, "filter by tag (repeatable, all must match)")
 }
