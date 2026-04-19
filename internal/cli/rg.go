@@ -18,7 +18,7 @@ The following flags are injected automatically: --glob *.md, --sortr path, --hea
 	SilenceErrors:      true,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		for _, arg := range args {
-			if arg == "--help" {
+			if arg == "--help" || arg == "-h" {
 				return cmd.Help()
 			}
 		}
