@@ -71,6 +71,11 @@ notes read --type todo --no-frontmatter
 notes edit todo
 notes edit meeting
 
+# Fill empty frontmatter (title, description, tags) using Claude Code CLI
+notes annotate 8823
+notes annotate meeting --model claude-sonnet-4-6
+notes annotate 8823 --max-chars 4000   # truncate body before sending
+
 # Append stdin text to a note
 echo "text" | notes append 8823
 echo "text" | notes append --type todo
