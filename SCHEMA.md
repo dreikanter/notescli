@@ -56,10 +56,10 @@ is called out in `CHANGELOG.md` when a new reserved key is added.
 Any other top-level key is preserved untouched by notes-cli. Nested
 structures (mappings, sequences) are preserved intact.
 
-Duplicate top-level keys are rejected at the document level (per
-PR #113). Non-string keys and anchors/aliases in the YAML tree
-are preserved inside `Extra` values as-is but are not specifically
-tested in notes-cli; use at your own risk.
+Duplicate top-level keys are rejected at the document level.
+Non-scalar keys are rejected. Anchors and aliases in the YAML
+tree are preserved inside `Extra` values as-is but are not
+specifically tested in notes-cli; use at your own risk.
 
 ## Process
 
