@@ -65,11 +65,10 @@ var updateCmd = &cobra.Command{
 			return fmt.Errorf("cannot read note: %w", err)
 		}
 
-		existing := note.ParseFrontmatterFields(data)
-		body := note.StripFrontmatter(data)
-
-		// Merge frontmatter updates.
-		updated := existing
+		updated, body, err := note.ParseNote(data)
+		if err != nil {
+			return fmt.Errorf("%s: %w", oldPath, err)
+		}
 
 		if cmd.Flags().Changed("title") {
 			updated.Title = updateTitle
@@ -114,10 +113,10 @@ var updateCmd = &cobra.Command{
 		dir := filepath.Dir(oldPath)
 		newPath := filepath.Join(dir, newFilename)
 
-		newContent := note.BuildFrontmatter(updated) + string(body)
+		newContent := note.FormatNote(updated, body)
 
 		tmpPath := newPath + ".tmp"
-		if err := os.WriteFile(tmpPath, []byte(newContent), 0o644); err != nil {
+		if err := os.WriteFile(tmpPath, newContent, 0o644); err != nil {
 			return fmt.Errorf("cannot write note: %w", err)
 		}
 		if err := os.Rename(tmpPath, newPath); err != nil {

@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.1.72] - 2026-04-19
+
+### Changed
+
+- `notes update` and `notes annotate` now fail with a clear error when the target note has malformed frontmatter, instead of silently dropping bad fields and rewriting the file ([#112])
+- `notes ls --tag` and `notes tags` log a per-note warning to stderr for any note with unparseable frontmatter and skip it, instead of silently treating it as tagless ([#112])
+- Stricter frontmatter parsing: duplicate keys, non-mapping top-level documents, control characters, and type mismatches are now rejected at the document level; previously the parser preserved siblings of a bad field ([#112])
+- CRLF line endings inside the note body are now preserved verbatim through read/write round-trips ([#112])
+
 ## [0.1.71] - 2026-04-19
 
 ### Changed
@@ -441,3 +450,4 @@
 [#108]: https://github.com/dreikanter/notes-cli/pull/108
 [#109]: https://github.com/dreikanter/notes-cli/pull/109
 [#110]: https://github.com/dreikanter/notes-cli/issues/110
+[#112]: https://github.com/dreikanter/notes-cli/issues/112

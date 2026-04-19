@@ -2,18 +2,24 @@ package note
 
 import (
 	"bytes"
+	"context"
+	"log"
 	"os"
 	"path/filepath"
 	"runtime"
 	"sort"
 	"sync"
+
+	"golang.org/x/sync/errgroup"
 )
 
 // ExtractTags scans the note store under root and returns a sorted,
 // deduplicated list of tags. Sources: frontmatter `tags:` fields and body
 // hashtags (#word) in the prose. File reads run concurrently across
-// runtime.NumCPU() workers. Returns a nil slice for an empty store. If any
-// file read fails, the first such error is returned after all workers drain.
+// runtime.NumCPU() workers. Returns a nil slice for an empty store.
+// A per-note frontmatter parse error is logged via log.Printf and the
+// note's frontmatter tags are skipped (body hashtags are still collected).
+// Any file-read error aborts the scan.
 func ExtractTags(root string) ([]string, error) {
 	notes, err := Scan(root)
 	if err != nil {
@@ -28,58 +34,56 @@ func ExtractTags(root string) ([]string, error) {
 		workers = len(notes)
 	}
 
+	g, ctx := errgroup.WithContext(context.Background())
 	jobs := make(chan Note)
-	results := make(chan map[string]struct{}, workers)
-	errCh := make(chan error, workers)
-	var wg sync.WaitGroup
+	var mu sync.Mutex
+	merged := make(map[string]struct{})
+
+	g.Go(func() error {
+		defer close(jobs)
+		for _, n := range notes {
+			select {
+			case <-ctx.Done():
+				return ctx.Err()
+			case jobs <- n:
+			}
+		}
+		return nil
+	})
 
 	for i := 0; i < workers; i++ {
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
+		g.Go(func() error {
 			local := make(map[string]struct{})
-			var workerErr error
 			for n := range jobs {
-				data, err := os.ReadFile(filepath.Join(root, n.RelPath))
+				path := filepath.Join(root, n.RelPath)
+				data, err := os.ReadFile(path)
 				if err != nil {
-					if workerErr == nil {
-						workerErr = err
-					}
-					continue
+					return err
 				}
-				for _, t := range ParseFrontmatterFields(data).Tags {
+				fm, body, parseErr := ParseNote(data)
+				if parseErr != nil {
+					log.Printf("warn: %s: %v", path, parseErr)
+				}
+				for _, t := range fm.Tags {
 					if t != "" {
 						local[t] = struct{}{}
 					}
 				}
-				for _, t := range extractHashtags(StripFrontmatter(data)) {
+				for _, t := range extractHashtags(body) {
 					local[t] = struct{}{}
 				}
 			}
-			results <- local
-			errCh <- workerErr
-		}()
+			mu.Lock()
+			for t := range local {
+				merged[t] = struct{}{}
+			}
+			mu.Unlock()
+			return nil
+		})
 	}
 
-	for _, n := range notes {
-		jobs <- n
-	}
-	close(jobs)
-	wg.Wait()
-	close(results)
-	close(errCh)
-
-	for err := range errCh {
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	merged := make(map[string]struct{})
-	for local := range results {
-		for t := range local {
-			merged[t] = struct{}{}
-		}
+	if err := g.Wait(); err != nil {
+		return nil, err
 	}
 
 	out := make([]string, 0, len(merged))

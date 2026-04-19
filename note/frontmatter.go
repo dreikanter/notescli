@@ -2,14 +2,17 @@ package note
 
 import (
 	"bytes"
+	"fmt"
+	"reflect"
 
 	"gopkg.in/yaml.v3"
 )
 
-var frontmatterDelim = []byte("---")
+const frontmatterDelim = "---"
 
-// FrontmatterFields holds optional fields for note frontmatter.
-type FrontmatterFields struct {
+// Frontmatter holds optional fields for note frontmatter.
+// Adding a field is a one-line struct addition — no other changes required.
+type Frontmatter struct {
 	Title       string   `yaml:"title,omitempty"`
 	Slug        string   `yaml:"slug,omitempty"`
 	Tags        []string `yaml:"tags,omitempty"`
@@ -17,111 +20,108 @@ type FrontmatterFields struct {
 	Public      bool     `yaml:"public,omitempty"`
 }
 
-// BuildFrontmatter generates YAML frontmatter from the given fields.
-// Returns empty string if no fields are provided.
-func BuildFrontmatter(f FrontmatterFields) string {
-	if f.Title == "" && f.Slug == "" && len(f.Tags) == 0 && f.Description == "" && !f.Public {
-		return ""
-	}
+// IsZero reports whether f has no fields set.
+func (f Frontmatter) IsZero() bool {
+	return reflect.ValueOf(f).IsZero()
+}
 
+// ParseNote splits a note file into its frontmatter and body.
+// If no frontmatter block is present, the zero Frontmatter is returned along
+// with the full input as body and a nil error.
+// If the frontmatter block is present but malformed, a non-nil error is
+// returned along with the zero Frontmatter; the body is still returned as
+// a sub-slice so bulk readers can fall back to body-only processing.
+// The returned body is always a sub-slice of the input — no allocation.
+func ParseNote(data []byte) (Frontmatter, []byte, error) {
+	bodyStart, fmEnd, ok := frontmatterEnd(data)
+	if !ok {
+		return Frontmatter{}, data, nil
+	}
+	yamlStart := len(frontmatterDelim) + 1
+	var f Frontmatter
+	if err := yaml.Unmarshal(data[yamlStart:fmEnd], &f); err != nil {
+		return Frontmatter{}, data[bodyStart:], fmt.Errorf("parse frontmatter: %w", err)
+	}
+	return f, data[bodyStart:], nil
+}
+
+// FormatNote serialises frontmatter followed by body. Omits the frontmatter
+// block entirely when f.IsZero(). yaml.Marshal cannot fail for this struct,
+// so marshal errors are treated as impossible and cause a panic.
+func FormatNote(f Frontmatter, body []byte) []byte {
+	if f.IsZero() {
+		return body
+	}
 	out, err := yaml.Marshal(f)
 	if err != nil {
-		return ""
+		panic(fmt.Sprintf("yaml.Marshal Frontmatter: %v", err))
 	}
-	return "---\n" + string(out) + "---\n\n"
+	const prefix = "---\n"
+	const suffix = "---\n\n"
+	buf := make([]byte, 0, len(prefix)+len(out)+len(suffix)+len(body))
+	buf = append(buf, prefix...)
+	buf = append(buf, out...)
+	buf = append(buf, suffix...)
+	buf = append(buf, body...)
+	return buf
 }
 
-// ParseFrontmatterFields extracts all frontmatter fields from data.
-// Returns zero-value FrontmatterFields if no valid frontmatter block is
-// present or if the YAML inside the block is not a mapping.
-//
-// Per-field errors are tolerated: a single field whose value cannot be
-// decoded into its target type (e.g. `public: maybe`) is skipped, and the
-// remaining fields still parse. This matches the old line-based parser's
-// graceful degradation on partially malformed notes.
-func ParseFrontmatterFields(data []byte) FrontmatterFields {
-	body, _, ok := findFrontmatterBlock(data)
-	if !ok {
-		return FrontmatterFields{}
-	}
-
-	var doc yaml.Node
-	if err := yaml.Unmarshal(body, &doc); err != nil {
-		return FrontmatterFields{}
-	}
-	if doc.Kind != yaml.DocumentNode || len(doc.Content) == 0 {
-		return FrontmatterFields{}
-	}
-	mapping := doc.Content[0]
-	if mapping.Kind != yaml.MappingNode {
-		return FrontmatterFields{}
-	}
-
-	var f FrontmatterFields
-	for i := 0; i+1 < len(mapping.Content); i += 2 {
-		key, value := mapping.Content[i], mapping.Content[i+1]
-		switch key.Value {
-		case "title":
-			_ = value.Decode(&f.Title)
-		case "slug":
-			_ = value.Decode(&f.Slug)
-		case "tags":
-			_ = value.Decode(&f.Tags)
-		case "description":
-			_ = value.Decode(&f.Description)
-		case "public":
-			_ = value.Decode(&f.Public)
-		}
-	}
-	return f
-}
-
-// StripFrontmatter removes YAML frontmatter from the beginning of data.
-// Frontmatter must start on the first line with "---" and end with a
-// subsequent "---" line. Exactly one blank line after the closing
-// delimiter is also consumed.
+// StripFrontmatter returns data with any leading frontmatter block removed.
+// If no valid frontmatter block is present, data is returned unchanged.
+// Convenience for callers that want the body without parsing (e.g.
+// `notes read --no-frontmatter`).
 func StripFrontmatter(data []byte) []byte {
-	_, after, ok := findFrontmatterBlock(data)
+	bodyStart, _, ok := frontmatterEnd(data)
 	if !ok {
 		return data
 	}
-	if len(after) > 0 && after[0] == '\n' {
-		return after[1:]
-	}
-	if len(after) > 1 && after[0] == '\r' && after[1] == '\n' {
-		return after[2:]
-	}
-	return after
+	return data[bodyStart:]
 }
 
-// findFrontmatterBlock locates the YAML frontmatter block at the start of data.
-// Returns the body between the opening/closing "---" delimiter lines and the
-// remaining data after the closing delimiter's newline.
-func findFrontmatterBlock(data []byte) (body, after []byte, ok bool) {
-	if !bytes.HasPrefix(data, frontmatterDelim) {
-		return nil, nil, false
+// frontmatterEnd locates the YAML frontmatter block at the start of data.
+// Returns fmEnd (end of the YAML content — i.e. start of the closing "---"
+// line, exclusive), bodyStart (index after the closing delimiter line and
+// one optional blank line), and ok=true if a valid block was found.
+func frontmatterEnd(data []byte) (bodyStart, fmEnd int, ok bool) {
+	delim := []byte(frontmatterDelim)
+	if !bytes.HasPrefix(data, delim) {
+		return 0, 0, false
 	}
-	rest := data[len(frontmatterDelim):]
-	idx := bytes.IndexByte(rest, '\n')
-	if idx < 0 {
-		return nil, nil, false
+	rest := data[len(delim):]
+	firstNL := bytes.IndexByte(rest, '\n')
+	if firstNL < 0 {
+		return 0, 0, false
 	}
-	if len(bytes.TrimRight(rest[:idx], "\r")) > 0 {
-		return nil, nil, false
+	if len(bytes.TrimRight(rest[:firstNL], "\r")) > 0 {
+		return 0, 0, false
 	}
-	rest = rest[idx+1:]
-
-	var bodyBuf []byte
-	for {
-		line, remainder, found := bytes.Cut(rest, []byte("\n"))
-		if bytes.Equal(bytes.TrimRight(line, "\r"), frontmatterDelim) {
-			return bodyBuf, remainder, true
+	offset := len(delim) + firstNL + 1
+	for offset < len(data) {
+		nl := bytes.IndexByte(data[offset:], '\n')
+		var line []byte
+		if nl < 0 {
+			line = data[offset:]
+		} else {
+			line = data[offset : offset+nl]
 		}
-		if !found {
-			return nil, nil, false
+		if bytes.Equal(bytes.TrimRight(line, "\r"), delim) {
+			fmEnd = offset
+			if nl < 0 {
+				bodyStart = len(data)
+			} else {
+				bodyStart = offset + nl + 1
+			}
+			if bodyStart < len(data) && data[bodyStart] == '\n' {
+				bodyStart++
+			} else if bodyStart+1 < len(data) && data[bodyStart] == '\r' && data[bodyStart+1] == '\n' {
+				bodyStart += 2
+			}
+			return bodyStart, fmEnd, true
 		}
-		bodyBuf = append(bodyBuf, line...)
-		bodyBuf = append(bodyBuf, '\n')
-		rest = remainder
+		if nl < 0 {
+			return 0, 0, false
+		}
+		offset += nl + 1
 	}
+	return 0, 0, false
 }

@@ -118,10 +118,8 @@ func RolloverTasks(prevLines []string) RolloverResult {
 
 // FormatTodoContent formats carried tasks into the new todo file content.
 func FormatTodoContent(tasks []Task) string {
-	fm := BuildFrontmatter(FrontmatterFields{})
-
 	if len(tasks) == 0 {
-		return fm
+		return ""
 	}
 
 	var lines []string
@@ -130,7 +128,7 @@ func FormatTodoContent(tasks []Task) string {
 		lines = append(lines, t.Reassembled(" "))
 	}
 
-	return fm + strings.Join(lines, "\n\n") + "\n"
+	return strings.Join(lines, "\n\n") + "\n"
 }
 
 // FindLatestTodo finds the most recent todo note strictly before the given date.

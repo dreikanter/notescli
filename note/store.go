@@ -2,6 +2,7 @@ package note
 
 import (
 	"fmt"
+	"log"
 	"os"
 	"path/filepath"
 	"sort"
@@ -169,15 +170,21 @@ func Filter(notes []Note, fragment string) []Note {
 }
 
 // FilterByTags returns notes that contain all of the given tags in their frontmatter.
+// Per-note frontmatter parse errors are logged via log.Printf and the note is skipped.
 func FilterByTags(notes []Note, root string, tags []string) ([]Note, error) {
 	var results []Note
 	for _, n := range notes {
-		data, err := os.ReadFile(filepath.Join(root, n.RelPath))
+		path := filepath.Join(root, n.RelPath)
+		data, err := os.ReadFile(path)
 		if err != nil {
 			return nil, err
 		}
-		noteTags := ParseFrontmatterFields(data).Tags
-		if hasAllTags(noteTags, tags) {
+		fm, _, parseErr := ParseNote(data)
+		if parseErr != nil {
+			log.Printf("warn: %s: %v", path, parseErr)
+			continue
+		}
+		if hasAllTags(fm.Tags, tags) {
 			results = append(results, n)
 		}
 	}

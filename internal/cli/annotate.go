@@ -65,8 +65,10 @@ func annotateRunE(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("cannot read note: %w", err)
 	}
 
-	existing := note.ParseFrontmatterFields(data)
-	body := note.StripFrontmatter(data)
+	existing, body, err := note.ParseNote(data)
+	if err != nil {
+		return fmt.Errorf("%s: %w", fullPath, err)
+	}
 
 	empty := annotateEmptyFields(existing)
 	if len(empty) == 0 {
@@ -98,10 +100,10 @@ func annotateRunE(cmd *cobra.Command, args []string) error {
 	}
 
 	merged := mergeAnnotation(existing, gen)
-	newContent := note.BuildFrontmatter(merged) + string(body)
+	newContent := note.FormatNote(merged, body)
 
 	tmpPath := fullPath + ".tmp"
-	if err := os.WriteFile(tmpPath, []byte(newContent), 0o644); err != nil {
+	if err := os.WriteFile(tmpPath, newContent, 0o644); err != nil {
 		return fmt.Errorf("cannot write note: %w", err)
 	}
 	if err := os.Rename(tmpPath, fullPath); err != nil {
@@ -146,7 +148,7 @@ func runClaude(model, schema, prompt string) ([]byte, error) {
 
 // annotateEmptyFields returns the empty fields among {title, description, tags}
 // in a deterministic order. "tags" counts as empty when the slice is empty.
-func annotateEmptyFields(f note.FrontmatterFields) []string {
+func annotateEmptyFields(f note.Frontmatter) []string {
 	var empty []string
 	if f.Title == "" {
 		empty = append(empty, "title")
@@ -226,7 +228,7 @@ func snippet(s string, n int) string {
 
 // mergeAnnotation fills empty fields in existing from gen.
 // Non-empty fields in existing are preserved.
-func mergeAnnotation(existing note.FrontmatterFields, gen annotateResult) note.FrontmatterFields {
+func mergeAnnotation(existing note.Frontmatter, gen annotateResult) note.Frontmatter {
 	merged := existing
 	if merged.Title == "" {
 		merged.Title = gen.Title

@@ -174,8 +174,8 @@ func TestExtractTagsMergedAndDeduped(t *testing.T) {
 
 func TestExtractTagsFrontmatterUniqueAcrossStore(t *testing.T) {
 	// The unique tag comes only from frontmatter; body hashtag coverage
-	// differs. A regression in ParseFrontmatterFields integration would
-	// drop fm-unique and fail this test.
+	// differs. A regression in ParseNote integration would drop fm-unique
+	// and fail this test.
 	root := t.TempDir()
 	writeNote(t, root, "2026/01/20260101_1001.md",
 		"---\ntags: [fm-unique]\n---\n\nbody mentions #body-unique only.\n")

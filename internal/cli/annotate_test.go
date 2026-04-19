@@ -29,7 +29,7 @@ func runAnnotate(t *testing.T, root string, args ...string) (string, error) {
 }
 
 func TestAnnotateEmptyFieldsAllEmpty(t *testing.T) {
-	got := annotateEmptyFields(note.FrontmatterFields{})
+	got := annotateEmptyFields(note.Frontmatter{})
 	want := []string{"title", "description", "tags"}
 	if !equalStrings(got, want) {
 		t.Errorf("got %v, want %v", got, want)
@@ -37,7 +37,7 @@ func TestAnnotateEmptyFieldsAllEmpty(t *testing.T) {
 }
 
 func TestAnnotateEmptyFieldsPartial(t *testing.T) {
-	f := note.FrontmatterFields{Title: "Existing"}
+	f := note.Frontmatter{Title: "Existing"}
 	got := annotateEmptyFields(f)
 	want := []string{"description", "tags"}
 	if !equalStrings(got, want) {
@@ -46,7 +46,7 @@ func TestAnnotateEmptyFieldsPartial(t *testing.T) {
 }
 
 func TestAnnotateEmptyFieldsAllFilled(t *testing.T) {
-	f := note.FrontmatterFields{Title: "T", Description: "D", Tags: []string{"x"}}
+	f := note.Frontmatter{Title: "T", Description: "D", Tags: []string{"x"}}
 	got := annotateEmptyFields(f)
 	if len(got) != 0 {
 		t.Errorf("got %v, want empty", got)
@@ -181,7 +181,7 @@ func TestParseAnnotationErrorFlag(t *testing.T) {
 }
 
 func TestMergeAnnotationFillsEmpty(t *testing.T) {
-	existing := note.FrontmatterFields{Slug: "meeting", Public: true}
+	existing := note.Frontmatter{Slug: "meeting", Public: true}
 	gen := annotateResult{
 		Title:       "New",
 		Description: "Generated desc",
@@ -207,7 +207,7 @@ func TestMergeAnnotationFillsEmpty(t *testing.T) {
 }
 
 func TestMergeAnnotationPreservesFilledFields(t *testing.T) {
-	existing := note.FrontmatterFields{
+	existing := note.Frontmatter{
 		Title:       "Existing title",
 		Description: "Existing desc",
 		Tags:        []string{"keep"},

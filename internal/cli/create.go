@@ -40,16 +40,16 @@ func createNote(p createNoteParams) (string, error) {
 
 	fullPath := filepath.Join(dir, filename)
 
-	content := note.BuildFrontmatter(note.FrontmatterFields{
+	fm := note.Frontmatter{
 		Title:       p.Title,
 		Slug:        p.Slug,
 		Tags:        p.Tags,
 		Description: p.Description,
 		Public:      p.Public,
-	})
-	content += p.Body
+	}
+	content := note.FormatNote(fm, []byte(p.Body))
 
-	if err := os.WriteFile(fullPath, []byte(content), 0o644); err != nil {
+	if err := os.WriteFile(fullPath, content, 0o644); err != nil {
 		return "", fmt.Errorf("cannot write note: %w", err)
 	}
 
