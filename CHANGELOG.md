@@ -4,7 +4,10 @@
 
 ### Changed
 
-- Replace `ParseFrontmatterFields` / `BuildFrontmatter` trio with error-returning `ParseNote` / `FormatNote` pair; rename `FrontmatterFields` → `Frontmatter` with `IsZero`. Single-note writers (`update`, `annotate`) now surface frontmatter parse errors; bulk readers (`FilterByTags`, `ExtractTags`) log per-note warnings and continue. Body is returned as a sub-slice of the input (no copy), and CRLF interior bytes round-trip through parsing. `ExtractTags` concurrency now uses `errgroup` ([#112])
+- `notes update` and `notes annotate` now fail with a clear error when the target note has malformed frontmatter, instead of silently dropping bad fields and rewriting the file ([#112])
+- `notes ls --tag` and `notes tags` log a per-note warning to stderr for any note with unparseable frontmatter and skip it, instead of silently treating it as tagless ([#112])
+- Stricter frontmatter parsing: duplicate keys, non-mapping top-level documents, control characters, and type mismatches are now rejected at the document level; previously the parser preserved siblings of a bad field ([#112])
+- CRLF line endings inside the note body are now preserved verbatim through read/write round-trips ([#112])
 
 ## [0.1.71] - 2026-04-19
 
