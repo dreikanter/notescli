@@ -6,12 +6,14 @@ import (
 	"strings"
 )
 
-// KnownTypes lists the well-known note types encoded as secondary file extensions.
-var KnownTypes = []string{"todo", "backlog", "weekly"}
+// TypesWithSpecialBehavior lists note types that trigger notes-cli-specific
+// handling (e.g., daily rollover, weekly review conventions). Any string is a
+// valid `type` value; this list is a soft registry, not a validation gate.
+var TypesWithSpecialBehavior = []string{"todo", "backlog", "weekly"}
 
-// IsKnownType reports whether s is a recognized note type.
-func IsKnownType(s string) bool {
-	for _, t := range KnownTypes {
+// HasSpecialBehavior reports whether s is a type with special notes-cli behavior.
+func HasSpecialBehavior(s string) bool {
+	for _, t := range TypesWithSpecialBehavior {
 		if s == t {
 			return true
 		}
@@ -39,7 +41,7 @@ func ParseFilename(baseName string) (Note, error) {
 	// Check for known type as a dot-suffix, e.g. "20260102_8814.todo"
 	if idx := strings.LastIndex(baseName, "."); idx >= 0 {
 		suffix := baseName[idx+1:]
-		if IsKnownType(suffix) {
+		if HasSpecialBehavior(suffix) {
 			noteType = suffix
 			remaining = baseName[:idx]
 		}

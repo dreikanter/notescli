@@ -159,20 +159,20 @@ func TestParseFilename(t *testing.T) {
 	}
 }
 
-func TestIsKnownType(t *testing.T) {
-	if !IsKnownType("todo") {
-		t.Error("expected todo to be a known type")
+func TestHasSpecialBehavior(t *testing.T) {
+	if !HasSpecialBehavior("todo") {
+		t.Error("expected todo to have special behavior")
 	}
-	if !IsKnownType("backlog") {
-		t.Error("expected backlog to be a known type")
+	if !HasSpecialBehavior("backlog") {
+		t.Error("expected backlog to have special behavior")
 	}
-	if !IsKnownType("weekly") {
-		t.Error("expected weekly to be a known type")
+	if !HasSpecialBehavior("weekly") {
+		t.Error("expected weekly to have special behavior")
 	}
-	if IsKnownType("random") {
-		t.Error("expected random to not be a known type")
+	if HasSpecialBehavior("random") {
+		t.Error("expected random to have no special behavior")
 	}
-	if IsKnownType("") {
-		t.Error("expected empty string to not be a known type")
+	if HasSpecialBehavior("") {
+		t.Error("expected empty string to have no special behavior")
 	}
 }

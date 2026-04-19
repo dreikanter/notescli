@@ -43,8 +43,8 @@ var updateCmd = &cobra.Command{
 			return fmt.Errorf("at least one update flag is required")
 		}
 
-		if updateType != "" && !note.IsKnownType(updateType) {
-			return fmt.Errorf("unknown note type %q (valid types: %s)", updateType, strings.Join(note.KnownTypes, ", "))
+		if updateType != "" && !note.HasSpecialBehavior(updateType) {
+			return fmt.Errorf("unknown note type %q (valid types: %s)", updateType, strings.Join(note.TypesWithSpecialBehavior, ", "))
 		}
 
 		if cmd.Flags().Changed("slug") {

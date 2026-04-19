@@ -26,8 +26,8 @@ var newCmd = &cobra.Command{
 		privateFlag, _ := cmd.Flags().GetBool("private")
 		upsert, _ := cmd.Flags().GetBool("upsert")
 
-		if noteType != "" && !note.IsKnownType(noteType) {
-			return fmt.Errorf("unknown note type %q (valid types: %s)", noteType, strings.Join(note.KnownTypes, ", "))
+		if noteType != "" && !note.HasSpecialBehavior(noteType) {
+			return fmt.Errorf("unknown note type %q (valid types: %s)", noteType, strings.Join(note.TypesWithSpecialBehavior, ", "))
 		}
 
 		if err := note.ValidateSlug(slug); err != nil {

@@ -99,7 +99,7 @@ func ResolveRefDate(root, query, date string) (*Note, error) {
 	}
 
 	// Step 2: type — most recent match
-	if IsKnownType(query) {
+	if HasSpecialBehavior(query) {
 		for i := range notes {
 			if notes[i].Type == query {
 				return &notes[i], nil
