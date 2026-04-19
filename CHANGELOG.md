@@ -1,10 +1,16 @@
 # Changelog
 
-## [0.1.69] - 2026-04-19
+## [0.1.70] - 2026-04-19
 
 ### Added
 
 - `notes annotate <ref>` command that uses Claude Code CLI to fill empty frontmatter fields (`title`, `description`, `tags`). Defaults to `claude-haiku-4-5`; override with `--model`. Non-destructive: existing field values are never overwritten. ([#109])
+
+## [0.1.69] - 2026-04-18
+
+### Added
+
+- Add `tags` command that lists unique tags from frontmatter and body hashtags across the store ([#108])
 
 ## [0.1.68] - 2026-04-18
 
@@ -423,4 +429,5 @@
 [#102]: https://github.com/dreikanter/notes-cli/pull/102
 [#106]: https://github.com/dreikanter/notes-cli/pull/106
 [#107]: https://github.com/dreikanter/notes-cli/pull/107
-[#109]: https://github.com/dreikanter/notes-cli/pull/N
+[#108]: https://github.com/dreikanter/notes-cli/pull/108
+[#109]: https://github.com/dreikanter/notes-cli/pull/109
