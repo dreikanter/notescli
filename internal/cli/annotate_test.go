@@ -124,11 +124,8 @@ func TestAnnotateCommandRegistered(t *testing.T) {
 	}
 }
 
-// annotateSampleEnvelope is the JSON shape observed in Task 2.
-// NOTE: Task 2 could not run the live probe (sandbox-blocked); this fixture
-// is based on the documented claude -p --output-format json shape. If the
-// actual CLI shape differs, adjust this fixture AND the annotateEnvelope /
-// parseAnnotation implementation together.
+// annotateSampleEnvelope mirrors the stdout of
+// `claude -p --output-format json --json-schema ...`.
 const annotateSampleEnvelope = `{
   "type": "result",
   "subtype": "success",

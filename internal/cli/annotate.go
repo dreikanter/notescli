@@ -1,22 +1,19 @@
 package cli
 
-// Claude CLI envelope (UNVERIFIED — run-time probe blocked by sandbox,
-// shape derived from claude -p --output-format json docs):
+// Claude CLI envelope from `claude -p --output-format json --json-schema ...`:
 //
 //	{
 //	  "type": "result",
 //	  "subtype": "success",
 //	  "is_error": false,
-//	  "result": "<schema-conforming JSON string>",
+//	  "result": "<schema-conforming JSON as a string>",
 //	  "session_id": "...",
 //	  "duration_ms": 0,
 //	  "total_cost_usd": 0
 //	}
 //
-// The schema-validated payload is the result field (as a JSON string).
-// Task 4 tests must be verified against a real invocation before merging.
-// If the observed shape differs on another machine, update annotateEnvelope
-// and parseAnnotation in Task 4 accordingly.
+// parseAnnotation reads the outer envelope, then unmarshals result as a
+// nested JSON string into annotateResult.
 
 import (
 	"bytes"
