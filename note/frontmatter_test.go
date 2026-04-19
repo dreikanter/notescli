@@ -70,8 +70,18 @@ func TestParseFrontmatterFields(t *testing.T) {
 			want:  FrontmatterFields{Title: "T"},
 		},
 		{
-			name:  "public non-true value means false",
-			input: "---\npublic: yes\n---\n\n# Content\n",
+			name:  "invalid bool value rejected",
+			input: "---\npublic: maybe\n---\n\n# Content\n",
+			want:  FrontmatterFields{},
+		},
+		{
+			name:  "bad field does not drop siblings",
+			input: "---\ntitle: T\npublic: maybe\ntags: [a, b]\n---\n\n# Content\n",
+			want:  FrontmatterFields{Title: "T", Tags: []string{"a", "b"}},
+		},
+		{
+			name:  "unclosed flow sequence drops frontmatter",
+			input: "---\ntitle: T\ntags: [a, b\n---\n\n# Content\n",
 			want:  FrontmatterFields{},
 		},
 		{
@@ -94,6 +104,21 @@ func TestParseFrontmatterFields(t *testing.T) {
 				Public: true,
 			}) + "body\n",
 			want: FrontmatterFields{Title: "T", Slug: "s", Tags: []string{"a"}, Public: true},
+		},
+		{
+			name:  "roundtrip preserves tag with comma",
+			input: BuildFrontmatter(FrontmatterFields{Tags: []string{"go", "rust, elixir"}}) + "body\n",
+			want:  FrontmatterFields{Tags: []string{"go", "rust, elixir"}},
+		},
+		{
+			name:  "roundtrip preserves tag with bracket and colon",
+			input: BuildFrontmatter(FrontmatterFields{Tags: []string{"foo: bar", "baz]"}}) + "body\n",
+			want:  FrontmatterFields{Tags: []string{"foo: bar", "baz]"}},
+		},
+		{
+			name:  "roundtrip preserves title with colon",
+			input: BuildFrontmatter(FrontmatterFields{Title: "Re: Project update"}) + "body\n",
+			want:  FrontmatterFields{Title: "Re: Project update"},
 		},
 	}
 
@@ -124,6 +149,79 @@ func TestParseFrontmatterFields(t *testing.T) {
 	}
 }
 
+func TestParseFrontmatterFieldsAdversarial(t *testing.T) {
+	tests := []struct {
+		name  string
+		input string
+		want  FrontmatterFields
+	}{
+		{
+			name: "alias bomb targeting tags is rejected",
+			input: "---\n" +
+				"a: &a [x]\n" +
+				"b: &b [*a,*a,*a,*a,*a,*a,*a,*a,*a,*a]\n" +
+				"c: &c [*b,*b,*b,*b,*b,*b,*b,*b,*b,*b]\n" +
+				"tags: *c\n" +
+				"title: T\n" +
+				"---\n",
+			want: FrontmatterFields{Title: "T"},
+		},
+		{
+			name:  "duplicate keys: last value wins",
+			input: "---\ntitle: A\ntitle: B\n---\n",
+			want:  FrontmatterFields{Title: "B"},
+		},
+		{
+			name:  "control characters rejected, siblings dropped",
+			input: "---\ntitle: \"A\x00B\"\nslug: s\n---\n",
+			want:  FrontmatterFields{},
+		},
+		{
+			name:  "merge key applied with later override",
+			input: "---\n<<: {title: X}\ntitle: Y\n---\n",
+			want:  FrontmatterFields{Title: "Y"},
+		},
+		{
+			name:  "int value coerced to string for title",
+			input: "---\ntitle: 12345\n---\n",
+			want:  FrontmatterFields{Title: "12345"},
+		},
+		{
+			name:  "null value leaves field empty",
+			input: "---\ntitle: null\nslug: s\n---\n",
+			want:  FrontmatterFields{Slug: "s"},
+		},
+		{
+			name:  "tag list is not a mapping",
+			input: "---\n[1, 2, 3]\n---\n",
+			want:  FrontmatterFields{},
+		},
+		{
+			name:  "unknown keys are ignored",
+			input: "---\ntitle: T\nrandom: whatever\nnested: {a: 1}\n---\n",
+			want:  FrontmatterFields{Title: "T"},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := ParseFrontmatterFields([]byte(tt.input))
+			if got.Title != tt.want.Title {
+				t.Errorf("Title = %q, want %q", got.Title, tt.want.Title)
+			}
+			if got.Slug != tt.want.Slug {
+				t.Errorf("Slug = %q, want %q", got.Slug, tt.want.Slug)
+			}
+			if len(got.Tags) != len(tt.want.Tags) {
+				t.Errorf("Tags = %v, want %v", got.Tags, tt.want.Tags)
+			}
+			if got.Public != tt.want.Public {
+				t.Errorf("Public = %v, want %v", got.Public, tt.want.Public)
+			}
+		})
+	}
+}
+
 func TestBuildFrontmatter(t *testing.T) {
 	tests := []struct {
 		name   string
@@ -137,7 +235,7 @@ func TestBuildFrontmatter(t *testing.T) {
 		{
 			name:   "tags only",
 			fields: FrontmatterFields{Tags: []string{"journal", "idea"}},
-			want:   "---\ntags: [journal, idea]\n---\n\n",
+			want:   "---\ntags:\n    - journal\n    - idea\n---\n\n",
 		},
 		{
 			name:   "description only",
@@ -151,12 +249,12 @@ func TestBuildFrontmatter(t *testing.T) {
 				Tags:        []string{"review"},
 				Description: "Week 10",
 			},
-			want: "---\ntitle: Weekly Review\ntags: [review]\ndescription: Week 10\n---\n\n",
+			want: "---\ntitle: Weekly Review\ntags:\n    - review\ndescription: Week 10\n---\n\n",
 		},
 		{
 			name:   "single tag",
 			fields: FrontmatterFields{Tags: []string{"journal"}},
-			want:   "---\ntags: [journal]\n---\n\n",
+			want:   "---\ntags:\n    - journal\n---\n\n",
 		},
 		{
 			name:   "title only",
@@ -187,7 +285,7 @@ func TestBuildFrontmatter(t *testing.T) {
 				Description: "D",
 				Public:      true,
 			},
-			want: "---\ntitle: T\nslug: s\ntags: [a]\ndescription: D\npublic: true\n---\n\n",
+			want: "---\ntitle: T\nslug: s\ntags:\n    - a\ndescription: D\npublic: true\n---\n\n",
 		},
 	}
 

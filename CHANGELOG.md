@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.1.71] - 2026-04-19
+
+### Changed
+
+- Switch frontmatter (de)serialization to `gopkg.in/yaml.v3`: tags and strings containing `,`, `]`, `:`, or other special characters now round-trip safely through write → read, and adding a new frontmatter field no longer requires parser changes ([#110])
+
 ## [0.1.70] - 2026-04-19
 
 ### Added
@@ -329,6 +335,9 @@
 - Add `new` and `new-todo` commands ([#2])
 - Add `--no-frontmatter` flag to `read` command ([#3], [#4])
 
+[0.1.71]: https://github.com/dreikanter/notes-cli/releases/tag/v0.1.71
+[0.1.70]: https://github.com/dreikanter/notes-cli/releases/tag/v0.1.70
+[0.1.69]: https://github.com/dreikanter/notes-cli/releases/tag/v0.1.69
 [0.1.66]: https://github.com/dreikanter/notes-cli/releases/tag/v0.1.66
 [0.1.63]: https://github.com/dreikanter/notes-cli/releases/tag/v0.1.63
 [0.1.60]: https://github.com/dreikanter/notes-cli/releases/tag/v0.1.60
@@ -431,3 +440,4 @@
 [#107]: https://github.com/dreikanter/notes-cli/pull/107
 [#108]: https://github.com/dreikanter/notes-cli/pull/108
 [#109]: https://github.com/dreikanter/notes-cli/pull/109
+[#110]: https://github.com/dreikanter/notes-cli/issues/110

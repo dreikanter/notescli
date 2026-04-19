@@ -51,10 +51,10 @@ func TestUpdateTagsByID(t *testing.T) {
 
 	data, _ := os.ReadFile(want)
 	content := string(data)
-	if !strings.Contains(content, "tags: [new1, new2]") {
+	if !strings.Contains(content, "tags:\n    - new1\n    - new2\n") {
 		t.Errorf("expected updated tags in frontmatter, got:\n%s", content)
 	}
-	if strings.Contains(content, "tags: [work]") {
+	if strings.Contains(content, "- work") {
 		t.Error("old tags should be gone")
 	}
 }
