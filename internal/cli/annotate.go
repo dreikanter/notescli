@@ -40,7 +40,7 @@ const annotateSystemPrompt = `You are annotating a personal note stored as a mar
 Generate concise metadata for the provided note body, returning ONLY the fields required by the response schema.
 - title: short title, <= 8 words.
 - description: single-sentence summary, <= 140 characters.
-- tags: 1-5 lowercase single-word slugs related to the content.`
+- tags: 1-3 lowercase single-word slugs related to the content.`
 
 var annotateCmd = &cobra.Command{
 	Use:   "annotate <id|type|query>",
@@ -161,8 +161,9 @@ func buildAnnotateSchema(fields []string) string {
 			props[f] = map[string]string{"type": "string"}
 		case "tags":
 			props[f] = map[string]any{
-				"type":  "array",
-				"items": map[string]string{"type": "string"},
+				"type":     "array",
+				"items":    map[string]string{"type": "string"},
+				"maxItems": 3,
 			}
 		}
 	}
