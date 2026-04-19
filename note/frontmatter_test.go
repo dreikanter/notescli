@@ -235,7 +235,7 @@ func TestBuildFrontmatter(t *testing.T) {
 		{
 			name:   "tags only",
 			fields: FrontmatterFields{Tags: []string{"journal", "idea"}},
-			want:   "---\ntags: [journal, idea]\n---\n\n",
+			want:   "---\ntags:\n    - journal\n    - idea\n---\n\n",
 		},
 		{
 			name:   "description only",
@@ -249,12 +249,12 @@ func TestBuildFrontmatter(t *testing.T) {
 				Tags:        []string{"review"},
 				Description: "Week 10",
 			},
-			want: "---\ntitle: Weekly Review\ntags: [review]\ndescription: Week 10\n---\n\n",
+			want: "---\ntitle: Weekly Review\ntags:\n    - review\ndescription: Week 10\n---\n\n",
 		},
 		{
 			name:   "single tag",
 			fields: FrontmatterFields{Tags: []string{"journal"}},
-			want:   "---\ntags: [journal]\n---\n\n",
+			want:   "---\ntags:\n    - journal\n---\n\n",
 		},
 		{
 			name:   "title only",
@@ -285,7 +285,7 @@ func TestBuildFrontmatter(t *testing.T) {
 				Description: "D",
 				Public:      true,
 			},
-			want: "---\ntitle: T\nslug: s\ntags: [a]\ndescription: D\npublic: true\n---\n\n",
+			want: "---\ntitle: T\nslug: s\ntags:\n    - a\ndescription: D\npublic: true\n---\n\n",
 		},
 	}
 

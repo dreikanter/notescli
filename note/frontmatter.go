@@ -2,7 +2,6 @@ package note
 
 import (
 	"bytes"
-	"strings"
 
 	"gopkg.in/yaml.v3"
 )
@@ -19,57 +18,17 @@ type FrontmatterFields struct {
 }
 
 // BuildFrontmatter generates YAML frontmatter from the given fields.
-// Returns empty string if no fields are provided. Tags are emitted in
-// flow style (`[a, b]`) to minimize diffs against existing notes.
+// Returns empty string if no fields are provided.
 func BuildFrontmatter(f FrontmatterFields) string {
-	root := &yaml.Node{Kind: yaml.MappingNode}
-
-	addScalar := func(key, value string) {
-		root.Content = append(root.Content,
-			&yaml.Node{Kind: yaml.ScalarNode, Value: key},
-			&yaml.Node{Kind: yaml.ScalarNode, Value: value})
-	}
-
-	if f.Title != "" {
-		addScalar("title", f.Title)
-	}
-	if f.Slug != "" {
-		addScalar("slug", f.Slug)
-	}
-	if len(f.Tags) > 0 {
-		tags := &yaml.Node{Kind: yaml.SequenceNode, Style: yaml.FlowStyle}
-		for _, t := range f.Tags {
-			tags.Content = append(tags.Content, &yaml.Node{Kind: yaml.ScalarNode, Value: t})
-		}
-		root.Content = append(root.Content,
-			&yaml.Node{Kind: yaml.ScalarNode, Value: "tags"},
-			tags)
-	}
-	if f.Description != "" {
-		addScalar("description", f.Description)
-	}
-	if f.Public {
-		addScalar("public", "true")
-	}
-
-	if len(root.Content) == 0 {
+	if f.Title == "" && f.Slug == "" && len(f.Tags) == 0 && f.Description == "" && !f.Public {
 		return ""
 	}
 
-	var buf bytes.Buffer
-	enc := yaml.NewEncoder(&buf)
-	enc.SetIndent(2)
-	if err := enc.Encode(root); err != nil {
+	out, err := yaml.Marshal(f)
+	if err != nil {
 		return ""
 	}
-	if err := enc.Close(); err != nil {
-		return ""
-	}
-
-	// Normalize trailing whitespace so the wrapped output is stable even if
-	// yaml.v3 ever changes its trailing-newline emission.
-	body := strings.TrimRight(buf.String(), "\n") + "\n"
-	return "---\n" + body + "---\n\n"
+	return "---\n" + string(out) + "---\n\n"
 }
 
 // ParseFrontmatterFields extracts all frontmatter fields from data.

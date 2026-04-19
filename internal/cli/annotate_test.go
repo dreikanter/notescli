@@ -288,7 +288,7 @@ func TestAnnotateFillsEmptyFields(t *testing.T) {
 	for _, s := range []string{
 		"title: Weekly sync",
 		"description: Notes from the weekly team sync.",
-		"tags: [meeting, weekly]",
+		"tags:\n    - meeting\n    - weekly\n",
 	} {
 		if !strings.Contains(content, s) {
 			t.Errorf("expected %q in file, got:\n%s", s, content)

@@ -103,7 +103,7 @@ func TestNewWithTags(t *testing.T) {
 		t.Fatalf("unexpected error: %v", err)
 	}
 	data, _ := os.ReadFile(out)
-	if !strings.Contains(string(data), "tags: [work, daily]") {
+	if !strings.Contains(string(data), "tags:\n    - work\n    - daily\n") {
 		t.Errorf("expected tags in frontmatter, got:\n%s", string(data))
 	}
 }
