@@ -10,6 +10,22 @@ import (
 
 const frontmatterDelim = "---"
 
+func yamlKindName(k yaml.Kind) string {
+	switch k {
+	case yaml.DocumentNode:
+		return "document"
+	case yaml.SequenceNode:
+		return "sequence"
+	case yaml.MappingNode:
+		return "mapping"
+	case yaml.ScalarNode:
+		return "scalar"
+	case yaml.AliasNode:
+		return "alias"
+	}
+	return fmt.Sprintf("kind(%d)", k)
+}
+
 // Frontmatter holds optional fields for note frontmatter.
 // Adding a field is a one-line struct addition — no other changes required.
 type Frontmatter struct {
@@ -30,14 +46,17 @@ func (f Frontmatter) IsZero() bool {
 
 // UnmarshalYAML decodes a mapping node into f. Reserved keys populate the
 // typed fields; unknown keys are captured in f.Extra as yaml.Node values.
-// Duplicate top-level keys are rejected (matching PR #113's strictness).
+// Duplicate top-level keys and non-scalar keys are rejected.
 func (f *Frontmatter) UnmarshalYAML(node *yaml.Node) error {
 	if node.Kind != yaml.MappingNode {
-		return fmt.Errorf("frontmatter: expected mapping, got kind %d", node.Kind)
+		return fmt.Errorf("frontmatter: expected mapping, got %s", yamlKindName(node.Kind))
 	}
 	seen := make(map[string]bool, len(node.Content)/2)
 	for i := 0; i+1 < len(node.Content); i += 2 {
 		key, value := node.Content[i], node.Content[i+1]
+		if key.Kind != yaml.ScalarNode {
+			return fmt.Errorf("frontmatter: non-scalar key (%s)", yamlKindName(key.Kind))
+		}
 		if seen[key.Value] {
 			return fmt.Errorf("frontmatter: duplicate key %q", key.Value)
 		}
