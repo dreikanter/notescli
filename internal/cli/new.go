@@ -22,7 +22,6 @@ var newCmd = &cobra.Command{
 		description, _ := cmd.Flags().GetString("description")
 		title, _ := cmd.Flags().GetString("title")
 		publicFlag, _ := cmd.Flags().GetBool("public")
-		privateFlag, _ := cmd.Flags().GetBool("private")
 		upsert, _ := cmd.Flags().GetBool("upsert")
 
 		if err := note.ValidateSlug(slug); err != nil {
@@ -67,7 +66,6 @@ var newCmd = &cobra.Command{
 			body = string(data)
 		}
 
-		public := publicFlag && !privateFlag
 		fullPath, err := createNote(createNoteParams{
 			Root:        root,
 			Slug:        slug,
@@ -75,7 +73,7 @@ var newCmd = &cobra.Command{
 			Tags:        tags,
 			Title:       title,
 			Description: description,
-			Public:      public,
+			Public:      publicFlag,
 			Body:        body,
 		})
 		if err != nil {
@@ -102,7 +100,8 @@ func init() {
 	newCmd.Flags().String("description", "", "description for frontmatter")
 	newCmd.Flags().String("title", "", "title for frontmatter")
 	newCmd.Flags().Bool("public", false, "mark note as public in frontmatter")
-	newCmd.Flags().Bool("private", false, "mark note as private in frontmatter (default; overrides --public)")
+	newCmd.Flags().Bool("private", false, "mark note as private in frontmatter (default)")
 	newCmd.Flags().Bool("upsert", false, "return existing note if today already has one matching --type/--slug")
+	newCmd.MarkFlagsMutuallyExclusive("public", "private")
 	rootCmd.AddCommand(newCmd)
 }
