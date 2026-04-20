@@ -42,6 +42,12 @@ func TestExtractHashtagsNegative(t *testing.T) {
 		{"word-prefixed", "foo#bar baz"},
 		{"bare hash", "look here: # not-tag"},
 		{"lone hash", "just # alone"},
+		{"url anchor", "https://www.teamviewer.com/en/#screenshotsAnchor"},
+		{"url anchor bare", "see example.com/path/#section for more"},
+		{"backticked tag", "prose `#hashtag` continues"},
+		{"chained hashes", "#one#two"},
+		{"chained three", "prefix #one#two#three suffix"},
+		{"domain anchor", "visit foo.bar/#frag here"},
 	}
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {

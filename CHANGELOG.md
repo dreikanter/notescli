@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.1.76] - 2026-04-20
+
+### Changed
+
+- Tighter inline hashtag matching: a `#` preceded by a URL-path byte (`/`, `:`, `.`, `?`, `=`, `&`, `~`, `#`) no longer starts a tag, so fragments like `example.com/#anchor` are left alone; and a tag immediately followed by another `#` (e.g. `#one#two`) is rejected to avoid mid-word false positives ([#119])
+
 ## [0.1.75] - 2026-04-20
 
 ### Changed
@@ -473,3 +479,4 @@
 [#114]: https://github.com/dreikanter/notes-cli/pull/114
 [#116]: https://github.com/dreikanter/notes-cli/pull/116
 [#118]: https://github.com/dreikanter/notes-cli/pull/118
+[#119]: https://github.com/dreikanter/notes-cli/issues/119

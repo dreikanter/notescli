@@ -103,11 +103,14 @@ func ExtractTags(root string) ([]string, error) {
 //     are not recognised.
 //   - Inline backtick spans on a single line are skipped. An unclosed
 //     backtick suppresses hashtags for the remainder of its line.
-//   - A '#' preceded by a word byte ([A-Za-z0-9_]) is not a tag. The check is
-//     byte-level, so hashtags adjacent to non-ASCII prose (e.g. `café#bar`)
-//     may still be extracted.
+//   - A '#' preceded by a word byte ([A-Za-z0-9_]) or a URL-path byte
+//     (`/`, `:`, `.`, `?`, `=`, `&`, `~`, `#`) is not a tag. This prevents
+//     matches inside URLs (`example.com/#anchor`) and inline chains
+//     (`#one#two`). The check is byte-level, so hashtags adjacent to
+//     non-ASCII prose (e.g. `café#bar`) may still be extracted.
 //   - Tag characters are [A-Za-z0-9_-]; other bytes terminate a tag. A bare
-//     '#' with no following tag byte produces no output.
+//     '#' with no following tag byte produces no output. A tag immediately
+//     followed by another '#' (e.g. `#one#two`) is rejected.
 func extractHashtags(body []byte) []string {
 	var out []string
 	inFence := false
@@ -158,14 +161,14 @@ func extractHashtags(body []byte) []string {
 			if c != '#' || inInline {
 				continue
 			}
-			if j > 0 && isWordByte(line[j-1]) {
+			if j > 0 && !isHashtagBoundaryByte(line[j-1]) {
 				continue
 			}
 			k := j + 1
 			for k < len(line) && isTagByte(line[k]) {
 				k++
 			}
-			if k > j+1 {
+			if k > j+1 && (k == len(line) || line[k] != '#') {
 				out = append(out, string(line[j+1:k]))
 			}
 			j = k - 1
@@ -182,4 +185,18 @@ func isTagByte(c byte) bool {
 func isWordByte(c byte) bool {
 	return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') ||
 		(c >= '0' && c <= '9') || c == '_'
+}
+
+// isHashtagBoundaryByte reports whether c may legally precede a '#' that
+// starts a hashtag. Word bytes (so `foo#bar` is not a tag) and URL-path
+// bytes (so `example.com/#anchor` is not a tag) are excluded.
+func isHashtagBoundaryByte(c byte) bool {
+	if isWordByte(c) {
+		return false
+	}
+	switch c {
+	case '/', ':', '.', '?', '=', '&', '~', '#':
+		return false
+	}
+	return true
 }
