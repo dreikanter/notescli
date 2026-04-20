@@ -1,6 +1,7 @@
 package cli
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -125,13 +126,16 @@ var updateCmd = &cobra.Command{
 			dir := filepath.Dir(oldPath)
 			newPath = filepath.Join(dir, newFilename)
 			if newPath != oldPath {
-				if _, err := os.Stat(newPath); err == nil {
-					return fmt.Errorf("target note already exists: %s", newPath)
-				} else if !os.IsNotExist(err) {
-					return fmt.Errorf("cannot stat target note: %w", err)
+				// os.Link atomically reserves the target: returns EEXIST if it
+				// already exists, which os.Rename on Unix would silently clobber.
+				if err := os.Link(oldPath, newPath); err != nil {
+					if errors.Is(err, os.ErrExist) {
+						return fmt.Errorf("target note already exists: %s", newPath)
+					}
+					return fmt.Errorf("cannot link note: %w", err)
 				}
-				if err := os.Rename(oldPath, newPath); err != nil {
-					return fmt.Errorf("cannot rename note: %w", err)
+				if err := os.Remove(oldPath); err != nil {
+					return fmt.Errorf("cannot remove old note: %w", err)
 				}
 			}
 		}
