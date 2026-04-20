@@ -67,7 +67,7 @@ var readCmd = &cobra.Command{
 
 func registerReadFlags() {
 	addFilterFlags(readCmd)
-	readCmd.Flags().BoolP("no-frontmatter", "F", false, "exclude YAML frontmatter from output")
+	readCmd.Flags().Bool("no-frontmatter", false, "exclude YAML frontmatter from output")
 }
 
 func init() {
