@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.1.81] - 2026-04-20
+
+### Changed
+
+- `notes update --sync-filename` now reserves the target atomically with `os.Link` + `os.Remove`, closing a TOCTOU between `os.Stat` and `os.Rename` that could silently clobber a file created between the two syscalls ([#115])
+- `mustNotesPath` replaced by `notesRoot() (string, error)`: the notes-store resolution no longer calls `os.Exit(1)` from inside `RunE` handlers, so errors now flow through Cobra's normal error pipeline (and respect `SilenceUsage`). Error output and exit code are unchanged ([#115])
+- `notes annotate` error messages are more useful when the `claude` CLI fails with empty stderr: the exit code and the first 500 bytes of stdout are now included, replacing the previous opaque `exit status 1`. Successful runs and failures that write to stderr are unchanged ([#115])
+
 ## [0.1.80] - 2026-04-20
 
 ### Changed
