@@ -18,7 +18,7 @@ func runAnnotate(t *testing.T, root string, args ...string) (string, error) {
 	annotateCmd.ResetFlags()
 	annotateCmd.Flags().String("model", annotateDefaultModel, "Claude model to use")
 	annotateCmd.Flags().Int("max-chars", 0, "truncate note body to this many characters before annotating (0 = no limit)")
-	annotateCmd.Flags().Duration("timeout", annotateDefaultTimeout, "maximum time to wait for the claude CLI to respond")
+	annotateCmd.Flags().Duration("timeout", annotateDefaultTimeout, "maximum time to wait for the claude CLI to respond (0 = no timeout)")
 
 	buf := new(bytes.Buffer)
 	rootCmd.SetOut(buf)
@@ -391,6 +391,24 @@ func TestAnnotateTimeout(t *testing.T) {
 	}
 	if !strings.Contains(err.Error(), "timed out") {
 		t.Errorf("expected timeout message, got: %v", err)
+	}
+}
+
+// --timeout 0 disables the deadline, so a fake claude that sleeps briefly
+// (shorter than any reasonable default) still completes successfully.
+func TestAnnotateTimeoutZeroDisables(t *testing.T) {
+	root, ref := noteWithOnlyBody(t, "body text here")
+
+	dir := t.TempDir()
+	script := filepath.Join(dir, "claude")
+	body := fmt.Sprintf("#!/bin/sh\nsleep 0.1\ncat <<'EOF'\n%s\nEOF\n", annotateSampleEnvelope)
+	if err := os.WriteFile(script, []byte(body), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	withClaudeBinary(t, script)
+
+	if _, err := runAnnotate(t, root, ref, "--timeout", "0"); err != nil {
+		t.Fatalf("unexpected error with --timeout 0: %v", err)
 	}
 }
 

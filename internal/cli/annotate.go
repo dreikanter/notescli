@@ -97,8 +97,12 @@ func annotateRunE(cmd *cobra.Command, args []string) error {
 	}
 
 	schema := buildAnnotateSchema(empty)
-	ctx, cancel := context.WithTimeout(cmd.Context(), timeout)
-	defer cancel()
+	ctx := cmd.Context()
+	if timeout > 0 {
+		var cancel context.CancelFunc
+		ctx, cancel = context.WithTimeout(ctx, timeout)
+		defer cancel()
+	}
 	out, err := runClaude(ctx, model, schema, prompt)
 	if err != nil {
 		return err
@@ -261,6 +265,6 @@ func mergeAnnotation(existing note.Frontmatter, gen annotateResult) note.Frontma
 func init() {
 	annotateCmd.Flags().String("model", annotateDefaultModel, "Claude model to use")
 	annotateCmd.Flags().Int("max-chars", 0, "truncate note body to this many characters before annotating (0 = no limit)")
-	annotateCmd.Flags().Duration("timeout", annotateDefaultTimeout, "maximum time to wait for the claude CLI to respond")
+	annotateCmd.Flags().Duration("timeout", annotateDefaultTimeout, "maximum time to wait for the claude CLI to respond (0 = no timeout)")
 	rootCmd.AddCommand(annotateCmd)
 }
