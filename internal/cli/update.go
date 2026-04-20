@@ -8,6 +8,7 @@ import (
 
 	"github.com/dreikanter/notes-cli/note"
 	"github.com/spf13/cobra"
+	"github.com/spf13/pflag"
 )
 
 var updateCmd = &cobra.Command{
@@ -26,18 +27,12 @@ var updateCmd = &cobra.Command{
 		updatePrivate, _ := cmd.Flags().GetBool("private")
 		syncFilename, _ := cmd.Flags().GetBool("sync-filename")
 
-		updateFlags := []string{
-			"tag", "no-tags", "title", "description",
-			"slug", "no-slug", "type", "no-type",
-			"public", "private", "sync-filename",
-		}
 		hasFlag := false
-		for _, name := range updateFlags {
-			if cmd.Flags().Changed(name) {
+		cmd.LocalFlags().VisitAll(func(f *pflag.Flag) {
+			if f.Changed {
 				hasFlag = true
-				break
 			}
-		}
+		})
 		if !hasFlag {
 			return fmt.Errorf("at least one update flag is required")
 		}

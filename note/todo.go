@@ -6,7 +6,7 @@ import (
 )
 
 // taskRe matches lines like "  - [ ] some task" or "[ ] some task".
-var taskRe = regexp.MustCompile(`^(\s*(?:- )?\[)(.?)(\].*)$`)
+var taskRe = regexp.MustCompile(`^(\s*(?:- )?\[)(.)(\].*)$`)
 
 // Task represents a parsed task line from a todo note.
 type Task struct {

@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.1.79] - 2026-04-20
+
+### Changed
+
+- Internal cleanups from the code-review follow-up list (no user-visible behavior change): `notes update`'s "at least one flag" guard now walks `cmd.LocalFlags()` instead of a hand-maintained flag-name slice that had to stay in sync with registrations; `ParseTask`'s regex requires exactly one marker character (`[ ]`, `[x]`, …) instead of accepting zero-or-one, so stray `[]` no longer parses as a task ([#115])
+
 ## [0.1.78] - 2026-04-20
 
 ### Changed
@@ -495,3 +501,4 @@
 [#120]: https://github.com/dreikanter/notes-cli/issues/120
 [#117]: https://github.com/dreikanter/notes-cli/issues/117
 [#123]: https://github.com/dreikanter/notes-cli/pull/123
+[#115]: https://github.com/dreikanter/notes-cli/issues/115
