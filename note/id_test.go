@@ -3,6 +3,8 @@ package note
 import (
 	"os"
 	"path/filepath"
+	"sort"
+	"sync"
 	"testing"
 )
 
@@ -79,6 +81,37 @@ func TestNextIDConsecutive(t *testing.T) {
 	}
 	if id2 != 102 {
 		t.Errorf("second call: got %d, want 102", id2)
+	}
+}
+
+func TestNextIDConcurrent(t *testing.T) {
+	dir := t.TempDir()
+	if err := os.WriteFile(filepath.Join(dir, "id.json"), []byte(`{"last_id": 0}`), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	const n = 32
+	ids := make([]int, n)
+	var wg sync.WaitGroup
+	for i := 0; i < n; i++ {
+		wg.Add(1)
+		go func(i int) {
+			defer wg.Done()
+			id, err := NextID(dir)
+			if err != nil {
+				t.Errorf("NextID failed: %v", err)
+				return
+			}
+			ids[i] = id
+		}(i)
+	}
+	wg.Wait()
+
+	sort.Ints(ids)
+	for i, id := range ids {
+		if id != i+1 {
+			t.Fatalf("ids not contiguous after concurrent NextID calls: %v", ids)
+		}
 	}
 }
 

@@ -1,7 +1,9 @@
 package cli
 
 import (
+	"errors"
 	"os"
+	"os/exec"
 	"strings"
 	"testing"
 )
@@ -53,6 +55,13 @@ func TestGrepNoMatch(t *testing.T) {
 	_, err := runGrep(t, "-rl", "zzz_no_match_zzz")
 	if err == nil {
 		t.Fatal("expected error for no matches, got nil")
+	}
+	var ee *exec.ExitError
+	if !errors.As(err, &ee) {
+		t.Fatalf("expected *exec.ExitError so exit code can be propagated, got %T: %v", err, err)
+	}
+	if ee.ExitCode() != 1 {
+		t.Errorf("grep no-match exit code = %d, want 1", ee.ExitCode())
 	}
 }
 
