@@ -44,7 +44,10 @@ var updateCmd = &cobra.Command{
 			}
 		}
 
-		root := mustNotesPath()
+		root, err := notesRoot()
+		if err != nil {
+			return err
+		}
 		n, err := note.ResolveRef(root, args[0])
 		if err != nil {
 			return err

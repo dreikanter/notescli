@@ -53,7 +53,10 @@ func annotateRunE(cmd *cobra.Command, args []string) error {
 	model, _ := cmd.Flags().GetString("model")
 	maxChars, _ := cmd.Flags().GetInt("max-chars")
 
-	root := mustNotesPath()
+	root, err := notesRoot()
+	if err != nil {
+		return err
+	}
 	n, err := note.ResolveRef(root, args[0])
 	if err != nil {
 		return err

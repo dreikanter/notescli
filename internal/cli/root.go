@@ -47,24 +47,21 @@ func resolveNotesPath() (string, error) {
 	return "", errors.New("no notes store configured. Set $NOTES_PATH or pass --path")
 }
 
-func mustNotesPath() string {
+func notesRoot() (string, error) {
 	p, err := resolveNotesPath()
 	if err != nil {
-		fmt.Fprintln(os.Stderr, err)
-		os.Exit(1)
+		return "", err
 	}
 
 	p, err = filepath.Abs(p)
 	if err != nil {
-		fmt.Fprintln(os.Stderr, err)
-		os.Exit(1)
+		return "", err
 	}
 
 	info, err := os.Stat(p)
 	if err != nil || !info.IsDir() {
-		fmt.Fprintf(os.Stderr, "notes path does not exist or is not a directory: %s\n", p)
-		os.Exit(1)
+		return "", fmt.Errorf("notes path does not exist or is not a directory: %s", p)
 	}
 
-	return p
+	return p, nil
 }

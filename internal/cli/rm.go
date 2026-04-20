@@ -17,7 +17,10 @@ var rmCmd = &cobra.Command{
 	RunE: func(cmd *cobra.Command, args []string) error {
 		today, _ := cmd.Flags().GetBool("today")
 
-		root := mustNotesPath()
+		root, err := notesRoot()
+		if err != nil {
+			return err
+		}
 
 		var date string
 		if today {

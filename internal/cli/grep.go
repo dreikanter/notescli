@@ -22,7 +22,10 @@ The following flags are injected automatically: -r (recursive), --include=*.md, 
 			}
 		}
 
-		root := mustNotesPath()
+		root, err := notesRoot()
+		if err != nil {
+			return err
+		}
 		grepArgs := append([]string{"-r", "--include=*.md", "--exclude-dir=.git"}, args...)
 		grepArgs = append(grepArgs, root)
 

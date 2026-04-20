@@ -53,7 +53,10 @@ Terminal editors (vi, vim, nvim, nano, emacs, micro, etc.) run in the foreground
 The editor value may include arguments, e.g. EDITOR="subl --wait".`,
 	Args: cobra.ExactArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
-		root := mustNotesPath()
+		root, err := notesRoot()
+		if err != nil {
+			return err
+		}
 		n, err := note.ResolveRef(root, args[0])
 		if err != nil {
 			return err

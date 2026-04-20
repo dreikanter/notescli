@@ -18,7 +18,10 @@ var newTodoCmd = &cobra.Command{
 	RunE: func(cmd *cobra.Command, args []string) error {
 		force, _ := cmd.Flags().GetBool("force")
 
-		root := mustNotesPath()
+		root, err := notesRoot()
+		if err != nil {
+			return err
+		}
 		today := time.Now().Format("20060102")
 
 		notes, err := note.Scan(root)

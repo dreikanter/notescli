@@ -33,7 +33,10 @@ var newCmd = &cobra.Command{
 			return fmt.Errorf("--upsert requires --type or --slug")
 		}
 
-		root := mustNotesPath()
+		root, err := notesRoot()
+		if err != nil {
+			return err
+		}
 
 		// --upsert: check if today already has a matching note
 		if upsert {
