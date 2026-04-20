@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.1.78] - 2026-04-20
+
+### Changed
+
+- Drop the hardcoded `~/notes` fallback when resolving the notes store path. If neither `--path` nor `$NOTES_PATH` is set, `notes` now exits with `no notes store configured. Set $NOTES_PATH or pass --path` instead of silently scanning a `~/notes` directory that may exist for unrelated reasons. Set `NOTES_PATH` once (e.g. `export NOTES_PATH=~/notes`) to restore the previous behavior ([#117])
+
 ## [0.1.77] - 2026-04-20
 
 ### Changed
@@ -487,3 +493,4 @@
 [#118]: https://github.com/dreikanter/notes-cli/pull/118
 [#119]: https://github.com/dreikanter/notes-cli/issues/119
 [#120]: https://github.com/dreikanter/notes-cli/issues/120
+[#117]: https://github.com/dreikanter/notes-cli/issues/117

@@ -112,7 +112,9 @@ The notes store path is resolved in this order:
 
 1. `--path` flag
 2. `NOTES_PATH` environment variable
-3. `~/notes` (default)
+
+If neither is set, `notes` exits with an error. There is no implicit default —
+set `NOTES_PATH` (e.g. `export NOTES_PATH=~/notes`) or pass `--path`.
 
 ## Development
 

@@ -1,6 +1,7 @@
 package cli
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -27,7 +28,7 @@ func init() {
 		}
 	}
 	rootCmd.Version = Version
-	rootCmd.PersistentFlags().StringVar(&notesPath, "path", "", "path to notes store (default: $NOTES_PATH or ~/notes)")
+	rootCmd.PersistentFlags().StringVar(&notesPath, "path", "", "path to notes store (default: $NOTES_PATH)")
 }
 
 func Execute() {
@@ -43,11 +44,7 @@ func resolveNotesPath() (string, error) {
 	if env := os.Getenv("NOTES_PATH"); env != "" {
 		return env, nil
 	}
-	home, err := os.UserHomeDir()
-	if err != nil {
-		return "", fmt.Errorf("cannot determine home directory: %w", err)
-	}
-	return filepath.Join(home, "notes"), nil
+	return "", errors.New("no notes store configured. Set $NOTES_PATH or pass --path")
 }
 
 func mustNotesPath() string {
