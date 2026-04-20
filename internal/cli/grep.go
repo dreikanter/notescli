@@ -12,7 +12,7 @@ var grepCmd = &cobra.Command{
 	Short: "Search note contents using grep",
 	Long: `Search note contents using grep. Only .md files are searched; .git directories are excluded.
 
-The following flags are injected automatically: -r (recursive), -i (case-insensitive), --include=*.md, --exclude-dir=.git. The notes path is appended as the last argument.`,
+The following flags are injected automatically: -r (recursive), --include=*.md, --exclude-dir=.git. The notes path is appended as the last argument. Pass -i explicitly for case-insensitive search.`,
 	DisableFlagParsing: true,
 	SilenceErrors:      true,
 	RunE: func(cmd *cobra.Command, args []string) error {
@@ -23,7 +23,7 @@ The following flags are injected automatically: -r (recursive), -i (case-insensi
 		}
 
 		root := mustNotesPath()
-		grepArgs := append([]string{"-r", "-i", "--include=*.md", "--exclude-dir=.git"}, args...)
+		grepArgs := append([]string{"-r", "--include=*.md", "--exclude-dir=.git"}, args...)
 		grepArgs = append(grepArgs, root)
 
 		grep := exec.Command("grep", grepArgs...)
