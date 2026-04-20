@@ -13,7 +13,7 @@ var rgCmd = &cobra.Command{
 	Short: "Search note contents using ripgrep",
 	Long: `Search note contents using ripgrep (rg). Only .md files are searched.
 
-The following flags are injected automatically: --glob *.md, --sortr path, --heading, --no-line-number, --ignore-case. The notes path is appended as the last argument.`,
+The following flag is injected automatically: --glob *.md. The notes path is appended as the last argument. Pass any other rg flags explicitly (e.g. --ignore-case, --heading, --sortr path).`,
 	DisableFlagParsing: true,
 	SilenceErrors:      true,
 	RunE: func(cmd *cobra.Command, args []string) error {
@@ -28,13 +28,7 @@ The following flags are injected automatically: --glob *.md, --sortr path, --hea
 		}
 
 		root := mustNotesPath()
-		rgArgs := append([]string{
-			"--glob", "*.md",
-			"--sortr", "path",
-			"--heading",
-			"--no-line-number",
-			"--ignore-case",
-		}, args...)
+		rgArgs := append([]string{"--glob", "*.md"}, args...)
 		rgArgs = append(rgArgs, root)
 
 		rg := exec.Command("rg", rgArgs...)
