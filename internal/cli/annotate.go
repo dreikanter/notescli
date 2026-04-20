@@ -53,7 +53,10 @@ func annotateRunE(cmd *cobra.Command, args []string) error {
 	model, _ := cmd.Flags().GetString("model")
 	maxChars, _ := cmd.Flags().GetInt("max-chars")
 
-	root := mustNotesPath()
+	root, err := notesRoot()
+	if err != nil {
+		return err
+	}
 	n, err := note.ResolveRef(root, args[0])
 	if err != nil {
 		return err
@@ -132,11 +135,18 @@ func runClaude(model, schema, prompt string) ([]byte, error) {
 	c.Stdout = &stdout
 	c.Stderr = &stderr
 	if err := c.Run(); err != nil {
-		msg := stderr.String()
-		if msg == "" {
-			msg = err.Error()
+		if s := stderr.String(); s != "" {
+			return nil, fmt.Errorf("claude failed: %s", s)
 		}
-		return nil, fmt.Errorf("claude failed: %s", msg)
+		exitCode := -1
+		var ee *exec.ExitError
+		if errors.As(err, &ee) {
+			exitCode = ee.ExitCode()
+		}
+		if out := stdout.String(); out != "" {
+			return nil, fmt.Errorf("claude failed (exit %d): %s", exitCode, snippet(out, 500))
+		}
+		return nil, fmt.Errorf("claude failed (exit %d): %s", exitCode, err.Error())
 	}
 	return stdout.Bytes(), nil
 }

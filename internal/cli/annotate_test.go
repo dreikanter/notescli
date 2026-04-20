@@ -399,6 +399,33 @@ func TestAnnotateClaudeNonZeroExit(t *testing.T) {
 	}
 }
 
+// TestAnnotateClaudeEmptyStderrIncludesStdout exercises the fallback path
+// for opaque failures: when claude exits non-zero with nothing on stderr,
+// the error should include the exit code and a snippet of stdout instead
+// of a bare "exit status 1".
+func TestAnnotateClaudeEmptyStderrIncludesStdout(t *testing.T) {
+	root, ref := noteWithOnlyBody(t, "body text here")
+
+	dir := t.TempDir()
+	script := filepath.Join(dir, "claude")
+	if err := os.WriteFile(script, []byte("#!/bin/sh\necho partial output on stdout\nexit 3\n"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	withClaudeBinary(t, script)
+
+	_, err := runAnnotate(t, root, ref)
+	if err == nil {
+		t.Fatal("expected error on non-zero exit")
+	}
+	msg := err.Error()
+	if !strings.Contains(msg, "exit 3") {
+		t.Errorf("expected exit code in error, got: %v", err)
+	}
+	if !strings.Contains(msg, "partial output on stdout") {
+		t.Errorf("expected stdout snippet in error, got: %v", err)
+	}
+}
+
 func TestAnnotateMalformedJSON(t *testing.T) {
 	root, ref := noteWithOnlyBody(t, "body text here")
 	withClaudeBinary(t, writeFakeClaude(t, `not valid json`))

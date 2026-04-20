@@ -17,7 +17,10 @@ var lsCmd = &cobra.Command{
 		lsName, _ := cmd.Flags().GetString("name")
 		f := readFilterFlags(cmd)
 
-		root := mustNotesPath()
+		root, err := notesRoot()
+		if err != nil {
+			return err
+		}
 		notes, err := note.Scan(root)
 		if err != nil {
 			return err

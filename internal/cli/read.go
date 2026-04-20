@@ -14,7 +14,10 @@ var readCmd = &cobra.Command{
 	Short: "Read a note by ref or filter flags",
 	Args:  cobra.MaximumNArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
-		root := mustNotesPath()
+		root, err := notesRoot()
+		if err != nil {
+			return err
+		}
 		f := readFilterFlags(cmd)
 		noFrontmatter, _ := cmd.Flags().GetBool("no-frontmatter")
 

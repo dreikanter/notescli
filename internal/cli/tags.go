@@ -12,7 +12,10 @@ var tagsCmd = &cobra.Command{
 	Short: "List all tags from frontmatter and body hashtags",
 	Args:  cobra.NoArgs,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		root := mustNotesPath()
+		root, err := notesRoot()
+		if err != nil {
+			return err
+		}
 		tags, err := note.ExtractTags(root)
 		if err != nil {
 			return err

@@ -13,9 +13,6 @@ import (
 func runNewTodo(t *testing.T, root string, args ...string) (string, error) {
 	t.Helper()
 
-	newTodoCmd.ResetFlags()
-	newTodoCmd.Flags().Bool("force", false, "regenerate today's todo even if it exists")
-
 	buf := new(bytes.Buffer)
 	rootCmd.SetOut(buf)
 	rootCmd.SetErr(buf)
@@ -64,7 +61,7 @@ func TestNewTodoReturnsExistingToday(t *testing.T) {
 		t.Fatalf("first call unexpected error: %v", err)
 	}
 
-	// Second call without --force should return the same path.
+	// Second call should return the same path.
 	second, err := runNewTodo(t, root)
 	if err != nil {
 		t.Fatalf("second call unexpected error: %v", err)
@@ -72,29 +69,6 @@ func TestNewTodoReturnsExistingToday(t *testing.T) {
 
 	if first != second {
 		t.Errorf("expected same path on second call, got %q then %q", first, second)
-	}
-}
-
-func TestNewTodoForceRegenerates(t *testing.T) {
-	root := copyTestdata(t)
-
-	// First call creates today's todo.
-	first, err := runNewTodo(t, root)
-	if err != nil {
-		t.Fatalf("first call unexpected error: %v", err)
-	}
-
-	// --force should create a new file.
-	second, err := runNewTodo(t, root, "--force")
-	if err != nil {
-		t.Fatalf("force call unexpected error: %v", err)
-	}
-
-	if first == second {
-		t.Errorf("expected a different path with --force, got same path %q", first)
-	}
-	if _, err := os.Stat(second); err != nil {
-		t.Errorf("forced file does not exist: %v", err)
 	}
 }
 
@@ -132,28 +106,5 @@ func TestNewTodoWritesTypeFrontmatter(t *testing.T) {
 	}
 	if !strings.Contains(string(data), "type: todo") {
 		t.Errorf("expected type: todo in frontmatter, got:\n%s", string(data))
-	}
-}
-
-func TestNewTodoForceOnlyTodayExists(t *testing.T) {
-	root := emptyNotesRoot(t)
-
-	// Create today's todo (no previous todo to roll from).
-	first, err := runNewTodo(t, root)
-	if err != nil {
-		t.Fatalf("first call unexpected error: %v", err)
-	}
-
-	// --force should regenerate even with no previous todo.
-	second, err := runNewTodo(t, root, "--force")
-	if err != nil {
-		t.Fatalf("force call unexpected error: %v", err)
-	}
-
-	if first == second {
-		t.Errorf("expected a different path with --force, got same path %q", first)
-	}
-	if _, err := os.Stat(second); err != nil {
-		t.Errorf("forced file does not exist: %v", err)
 	}
 }

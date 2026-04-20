@@ -27,7 +27,10 @@ The following flag is injected automatically: --glob *.md. The notes path is app
 			return fmt.Errorf("ripgrep (rg) is not installed; install it from https://github.com/BurntSushi/ripgrep")
 		}
 
-		root := mustNotesPath()
+		root, err := notesRoot()
+		if err != nil {
+			return err
+		}
 		rgArgs := append([]string{"--glob", "*.md"}, args...)
 		rgArgs = append(rgArgs, root)
 

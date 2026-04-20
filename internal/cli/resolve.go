@@ -29,7 +29,10 @@ combined with a positional argument; --today can, and restricts the
 positional resolution to notes dated today.`,
 	Args: cobra.MaximumNArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
-		root := mustNotesPath()
+		root, err := notesRoot()
+		if err != nil {
+			return err
+		}
 		f := readFilterFlags(cmd)
 
 		if len(args) == 1 {

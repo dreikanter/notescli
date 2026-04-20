@@ -16,7 +16,10 @@ var appendCmd = &cobra.Command{
 	Short: "Append text from stdin to a note",
 	Args:  cobra.MaximumNArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
-		root := mustNotesPath()
+		root, err := notesRoot()
+		if err != nil {
+			return err
+		}
 
 		// Check stdin is piped
 		if isTerminal(os.Stdin) {
