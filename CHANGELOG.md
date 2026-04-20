@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.1.82] - 2026-04-20
+
+### Changed
+
+- `note.NextID` now serializes the id.json read-modify-write across processes via an exclusive `flock` on a sibling `id.json.lock`, so parallel `notes new` / `notes new-todo` runs can no longer duplicate IDs ([#115])
+- `notes grep` and `notes rg` propagate the child process's exit code instead of collapsing every failure to `1`: "no match" (exit 1) is now distinguishable from real tool errors (exit 2+) by the caller ([#115])
+- `notes annotate` now runs the `claude` CLI with a context-bound timeout (default 60s, configurable via `--timeout`), so a hung Claude binary no longer hangs the command indefinitely ([#115])
+
 ## [0.1.81] - 2026-04-20
 
 ### Changed
