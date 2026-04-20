@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"regexp"
 	"sort"
 	"strings"
 )
@@ -244,6 +245,8 @@ func FilterByTypes(notes []Note, types []string) []Note {
 	return results
 }
 
+var slugRe = regexp.MustCompile(`^[A-Za-z0-9_-]+$`)
+
 // ValidateSlug returns an error if the slug cannot safely appear in a note
 // filename. Empty slugs are accepted (they just omit the slug segment).
 // All-digit slugs are rejected because they conflict with numeric ID lookup.
@@ -256,26 +259,10 @@ func ValidateSlug(slug string) error {
 	if isDigits(slug) {
 		return fmt.Errorf("slug %q is all digits, which conflicts with note ID resolution", slug)
 	}
-	for _, r := range slug {
-		if !isSlugRune(r) {
-			return fmt.Errorf("slug %q contains invalid character %q; only [A-Za-z0-9_-] are allowed", slug, r)
-		}
+	if !slugRe.MatchString(slug) {
+		return fmt.Errorf("slug %q contains invalid characters; only [A-Za-z0-9_-] are allowed", slug)
 	}
 	return nil
-}
-
-func isSlugRune(r rune) bool {
-	switch {
-	case r >= 'a' && r <= 'z':
-		return true
-	case r >= 'A' && r <= 'Z':
-		return true
-	case r >= '0' && r <= '9':
-		return true
-	case r == '-' || r == '_':
-		return true
-	}
-	return false
 }
 
 func toSet(vals []string) map[string]struct{} {
