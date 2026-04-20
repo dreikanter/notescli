@@ -113,6 +113,14 @@ func TestNextIDConcurrent(t *testing.T) {
 			t.Fatalf("ids not contiguous after concurrent NextID calls: %v", ids)
 		}
 	}
+
+	// The dir should contain only id.json — no lockfile or temp files.
+	entries, _ := os.ReadDir(dir)
+	for _, e := range entries {
+		if e.Name() != "id.json" {
+			t.Errorf("unexpected file left behind: %s", e.Name())
+		}
+	}
 }
 
 func TestWriteIDAtomic(t *testing.T) {

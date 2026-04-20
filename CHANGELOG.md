@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.83] - 2026-04-20
+
+### Changed
+
+- `note.NextID` now flocks the store root directory instead of a sibling `id.json.lock` file, so no lockfile artifact is left behind after `notes new` / `notes new-todo` runs. Serialization semantics are unchanged ([#115])
+- `notes annotate --timeout 0` now disables the deadline (previously it caused the command to fail immediately), mirroring `--max-chars 0 = no limit` ([#115])
+
 ## [0.1.82] - 2026-04-20
 
 ### Changed
