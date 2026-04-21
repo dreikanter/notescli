@@ -19,12 +19,14 @@ package cli
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"os"
 	"os/exec"
 	"path/filepath"
+	"time"
 
 	"github.com/dreikanter/notes-cli/note"
 	"github.com/spf13/cobra"
@@ -35,6 +37,8 @@ import (
 var claudeBinary = "claude"
 
 const annotateDefaultModel = "claude-haiku-4-5"
+
+const annotateDefaultTimeout = 60 * time.Second
 
 const annotateSystemPrompt = `You are annotating a personal note stored as a markdown file.
 Generate concise metadata for the provided note body, returning ONLY the fields required by the response schema.
@@ -52,6 +56,7 @@ var annotateCmd = &cobra.Command{
 func annotateRunE(cmd *cobra.Command, args []string) error {
 	model, _ := cmd.Flags().GetString("model")
 	maxChars, _ := cmd.Flags().GetInt("max-chars")
+	timeout, _ := cmd.Flags().GetDuration("timeout")
 
 	root, err := notesRoot()
 	if err != nil {
@@ -92,7 +97,13 @@ func annotateRunE(cmd *cobra.Command, args []string) error {
 	}
 
 	schema := buildAnnotateSchema(empty)
-	out, err := runClaude(model, schema, prompt)
+	ctx := cmd.Context()
+	if timeout > 0 {
+		var cancel context.CancelFunc
+		ctx, cancel = context.WithTimeout(ctx, timeout)
+		defer cancel()
+	}
+	out, err := runClaude(ctx, model, schema, prompt)
 	if err != nil {
 		return err
 	}
@@ -114,8 +125,9 @@ func annotateRunE(cmd *cobra.Command, args []string) error {
 }
 
 // runClaude executes the Claude Code CLI non-interactively and returns its stdout.
-// Returns a clear error if the binary is not found or exits non-zero.
-func runClaude(model, schema, prompt string) ([]byte, error) {
+// Returns a clear error if the binary is not found, the context is cancelled
+// (e.g. timeout), or the child exits non-zero.
+func runClaude(ctx context.Context, model, schema, prompt string) ([]byte, error) {
 	bin, err := exec.LookPath(claudeBinary)
 	if err != nil {
 		return nil, errors.New("claude CLI not found in PATH")
@@ -130,11 +142,14 @@ func runClaude(model, schema, prompt string) ([]byte, error) {
 		prompt,
 	}
 
-	c := exec.Command(bin, args...)
+	c := exec.CommandContext(ctx, bin, args...)
 	var stdout, stderr bytes.Buffer
 	c.Stdout = &stdout
 	c.Stderr = &stderr
 	if err := c.Run(); err != nil {
+		if errors.Is(ctx.Err(), context.DeadlineExceeded) {
+			return nil, errors.New("claude timed out; pass --timeout to raise the limit")
+		}
 		if s := stderr.String(); s != "" {
 			return nil, fmt.Errorf("claude failed: %s", s)
 		}
@@ -250,5 +265,6 @@ func mergeAnnotation(existing note.Frontmatter, gen annotateResult) note.Frontma
 func init() {
 	annotateCmd.Flags().String("model", annotateDefaultModel, "Claude model to use")
 	annotateCmd.Flags().Int("max-chars", 0, "truncate note body to this many characters before annotating (0 = no limit)")
+	annotateCmd.Flags().Duration("timeout", annotateDefaultTimeout, "maximum time to wait for the claude CLI to respond (0 = no timeout)")
 	rootCmd.AddCommand(annotateCmd)
 }

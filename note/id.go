@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"syscall"
 )
 
 // IDFile represents the id.json file that tracks the last allocated note ID.
@@ -25,8 +26,16 @@ func ReadID(root string) (IDFile, error) {
 	return idf, nil
 }
 
-// NextID reads id.json, increments last_id, writes it back atomically, and returns the new ID.
+// NextID reads id.json, increments last_id, writes it back, and returns the new ID.
+// The read-modify-write is serialized across processes via an exclusive flock on
+// the store root directory, so concurrent callers cannot duplicate IDs.
 func NextID(root string) (int, error) {
+	unlock, err := lockIDFile(root)
+	if err != nil {
+		return 0, err
+	}
+	defer unlock()
+
 	idf, err := ReadID(root)
 	if err != nil {
 		return 0, err
@@ -66,4 +75,24 @@ func WriteID(root string, idf IDFile) error {
 		return fmt.Errorf("cannot rename temp id.json: %w", err)
 	}
 	return nil
+}
+
+// lockIDFile acquires an exclusive flock on the store root directory, blocking
+// until it is available. Locking the directory (rather than a sibling lockfile)
+// avoids leaving artifacts behind and sidesteps the unlink-race that cleanable
+// lockfiles suffer from. The returned function releases the lock and closes
+// the file descriptor.
+func lockIDFile(root string) (func(), error) {
+	f, err := os.Open(root)
+	if err != nil {
+		return nil, fmt.Errorf("cannot open notes root for locking: %w", err)
+	}
+	if err := syscall.Flock(int(f.Fd()), syscall.LOCK_EX); err != nil {
+		f.Close()
+		return nil, fmt.Errorf("cannot lock notes root: %w", err)
+	}
+	return func() {
+		_ = syscall.Flock(int(f.Fd()), syscall.LOCK_UN)
+		_ = f.Close()
+	}, nil
 }

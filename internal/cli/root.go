@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"runtime/debug"
 
@@ -33,6 +34,10 @@ func init() {
 
 func Execute() {
 	if err := rootCmd.Execute(); err != nil {
+		var ee *exec.ExitError
+		if errors.As(err, &ee) {
+			os.Exit(ee.ExitCode())
+		}
 		os.Exit(1)
 	}
 }
