@@ -74,18 +74,18 @@ func Scan(root string) ([]Note, error) {
 //  2. Type with special behavior (todo, backlog, weekly) — most recent match
 //  3. Path — absolute or relative path with separator, exact match under root
 //  4. Slug substring — most recent note whose slug contains the query
-func ResolveRef(root, query string) (*Note, error) {
+func ResolveRef(root, query string) (Note, error) {
 	return ResolveRefDate(root, query, "")
 }
 
 // ResolveRefDate works like ResolveRef but optionally restricts candidates to
 // notes matching the given YYYYMMDD date string. Pass "" to skip date filtering.
-func ResolveRefDate(root, query, date string) (*Note, error) {
+func ResolveRefDate(root, query, date string) (Note, error) {
 	query = strings.TrimSpace(query)
 
 	notes, err := Scan(root)
 	if err != nil {
-		return nil, err
+		return Note{}, err
 	}
 
 	if date != "" {
@@ -96,17 +96,17 @@ func ResolveRefDate(root, query, date string) (*Note, error) {
 	if query != "" && isDigits(query) {
 		for i := range notes {
 			if notes[i].ID == query {
-				return &notes[i], nil
+				return notes[i], nil
 			}
 		}
-		return nil, fmt.Errorf("note not found: %s", query)
+		return Note{}, fmt.Errorf("note not found: %s", query)
 	}
 
 	// Step 2: type — most recent match
 	if HasSpecialBehavior(query) {
 		for i := range notes {
 			if notes[i].Type == query {
-				return &notes[i], nil
+				return notes[i], nil
 			}
 		}
 	}
@@ -115,24 +115,24 @@ func ResolveRefDate(root, query, date string) (*Note, error) {
 	if filepath.IsAbs(query) || strings.ContainsAny(query, "/\\") {
 		rel, err := resolveRelPath(root, query)
 		if err != nil {
-			return nil, err
+			return Note{}, err
 		}
 		for i := range notes {
 			if notes[i].RelPath == rel {
-				return &notes[i], nil
+				return notes[i], nil
 			}
 		}
-		return nil, fmt.Errorf("note not found: %s", query)
+		return Note{}, fmt.Errorf("note not found: %s", query)
 	}
 
 	// Step 4: slug substring — most recent match
 	for i := range notes {
 		if strings.Contains(notes[i].Slug, query) {
-			return &notes[i], nil
+			return notes[i], nil
 		}
 	}
 
-	return nil, fmt.Errorf("note not found: %s", query)
+	return Note{}, fmt.Errorf("note not found: %s", query)
 }
 
 // resolveRelPath converts a path-like query to a note RelPath under root.
