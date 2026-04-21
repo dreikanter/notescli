@@ -169,10 +169,11 @@ func Filter(notes []Note, fragment string) []Note {
 	return results
 }
 
-// FilterByTags returns notes that contain all of the given tags in their
-// frontmatter. Comparison is case-insensitive: both required tags and note
-// frontmatter tags are lowercased before matching.
-// Per-note frontmatter parse errors are written to stderr and the note is skipped.
+// FilterByTags returns notes that contain all of the given tags. Tag sources
+// mirror ExtractTags: frontmatter `tags:` fields and body hashtags (#word).
+// Comparison is case-insensitive.
+// A per-note frontmatter parse error is written to stderr and the note's
+// frontmatter tags are skipped (body hashtags are still considered).
 func FilterByTags(notes []Note, root string, tags []string) ([]Note, error) {
 	var results []Note
 	for _, n := range notes {
@@ -181,12 +182,15 @@ func FilterByTags(notes []Note, root string, tags []string) ([]Note, error) {
 		if err != nil {
 			return nil, err
 		}
-		fm, _, parseErr := ParseNote(data)
+		fm, body, parseErr := ParseNote(data)
 		if parseErr != nil {
 			fmt.Fprintf(os.Stderr, "warn: %s: %v\n", path, parseErr)
-			continue
 		}
-		if hasAllTags(fm.Tags, tags) {
+		hashtags := extractHashtags(body)
+		noteTags := make([]string, 0, len(fm.Tags)+len(hashtags))
+		noteTags = append(noteTags, fm.Tags...)
+		noteTags = append(noteTags, hashtags...)
+		if hasAllTags(noteTags, tags) {
 			results = append(results, n)
 		}
 	}

@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.1.85] - 2026-04-21
+
+### Changed
+
+- `notes ls --tag`, `notes read --tag`, `notes append --tag`, and `notes resolve --tag` now match body hashtags (`#tag`) in addition to frontmatter `tags:`, mirroring the sources already used by `notes tags`. Tag-based filtering no longer silently ignores inline hashtags ([#131])
+
 ## [0.1.84] - 2026-04-20
 
 ### Changed
@@ -549,3 +555,4 @@
 [#117]: https://github.com/dreikanter/notes-cli/issues/117
 [#123]: https://github.com/dreikanter/notes-cli/pull/123
 [#115]: https://github.com/dreikanter/notes-cli/issues/115
+[#131]: https://github.com/dreikanter/notes-cli/pull/131

@@ -195,6 +195,49 @@ func TestFilterByTags(t *testing.T) {
 	}
 }
 
+func TestFilterByTagsInlineHashtags(t *testing.T) {
+	root := t.TempDir()
+	writeNote(t, root, "2026/01/20260101_1001.md",
+		"---\ntags: [work]\n---\n\nbody mentions #inline here.\n")
+	writeNote(t, root, "2026/01/20260102_1002.md",
+		"no frontmatter, just #inline body tag.\n")
+	writeNote(t, root, "2026/01/20260103_1003.md",
+		"---\ntags: [work]\n---\n\nno inline tags here.\n")
+
+	notes, err := Scan(root)
+	if err != nil {
+		t.Fatalf("Scan error: %v", err)
+	}
+
+	tests := []struct {
+		name    string
+		tags    []string
+		wantIDs []string
+	}{
+		{"inline tag matches fm-only and body-only", []string{"inline"}, []string{"1002", "1001"}},
+		{"fm tag still matches", []string{"work"}, []string{"1003", "1001"}},
+		{"AND across fm and body", []string{"work", "inline"}, []string{"1001"}},
+		{"case-insensitive inline", []string{"INLINE"}, []string{"1002", "1001"}},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := FilterByTags(notes, root, tt.tags)
+			if err != nil {
+				t.Fatalf("FilterByTags(%v) error: %v", tt.tags, err)
+			}
+			if len(got) != len(tt.wantIDs) {
+				t.Fatalf("FilterByTags(%v) returned %d notes, want %d", tt.tags, len(got), len(tt.wantIDs))
+			}
+			for i, wantID := range tt.wantIDs {
+				if got[i].ID != wantID {
+					t.Errorf("FilterByTags(%v)[%d].ID = %q, want %q", tt.tags, i, got[i].ID, wantID)
+				}
+			}
+		})
+	}
+}
+
 func TestFilterBySlug(t *testing.T) {
 	notes := []Note{
 		{Slug: ""},
