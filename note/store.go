@@ -11,6 +11,8 @@ import (
 
 // Scan enumerates notes under root using the known YYYY/MM/ directory structure.
 // Only directories matching year (all digits) and month (two-digit) patterns are visited.
+// Unreadable year/month subdirectories are logged to stderr and skipped, matching
+// the per-note parse-error behavior, so a single permission glitch can't break ls/tags/resolve.
 func Scan(root string) ([]Note, error) {
 	var notes []Note
 
@@ -27,7 +29,8 @@ func Scan(root string) ([]Note, error) {
 		yearPath := filepath.Join(root, y.Name())
 		months, err := os.ReadDir(yearPath)
 		if err != nil {
-			return nil, err
+			fmt.Fprintf(os.Stderr, "warn: %s: %v\n", yearPath, err)
+			continue
 		}
 
 		for _, m := range months {
@@ -38,7 +41,8 @@ func Scan(root string) ([]Note, error) {
 			monthPath := filepath.Join(yearPath, m.Name())
 			files, err := os.ReadDir(monthPath)
 			if err != nil {
-				return nil, err
+				fmt.Fprintf(os.Stderr, "warn: %s: %v\n", monthPath, err)
+				continue
 			}
 
 			for _, f := range files {

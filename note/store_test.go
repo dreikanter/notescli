@@ -1,6 +1,7 @@
 package note
 
 import (
+	"os"
 	"path/filepath"
 	"testing"
 )
@@ -62,6 +63,41 @@ func TestScanSkipsInvalidFiles(t *testing.T) {
 		if n.BaseName == "random_file" || n.BaseName == "not-a-note" {
 			t.Errorf("Scan should have skipped %q", n.BaseName)
 		}
+	}
+}
+
+// TestScanSkipsUnreadableDir verifies one unreadable month directory doesn't
+// abort the whole scan — readable siblings still enumerate successfully.
+func TestScanSkipsUnreadableDir(t *testing.T) {
+	if os.Geteuid() == 0 {
+		t.Skip("root bypasses directory permission checks")
+	}
+
+	root := t.TempDir()
+	good := filepath.Join(root, "2026", "01")
+	if err := os.MkdirAll(good, 0o755); err != nil {
+		t.Fatalf("mkdir good: %v", err)
+	}
+	goodNote := filepath.Join(good, "20260101_1_s.md")
+	if err := os.WriteFile(goodNote, []byte("body\n"), 0o644); err != nil {
+		t.Fatalf("write good: %v", err)
+	}
+
+	bad := filepath.Join(root, "2026", "02")
+	if err := os.MkdirAll(bad, 0o755); err != nil {
+		t.Fatalf("mkdir bad: %v", err)
+	}
+	if err := os.Chmod(bad, 0o000); err != nil {
+		t.Fatalf("chmod bad: %v", err)
+	}
+	t.Cleanup(func() { _ = os.Chmod(bad, 0o755) })
+
+	notes, err := Scan(root)
+	if err != nil {
+		t.Fatalf("Scan(%q) error: %v", root, err)
+	}
+	if len(notes) != 1 || notes[0].ID != "1" {
+		t.Errorf("Scan = %+v, want 1 note with ID=1", notes)
 	}
 }
 
