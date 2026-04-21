@@ -102,45 +102,37 @@ func (f *Frontmatter) UnmarshalYAML(node *yaml.Node) error {
 func (f Frontmatter) MarshalYAML() (interface{}, error) {
 	node := &yaml.Node{Kind: yaml.MappingNode}
 
-	// Encode cannot fail for string/[]string/bool — matches the panic-on-
-	// impossible stance FormatNote takes for yaml.Marshal.
 	appendString := func(key, value string) {
 		if value == "" {
 			return
 		}
-		valNode := &yaml.Node{}
-		if err := valNode.Encode(value); err != nil {
-			panic(fmt.Sprintf("yaml encode string %q: %v", key, err))
-		}
 		node.Content = append(node.Content,
 			&yaml.Node{Kind: yaml.ScalarNode, Value: key},
-			valNode,
+			&yaml.Node{Kind: yaml.ScalarNode, Tag: "!!str", Value: value},
 		)
 	}
 	appendList := func(key string, value []string) {
 		if len(value) == 0 {
 			return
 		}
-		valNode := &yaml.Node{}
-		if err := valNode.Encode(value); err != nil {
-			panic(fmt.Sprintf("yaml encode list %q: %v", key, err))
+		seq := &yaml.Node{Kind: yaml.SequenceNode, Tag: "!!seq"}
+		for _, v := range value {
+			seq.Content = append(seq.Content,
+				&yaml.Node{Kind: yaml.ScalarNode, Tag: "!!str", Value: v},
+			)
 		}
 		node.Content = append(node.Content,
 			&yaml.Node{Kind: yaml.ScalarNode, Value: key},
-			valNode,
+			seq,
 		)
 	}
 	appendBool := func(key string, value bool) {
 		if !value {
 			return
 		}
-		valNode := &yaml.Node{}
-		if err := valNode.Encode(value); err != nil {
-			panic(fmt.Sprintf("yaml encode bool %q: %v", key, err))
-		}
 		node.Content = append(node.Content,
 			&yaml.Node{Kind: yaml.ScalarNode, Value: key},
-			valNode,
+			&yaml.Node{Kind: yaml.ScalarNode, Tag: "!!bool", Value: "true"},
 		)
 	}
 
