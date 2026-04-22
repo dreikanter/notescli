@@ -51,6 +51,17 @@ is called out in `CHANGELOG.md` when a new reserved key is added.
 - **Consumers:** notes-cli (`tags`, filters), notes-pub (tag pages,
   feed), notes-view.
 
+### aliases
+- **Type:** list of strings
+- **Semantics:** prior identifiers for the note — historical slugs,
+  legacy IDs, or alternate names that should continue to resolve to
+  this note after a rename. notes-cli itself does not yet consume this
+  field; it is reserved so downstream publishers can implement
+  permalink redirects and rename-history handling without collision
+  risk.
+- **Consumers:** notes-pub (permalink redirects), notes-view
+  (rename-history resolution).
+
 ### description
 - **Type:** string
 - **Semantics:** short summary; optional.

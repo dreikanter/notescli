@@ -20,6 +20,8 @@ func TestFrontmatterIsZero(t *testing.T) {
 		{"slug set", Frontmatter{Slug: "s"}, false},
 		{"tags empty slice is zero", Frontmatter{Tags: []string{}}, true},
 		{"tags with value", Frontmatter{Tags: []string{"a"}}, false},
+		{"aliases empty slice is zero", Frontmatter{Aliases: []string{}}, true},
+		{"aliases with value", Frontmatter{Aliases: []string{"a"}}, false},
 		{"description set", Frontmatter{Description: "d"}, false},
 		{"public true", Frontmatter{Public: true}, false},
 		{"date set", Frontmatter{Date: time.Date(2026, 4, 22, 0, 0, 0, 0, time.UTC)}, false},
@@ -420,6 +422,93 @@ func TestDateInvalidRejected(t *testing.T) {
 	_, _, err := ParseNote(in)
 	if err == nil {
 		t.Fatal("expected error for malformed date")
+	}
+}
+
+func TestAliasesRoundTrip(t *testing.T) {
+	in := []byte("---\ntitle: T\naliases:\n  - old-slug\n  - even-older\n---\n\nbody\n")
+	fm, body, err := ParseNote(in)
+	if err != nil {
+		t.Fatalf("ParseNote: %v", err)
+	}
+	if len(fm.Aliases) != 2 || fm.Aliases[0] != "old-slug" || fm.Aliases[1] != "even-older" {
+		t.Errorf("Aliases = %v, want [old-slug even-older]", fm.Aliases)
+	}
+	if _, ok := fm.Extra["aliases"]; ok {
+		t.Error("Aliases should be on the typed field, not in Extra")
+	}
+	out := string(FormatNote(fm, body))
+	want := "---\ntitle: T\naliases:\n    - old-slug\n    - even-older\n---\n\nbody\n"
+	if out != want {
+		t.Errorf("FormatNote =\n%q\nwant:\n%q", out, want)
+	}
+}
+
+func TestAliasesFieldOrder(t *testing.T) {
+	fm := Frontmatter{
+		Title: "T", Slug: "s", Type: "meeting",
+		Date:        time.Date(2026, 4, 22, 0, 0, 0, 0, time.UTC),
+		Tags:        []string{"a"},
+		Aliases:     []string{"old"},
+		Description: "D", Public: true,
+	}
+	got := string(FormatNote(fm, []byte("body\n")))
+	want := "---\ntitle: T\nslug: s\ntype: meeting\ndate: 2026-04-22\ntags:\n    - a\naliases:\n    - old\ndescription: D\npublic: true\n---\n\nbody\n"
+	if got != want {
+		t.Errorf("FormatNote =\n%q\nwant:\n%q", got, want)
+	}
+}
+
+// Migration check: a note whose `aliases:` previously landed in Extra now
+// populates the typed Aliases field instead, and non-reserved Extra keys
+// continue to round-trip.
+func TestAliasesMigratesFromExtra(t *testing.T) {
+	in := []byte("---\ntitle: Old note\naliases:\n  - prior-slug\n  - legacy-id\nfeatured: true\n---\n\nbody\n")
+	fm, _, err := ParseNote(in)
+	if err != nil {
+		t.Fatalf("ParseNote: %v", err)
+	}
+	want := []string{"prior-slug", "legacy-id"}
+	if !reflect.DeepEqual(fm.Aliases, want) {
+		t.Errorf("Aliases = %v, want %v", fm.Aliases, want)
+	}
+	if _, ok := fm.Extra["aliases"]; ok {
+		t.Error("aliases key should not be in Extra after migration")
+	}
+	if _, ok := fm.Extra["featured"]; !ok {
+		t.Error("non-reserved Extra keys should still round-trip")
+	}
+}
+
+func TestAliasesInvalidRejected(t *testing.T) {
+	in := []byte("---\ntitle: T\naliases: not-a-list\n---\n\nbody\n")
+	_, _, err := ParseNote(in)
+	if err == nil {
+		t.Fatal("expected error for non-list aliases")
+	}
+}
+
+func TestRoundtripWithAliases(t *testing.T) {
+	cases := []Frontmatter{
+		{Aliases: []string{"a"}},
+		{Title: "T", Aliases: []string{"old-slug", "prior"}},
+		{Title: "T", Slug: "new", Aliases: []string{"old"}, Tags: []string{"x"}},
+		{Aliases: []string{"contains: colon", "brackets]"}},
+	}
+	for i, fm := range cases {
+		t.Run(fmt.Sprintf("case_%d", i), func(t *testing.T) {
+			out := FormatNote(fm, []byte("body\n"))
+			gotF, gotBody, err := ParseNote(out)
+			if err != nil {
+				t.Fatalf("parse failed: %v", err)
+			}
+			if !reflect.DeepEqual(gotF.Aliases, fm.Aliases) {
+				t.Errorf("Aliases: got %v, want %v", gotF.Aliases, fm.Aliases)
+			}
+			if string(gotBody) != "body\n" {
+				t.Errorf("body: got %q, want %q", string(gotBody), "body\n")
+			}
+		})
 	}
 }
 

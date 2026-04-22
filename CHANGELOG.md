@@ -5,6 +5,7 @@
 ### Added
 
 - `note.ScanOptions{Strict bool}` and a variadic `Scan(root string, opts ...ScanOptions) ([]Note, error)` signature let callers opt into a lenient walk. The default (no options, or `Strict: true`) preserves the existing YYYY/MM/*.md discipline; `Strict: false` walks every `.md` file under root with `filepath.WalkDir` regardless of nesting depth or parent-directory naming, matching the layout downstream tools like notes-view consume. Existing `Scan(root)` callers are unaffected ([#141])
+- `note.Frontmatter` now has a reserved `Aliases []string` field (`yaml:"aliases,omitempty"`). Notes whose `aliases:` previously landed in `Frontmatter.Extra` now populate the typed field, so downstream publishers (notes-pub permalink redirects, notes-view rename-history resolution) no longer need to decode the `yaml.Node` themselves. notes-cli does not itself consume `aliases` yet; the field is reserved to stabilize the contract and avoid future collisions — see `SCHEMA.md` ([#139])
 
 ## [0.1.90] - 2026-04-22
 
@@ -589,3 +590,4 @@
 [#136]: https://github.com/dreikanter/notes-cli/pull/135
 [#146]: https://github.com/dreikanter/notes-cli/pull/146
 [#141]: https://github.com/dreikanter/notes-cli/issues/141
+[#139]: https://github.com/dreikanter/notes-cli/issues/139
