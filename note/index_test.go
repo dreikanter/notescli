@@ -186,6 +186,63 @@ func TestIndexByTagAndTags(t *testing.T) {
 	}
 }
 
+// TestEntryMergedTags verifies that body hashtags are extracted during Load
+// and surface via Entry.MergedTags alongside frontmatter tags, case-folded
+// and deduped. This is the path FilterByTags and ExtractTags route through.
+func TestEntryMergedTags(t *testing.T) {
+	root := t.TempDir()
+	writeNote(t, root, "2026/01/20260101_1.md",
+		"---\ntags: [Work, Planning]\n---\n\nbody mentions #inline and #Work again.\n")
+	writeNote(t, root, "2026/01/20260102_2.md",
+		"no frontmatter, just #solo\n")
+
+	idx, err := Load(root)
+	if err != nil {
+		t.Fatalf("Load error: %v", err)
+	}
+
+	e1, ok := idx.ByID("1")
+	if !ok {
+		t.Fatalf("ByID(1) missing")
+	}
+	got := e1.MergedTags()
+	want := []string{"inline", "planning", "work"}
+	if len(got) != len(want) {
+		t.Fatalf("MergedTags(1) = %v, want %v", got, want)
+	}
+	for i, w := range want {
+		if got[i] != w {
+			t.Errorf("MergedTags(1)[%d] = %q, want %q", i, got[i], w)
+		}
+	}
+
+	e2, _ := idx.ByID("2")
+	if got := e2.MergedTags(); len(got) != 1 || got[0] != "solo" {
+		t.Errorf("MergedTags(2) = %v, want [solo]", got)
+	}
+}
+
+// TestLoadWithoutFrontmatterSkipsBodyHashtags documents that WithFrontmatter(false)
+// turns off both frontmatter parsing and body hashtag extraction — Entry.MergedTags
+// returns empty because neither source is populated.
+func TestLoadWithoutFrontmatterSkipsBodyHashtags(t *testing.T) {
+	root := t.TempDir()
+	writeNote(t, root, "2026/01/20260101_1.md",
+		"---\ntags: [fm]\n---\n\nbody with #inline tag\n")
+
+	idx, err := Load(root, WithFrontmatter(false))
+	if err != nil {
+		t.Fatalf("Load error: %v", err)
+	}
+	e, ok := idx.ByID("1")
+	if !ok {
+		t.Fatalf("ByID(1) missing")
+	}
+	if got := e.MergedTags(); got != nil {
+		t.Errorf("MergedTags on WithFrontmatter(false) = %v, want nil", got)
+	}
+}
+
 func TestIndexResolve(t *testing.T) {
 	root := testdataPath(t)
 	idx, err := Load(root)

@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.1.98] - 2026-04-22
+
+### Changed
+
+- `note.FilterByTags`, `note.ExtractTags`, `note.ResolveRef`, and `note.ResolveRefDate` now route through `note.Load` + `Index` instead of re-walking and re-reading the store on every call. Behavior is unchanged: tag sources still merge frontmatter `tags:` with body hashtags, the resolve priority chain (ID → type → path → slug substring) is identical, and a per-note frontmatter parse error still logs to stderr and falls back to body hashtags only. Callers that already hold an `Index` can skip the wrappers and call `Index.Resolve` / `Entry.MergedTags` directly to avoid a second file-read pass. `Entry.MergedTags()` returns the sorted, lowercased, deduplicated union of frontmatter tags and body hashtags for a single entry ([#144])
+
 ## [0.1.96] - 2026-04-22
 
 ### Added
@@ -624,3 +630,4 @@
 [#150]: https://github.com/dreikanter/notes-cli/pull/150
 [#145]: https://github.com/dreikanter/notes-cli/issues/145
 [#143]: https://github.com/dreikanter/notes-cli/issues/143
+[#144]: https://github.com/dreikanter/notes-cli/issues/144

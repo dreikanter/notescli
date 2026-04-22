@@ -2,97 +2,53 @@ package note
 
 import (
 	"bytes"
-	"context"
-	"fmt"
-	"os"
-	"path/filepath"
-	"runtime"
 	"sort"
-	"strings"
-	"sync"
-
-	"golang.org/x/sync/errgroup"
 )
 
 // ExtractTags scans the note store under root and returns a sorted,
 // deduplicated, lowercased list of tags. Sources: frontmatter `tags:` fields
-// and body hashtags (#word) in the prose. File reads run concurrently across
-// runtime.NumCPU() workers. Returns a nil slice for an empty store.
-// A per-note frontmatter parse error is written to stderr and the
+// and body hashtags (#word) in the prose. Returns a nil slice for an empty
+// store. A per-note frontmatter parse error is written to stderr and the
 // note's frontmatter tags are skipped (body hashtags are still collected).
 // Any file-read error aborts the scan.
+//
+// Implementation routes through Load so concurrent callers reuse a single
+// file-read pass; the worker pool and error-group coordination live in Load.
 func ExtractTags(root string) ([]string, error) {
-	notes, err := Scan(root)
+	idx, err := Load(root)
 	if err != nil {
 		return nil, err
 	}
-	if len(notes) == 0 {
-		return nil, nil
-	}
+	return idx.mergedTagsSorted(), nil
+}
 
-	workers := runtime.NumCPU()
-	if workers > len(notes) {
-		workers = len(notes)
-	}
-
-	g, ctx := errgroup.WithContext(context.Background())
-	jobs := make(chan Note)
-	var mu sync.Mutex
-	merged := make(map[string]struct{})
-
-	g.Go(func() error {
-		defer close(jobs)
-		for _, n := range notes {
-			select {
-			case <-ctx.Done():
-				return ctx.Err()
-			case jobs <- n:
-			}
-		}
+// mergedTagsSorted returns the sorted, deduplicated, lowercased union of all
+// entries' frontmatter tags and body hashtags. Returns nil on an empty index
+// to match ExtractTags's pre-migration behavior.
+func (i *Index) mergedTagsSorted() []string {
+	i.mu.RLock()
+	defer i.mu.RUnlock()
+	if len(i.entries) == 0 {
 		return nil
-	})
-
-	for i := 0; i < workers; i++ {
-		g.Go(func() error {
-			local := make(map[string]struct{})
-			for n := range jobs {
-				path := filepath.Join(root, n.RelPath)
-				data, err := os.ReadFile(path)
-				if err != nil {
-					return err
-				}
-				fm, body, parseErr := ParseNote(data)
-				if parseErr != nil {
-					fmt.Fprintf(os.Stderr, "warn: %s: %v\n", path, parseErr)
-				}
-				for _, t := range fm.Tags {
-					if t != "" {
-						local[strings.ToLower(t)] = struct{}{}
-					}
-				}
-				for _, t := range ExtractHashtags(body) {
-					local[strings.ToLower(t)] = struct{}{}
-				}
-			}
-			mu.Lock()
-			for t := range local {
-				merged[t] = struct{}{}
-			}
-			mu.Unlock()
-			return nil
-		})
 	}
-
-	if err := g.Wait(); err != nil {
-		return nil, err
+	set := make(map[string]struct{})
+	for _, t := range i.allTags {
+		set[t] = struct{}{}
 	}
-
-	out := make([]string, 0, len(merged))
-	for t := range merged {
+	for _, e := range i.entries {
+		for _, t := range e.bodyHashtags {
+			set[t] = struct{}{}
+		}
+	}
+	if len(set) == 0 {
+		return nil
+	}
+	out := make([]string, 0, len(set))
+	for t := range set {
 		out = append(out, t)
 	}
 	sort.Strings(out)
-	return out, nil
+	return out
 }
 
 // ExtractHashtags scans body text and returns hashtag tokens (without the

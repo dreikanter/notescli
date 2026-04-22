@@ -151,6 +151,10 @@ func scanLenient(root string) ([]Note, error) {
 //  2. Type with special behavior (todo, backlog, weekly) — most recent match
 //  3. Path — absolute or relative path with separator, exact match under root
 //  4. Slug substring — most recent note whose slug contains the query
+//
+// Implementation routes through Index.Resolve on a WithFrontmatter(false)
+// load, so CLI commands that already hold an Index can call Index.Resolve
+// directly and skip this wrapper.
 func ResolveRef(root, query string) (Note, error) {
 	return ResolveRefDate(root, query, "")
 }
@@ -158,58 +162,96 @@ func ResolveRef(root, query string) (Note, error) {
 // ResolveRefDate works like ResolveRef but optionally restricts candidates to
 // notes matching the given YYYYMMDD date string. Pass "" to skip date filtering.
 func ResolveRefDate(root, query, date string) (Note, error) {
-	query = strings.TrimSpace(query)
-
-	notes, err := Scan(root)
+	idx, err := Load(root, WithFrontmatter(false))
 	if err != nil {
 		return Note{}, err
 	}
 
-	if date != "" {
-		notes = FilterByDate(notes, date)
-	}
-
-	// Step 1: numeric ID — strict, no fallthrough
-	if IsID(query) {
-		for i := range notes {
-			if notes[i].ID == query {
-				return notes[i], nil
-			}
-		}
-		return Note{}, fmt.Errorf("note not found: %s", query)
-	}
-
-	// Step 2: type — most recent match
-	if HasSpecialBehavior(query) {
-		for i := range notes {
-			if notes[i].Type == query {
-				return notes[i], nil
-			}
-		}
-	}
-
-	// Step 3: path (absolute, or relative containing a separator) — exact match
-	if filepath.IsAbs(query) || strings.ContainsAny(query, "/\\") {
-		rel, err := resolveRelPath(root, query)
+	if date == "" {
+		e, ok, err := idx.Resolve(query)
 		if err != nil {
 			return Note{}, err
 		}
-		for i := range notes {
-			if notes[i].RelPath == rel {
-				return notes[i], nil
+		if !ok {
+			return Note{}, fmt.Errorf("note not found: %s", strings.TrimSpace(query))
+		}
+		return e.Note, nil
+	}
+
+	entries := idx.Entries()
+	filtered := filterEntriesByDate(entries, date)
+	e, ok, err := resolveInEntries(root, filtered, query)
+	if err != nil {
+		return Note{}, err
+	}
+	if !ok {
+		return Note{}, fmt.Errorf("note not found: %s", strings.TrimSpace(query))
+	}
+	return e.Note, nil
+}
+
+// filterEntriesByDate returns entries whose Date field matches the given
+// YYYYMMDD string, preserving input order.
+func filterEntriesByDate(entries []Entry, date string) []Entry {
+	var out []Entry
+	for _, e := range entries {
+		if e.Date == date {
+			out = append(out, e)
+		}
+	}
+	return out
+}
+
+// resolveInEntries applies the ResolveRef priority chain to an arbitrary
+// (pre-filtered) entry slice. It mirrors Index.Resolve but linear-scans,
+// because date-restricted subsets don't share the index's maps.
+func resolveInEntries(root string, entries []Entry, query string) (Entry, bool, error) {
+	query = strings.TrimSpace(query)
+
+	if query == "" {
+		if len(entries) == 0 {
+			return Entry{}, false, nil
+		}
+		return entries[0], true, nil
+	}
+
+	if IsID(query) {
+		for _, e := range entries {
+			if e.ID == query {
+				return e, true, nil
 			}
 		}
-		return Note{}, fmt.Errorf("note not found: %s", query)
+		return Entry{}, false, nil
 	}
 
-	// Step 4: slug substring — most recent match
-	for i := range notes {
-		if strings.Contains(notes[i].Slug, query) {
-			return notes[i], nil
+	if HasSpecialBehavior(query) {
+		for _, e := range entries {
+			if e.Type == query {
+				return e, true, nil
+			}
 		}
 	}
 
-	return Note{}, fmt.Errorf("note not found: %s", query)
+	if filepath.IsAbs(query) || strings.ContainsAny(query, `/\`) {
+		rel, err := resolveRelPath(root, query)
+		if err != nil {
+			return Entry{}, false, err
+		}
+		for _, e := range entries {
+			if e.RelPath == rel {
+				return e, true, nil
+			}
+		}
+		return Entry{}, false, nil
+	}
+
+	for _, e := range entries {
+		if e.Slug != "" && strings.Contains(e.Slug, query) {
+			return e, true, nil
+		}
+	}
+
+	return Entry{}, false, nil
 }
 
 // resolveRelPath converts a path-like query to a note RelPath under root.
@@ -253,31 +295,36 @@ func Filter(notes []Note, fragment string) []Note {
 // FilterByTags returns notes that contain all of the given tags. Tag sources
 // mirror ExtractTags: frontmatter `tags:` fields and body hashtags (#word).
 // Comparison is case-insensitive.
-// A per-note frontmatter parse error is written to stderr and the note's
-// frontmatter tags are skipped (body hashtags are still considered).
+//
+// Implementation routes through Load so the tag index is built from a single
+// concurrent file-read pass; the []Note signature is preserved as a shim for
+// callers that don't yet hold an Index. A per-note frontmatter parse error is
+// logged to stderr during Load and leaves the note's frontmatter tags empty;
+// body hashtags are still considered.
 func FilterByTags(notes []Note, root string, tags []string) ([]Note, error) {
+	if len(notes) == 0 {
+		return nil, nil
+	}
+	idx, err := Load(root)
+	if err != nil {
+		return nil, err
+	}
 	var results []Note
 	for _, n := range notes {
-		path := filepath.Join(root, n.RelPath)
-		data, err := os.ReadFile(path)
-		if err != nil {
-			return nil, err
+		e, ok := idx.ByRel(n.RelPath)
+		if !ok {
+			continue
 		}
-		fm, body, parseErr := ParseNote(data)
-		if parseErr != nil {
-			fmt.Fprintf(os.Stderr, "warn: %s: %v\n", path, parseErr)
-		}
-		hashtags := ExtractHashtags(body)
-		noteTags := make([]string, 0, len(fm.Tags)+len(hashtags))
-		noteTags = append(noteTags, fm.Tags...)
-		noteTags = append(noteTags, hashtags...)
-		if hasAllTags(noteTags, tags) {
+		if hasAllTags(e.MergedTags(), tags) {
 			results = append(results, n)
 		}
 	}
 	return results, nil
 }
 
+// hasAllTags reports whether every entry in required appears in noteTags,
+// case-insensitively. noteTags may be pre-lowercased (as from Entry.MergedTags)
+// or mixed-case — both sides are folded for comparison.
 func hasAllTags(noteTags []string, required []string) bool {
 	set := make(map[string]struct{}, len(noteTags))
 	for _, t := range noteTags {

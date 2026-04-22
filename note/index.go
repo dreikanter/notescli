@@ -23,6 +23,38 @@ type Entry struct {
 	Frontmatter Frontmatter
 	ModTime     time.Time
 	Size        int64
+
+	// bodyHashtags holds the lowercased, deduplicated body hashtags extracted
+	// during Load. Read via MergedTags; the field is unexported because it
+	// only feeds migration shims (FilterByTags, ExtractTags). Nil when Load
+	// ran with WithFrontmatter(false).
+	bodyHashtags []string
+}
+
+// MergedTags returns the lowercased, deduplicated union of the entry's
+// frontmatter tags and body hashtags. This matches the tag source used by
+// FilterByTags and ExtractTags: both frontmatter `tags:` values and in-body
+// `#hashtag` tokens. Result is sorted.
+func (e Entry) MergedTags() []string {
+	set := make(map[string]struct{}, len(e.Frontmatter.Tags)+len(e.bodyHashtags))
+	for _, t := range e.Frontmatter.Tags {
+		if t == "" {
+			continue
+		}
+		set[strings.ToLower(t)] = struct{}{}
+	}
+	for _, t := range e.bodyHashtags {
+		set[t] = struct{}{}
+	}
+	if len(set) == 0 {
+		return nil
+	}
+	out := make([]string, 0, len(set))
+	for t := range set {
+		out = append(out, t)
+	}
+	sort.Strings(out)
+	return out
 }
 
 // Index is an in-memory, read-only snapshot of a notes store. Build one with
@@ -155,12 +187,14 @@ func (i *Index) build() error {
 						if err != nil {
 							return err
 						}
-						fm, _, parseErr := ParseNote(data)
+						fm, body, parseErr := ParseNote(data)
 						if parseErr != nil {
 							fmt.Fprintf(os.Stderr, "warn: %s: %v\n", path, parseErr)
-							continue
+							body = data
+						} else {
+							entries[j].Frontmatter = fm
 						}
-						entries[j].Frontmatter = fm
+						entries[j].bodyHashtags = normalizeHashtags(ExtractHashtags(body))
 					}
 				}
 				return nil
@@ -440,6 +474,7 @@ func (i *Index) Resolve(query string) (Entry, bool, error) {
 func cloneEntry(e Entry) Entry {
 	e.Frontmatter.Tags = cloneStrings(e.Frontmatter.Tags)
 	e.Frontmatter.Aliases = cloneStrings(e.Frontmatter.Aliases)
+	e.bodyHashtags = cloneStrings(e.bodyHashtags)
 	return e
 }
 
@@ -449,5 +484,30 @@ func cloneStrings(s []string) []string {
 	}
 	out := make([]string, len(s))
 	copy(out, s)
+	return out
+}
+
+// normalizeHashtags lowercases and deduplicates a hashtag list from
+// ExtractHashtags into the canonical form used by Entry.bodyHashtags.
+// Returns nil when the input is empty so equality checks against nil hold.
+func normalizeHashtags(raw []string) []string {
+	if len(raw) == 0 {
+		return nil
+	}
+	set := make(map[string]struct{}, len(raw))
+	for _, t := range raw {
+		if t == "" {
+			continue
+		}
+		set[strings.ToLower(t)] = struct{}{}
+	}
+	if len(set) == 0 {
+		return nil
+	}
+	out := make([]string, 0, len(set))
+	for t := range set {
+		out = append(out, t)
+	}
+	sort.Strings(out)
 	return out
 }
