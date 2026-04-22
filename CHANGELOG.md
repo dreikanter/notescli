@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.1.99] - 2026-04-22
+
+### Changed
+
+- `note.ResolveEntryDate` now takes the `Entry` directly (`func ResolveEntryDate(e Entry, fi fs.FileInfo) (time.Time, string)`) instead of the explicit `Note` + `Frontmatter` pair it accepted when it landed in #149 before `Entry` existed. Priority, source labels, and `fi == nil` handling are unchanged. Callers holding an `Entry` from `note.Index` no longer need to unpack it ([#140])
+
 ## [0.1.98] - 2026-04-22
 
 ### Changed
@@ -631,3 +637,4 @@
 [#145]: https://github.com/dreikanter/notes-cli/issues/145
 [#143]: https://github.com/dreikanter/notes-cli/issues/143
 [#144]: https://github.com/dreikanter/notes-cli/issues/144
+[#140]: https://github.com/dreikanter/notes-cli/issues/140
