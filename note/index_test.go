@@ -1,6 +1,7 @@
 package note
 
 import (
+	"fmt"
 	"path/filepath"
 	"testing"
 )
@@ -285,5 +286,82 @@ func TestIndexByIDKeepsNewestOnCollision(t *testing.T) {
 	}
 	if e.Slug != "newer" {
 		t.Errorf("ByID(1).Slug = %q, want \"newer\" (newest entry)", e.Slug)
+	}
+}
+
+// TestReloadDoneReflectsLatestState pins that reading the channel returned
+// from Reload guarantees a build has completed against the tree state at or
+// after the Reload call. Without this guarantee, downstream live-reload hooks
+// could fire before the index catches up and serve stale metadata.
+func TestReloadDoneReflectsLatestState(t *testing.T) {
+	root := t.TempDir()
+	idx, err := Load(root)
+	if err != nil {
+		t.Fatalf("initial Load: %v", err)
+	}
+
+	writeNote(t, root, "2026/01/20260101_9999_fresh.md",
+		"---\ntitle: Fresh\n---\n")
+
+	if _, ok := idx.ByRel("2026/01/20260101_9999_fresh.md"); ok {
+		t.Fatal("fresh note should not be indexed before Reload")
+	}
+
+	<-idx.Reload()
+
+	entry, ok := idx.ByRel("2026/01/20260101_9999_fresh.md")
+	if !ok {
+		t.Fatal("fresh note should be indexed after Reload done fires")
+	}
+	if entry.Frontmatter.Title != "Fresh" {
+		t.Errorf("Title = %q, want Fresh", entry.Frontmatter.Title)
+	}
+}
+
+// TestReloadCoalescesRequestsDuringInflight pins the scheduling rule: while a
+// build is in-flight, all new Reload callers share a single queued follow-up.
+// Verified by observing that a request arriving after a write is reflected by
+// the time the returned channel closes.
+func TestReloadCoalescesRequestsDuringInflight(t *testing.T) {
+	root := t.TempDir()
+	// Prime the tree with enough files that build takes measurable time.
+	for i := 0; i < 200; i++ {
+		writeNote(t, root, fmt.Sprintf("2026/01/20260101_%04d.md", i+1),
+			"---\ntitle: T\n---\n")
+	}
+
+	idx, err := Load(root)
+	if err != nil {
+		t.Fatalf("initial Load: %v", err)
+	}
+
+	// Kick off a build, then — without waiting — add a new file and request
+	// another reload. The second call must return a channel that reflects
+	// the new file, not the prior in-flight build.
+	first := idx.Reload()
+
+	writeNote(t, root, "2026/02/20260201_9999_late.md",
+		"---\ntitle: Late\n---\n")
+
+	second := idx.Reload()
+
+	// Second must not close before first (queue ordering).
+	select {
+	case <-second:
+		// If this ever fires before first, the queued build was elided.
+		select {
+		case <-first:
+			// Both closed at roughly the same time — acceptable if first
+			// finished between the two reads.
+		default:
+			t.Fatal("second done closed before in-flight build finished")
+		}
+	case <-first:
+	}
+
+	<-second
+
+	if _, ok := idx.ByRel("2026/02/20260201_9999_late.md"); !ok {
+		t.Error("late note must be indexed once second Reload's done fires")
 	}
 }

@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.1.96] - 2026-04-22
+
+### Added
+
+- `note.Index.Reload() <-chan struct{}` requests a rebuild and returns a channel that closes once a walk completing at or after the call has swapped in. Scheduling: idle → start immediately; in-flight → queue at most one follow-up, and every caller arriving during the in-flight build receives the same queued `done` so they only observe completion after a walk that started after their request. Cleanup runs in a deferred block so a panicking build cannot leave waiters blocked. Pairs with the `note/watch` debouncer (step 7 of #134): watcher fires, consumer calls `Reload`, bursts collapse to at most one rebuild ([#143])
+
 ## [0.1.95] - 2026-04-22
 
 ### Added
@@ -617,3 +623,4 @@
 [#149]: https://github.com/dreikanter/notes-cli/pull/149
 [#150]: https://github.com/dreikanter/notes-cli/pull/150
 [#145]: https://github.com/dreikanter/notes-cli/issues/145
+[#143]: https://github.com/dreikanter/notes-cli/issues/143

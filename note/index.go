@@ -26,10 +26,11 @@ type Entry struct {
 }
 
 // Index is an in-memory, read-only snapshot of a notes store. Build one with
-// Load; future reload semantics will swap state atomically under the RWMutex,
-// so all read methods already take RLock today.
+// Load; Reload swaps state atomically under the RWMutex, so all read methods
+// take RLock today.
 type Index struct {
 	root string
+	cfg  loadConfig
 
 	mu      sync.RWMutex
 	entries []Entry
@@ -38,6 +39,13 @@ type Index struct {
 	bySlug  map[string][]Entry
 	byTag   map[string][]Entry
 	allTags []string
+
+	// buildMu guards curDone and queuedDone — the Reload state machine.
+	// Separate from mu so rebuild bookkeeping does not contend with read
+	// lookups. See Reload for the scheduling semantics.
+	buildMu    sync.Mutex
+	curDone    chan struct{} // in-flight build's completion signal; nil when idle
+	queuedDone chan struct{} // follow-up build queued while curDone runs; nil when none
 }
 
 type loadConfig struct {
@@ -90,18 +98,29 @@ func Load(root string, opts ...LoadOption) (*Index, error) {
 		cfg.workers = runtime.NumCPU()
 	}
 
-	notes, err := Scan(root, cfg.scanOpts)
-	if err != nil {
+	idx := &Index{root: root, cfg: cfg}
+	if err := idx.build(); err != nil {
 		return nil, err
+	}
+	return idx, nil
+}
+
+// build walks the notes tree once, reads each entry under the configured
+// worker pool, and atomically swaps the new state in under i.mu. Called by
+// Load for the initial population and by runBuild for subsequent reloads.
+func (i *Index) build() error {
+	notes, err := Scan(i.root, i.cfg.scanOpts)
+	if err != nil {
+		return err
 	}
 
 	entries := make([]Entry, len(notes))
-	for i, n := range notes {
-		entries[i] = Entry{Note: n}
+	for j, n := range notes {
+		entries[j] = Entry{Note: n}
 	}
 
 	if len(entries) > 0 {
-		workers := cfg.workers
+		workers := i.cfg.workers
 		if workers > len(entries) {
 			workers = len(entries)
 		}
@@ -111,11 +130,11 @@ func Load(root string, opts ...LoadOption) (*Index, error) {
 
 		g.Go(func() error {
 			defer close(jobs)
-			for i := range entries {
+			for j := range entries {
 				select {
 				case <-ctx.Done():
 					return ctx.Err()
-				case jobs <- i:
+				case jobs <- j:
 				}
 			}
 			return nil
@@ -123,15 +142,15 @@ func Load(root string, opts ...LoadOption) (*Index, error) {
 
 		for w := 0; w < workers; w++ {
 			g.Go(func() error {
-				for i := range jobs {
-					path := filepath.Join(root, entries[i].RelPath)
+				for j := range jobs {
+					path := filepath.Join(i.root, entries[j].RelPath)
 					info, err := os.Stat(path)
 					if err != nil {
 						return err
 					}
-					entries[i].ModTime = info.ModTime()
-					entries[i].Size = info.Size()
-					if cfg.frontmatter {
+					entries[j].ModTime = info.ModTime()
+					entries[j].Size = info.Size()
+					if i.cfg.frontmatter {
 						data, err := os.ReadFile(path)
 						if err != nil {
 							return err
@@ -141,7 +160,7 @@ func Load(root string, opts ...LoadOption) (*Index, error) {
 							fmt.Fprintf(os.Stderr, "warn: %s: %v\n", path, parseErr)
 							continue
 						}
-						entries[i].Frontmatter = fm
+						entries[j].Frontmatter = fm
 					}
 				}
 				return nil
@@ -149,47 +168,107 @@ func Load(root string, opts ...LoadOption) (*Index, error) {
 		}
 
 		if err := g.Wait(); err != nil {
-			return nil, err
+			return err
 		}
 	}
 
-	idx := &Index{
-		root:    root,
-		entries: entries,
-		byID:    make(map[string]Entry, len(entries)),
-		byRel:   make(map[string]Entry, len(entries)),
-		bySlug:  make(map[string][]Entry),
-		byTag:   make(map[string][]Entry),
-	}
-
+	byID := make(map[string]Entry, len(entries))
+	byRel := make(map[string]Entry, len(entries))
+	bySlug := make(map[string][]Entry)
+	byTag := make(map[string][]Entry)
 	tagSet := make(map[string]struct{})
 	for _, e := range entries {
 		if e.ID != "" {
-			if _, dup := idx.byID[e.ID]; !dup {
-				idx.byID[e.ID] = e
+			if _, dup := byID[e.ID]; !dup {
+				byID[e.ID] = e
 			}
 		}
-		idx.byRel[e.RelPath] = e
+		byRel[e.RelPath] = e
 		if e.Slug != "" {
-			idx.bySlug[e.Slug] = append(idx.bySlug[e.Slug], e)
+			bySlug[e.Slug] = append(bySlug[e.Slug], e)
 		}
 		for _, t := range e.Frontmatter.Tags {
 			if t == "" {
 				continue
 			}
 			lower := strings.ToLower(t)
-			idx.byTag[lower] = append(idx.byTag[lower], e)
+			byTag[lower] = append(byTag[lower], e)
 			tagSet[lower] = struct{}{}
 		}
 	}
 
-	idx.allTags = make([]string, 0, len(tagSet))
+	allTags := make([]string, 0, len(tagSet))
 	for t := range tagSet {
-		idx.allTags = append(idx.allTags, t)
+		allTags = append(allTags, t)
 	}
-	sort.Strings(idx.allTags)
+	sort.Strings(allTags)
 
-	return idx, nil
+	i.mu.Lock()
+	i.entries = entries
+	i.byID = byID
+	i.byRel = byRel
+	i.bySlug = bySlug
+	i.byTag = byTag
+	i.allTags = allTags
+	i.mu.Unlock()
+
+	return nil
+}
+
+// Reload requests an index rebuild and returns a channel that closes when a
+// build has completed that reflects the tree state at or after this call.
+//
+// Scheduling rules:
+//   - Idle: start a new build immediately.
+//   - Build in-flight: coalesce — queue at most one follow-up. Every caller
+//     that arrives while the in-flight build runs receives the same follow-up's
+//     done channel, so they only observe completion after a full walk that
+//     started after their request.
+//
+// Callers that only need "the current build" can read the returned channel;
+// callers that do not care (e.g. warmup on a navigation) may ignore it.
+func (i *Index) Reload() <-chan struct{} {
+	i.buildMu.Lock()
+	if i.curDone == nil {
+		done := make(chan struct{})
+		i.curDone = done
+		i.buildMu.Unlock()
+		go i.runBuild(done)
+		return done
+	}
+	if i.queuedDone == nil {
+		i.queuedDone = make(chan struct{})
+	}
+	done := i.queuedDone
+	i.buildMu.Unlock()
+	return done
+}
+
+// runBuild executes one build and signals done; if another Reload request
+// arrived during the build, it chains into the follow-up build in the same
+// goroutine lineage.
+//
+// The state-machine cleanup runs in a deferred block so that even if build
+// panics, waiters on done are released and any queued follow-up still gets
+// scheduled — without this, waiting callers would block forever.
+func (i *Index) runBuild(done chan struct{}) {
+	defer func() {
+		i.buildMu.Lock()
+		next := i.queuedDone
+		i.queuedDone = nil
+		i.curDone = next
+		i.buildMu.Unlock()
+
+		close(done)
+
+		if next != nil {
+			go i.runBuild(next)
+		}
+	}()
+
+	if err := i.build(); err != nil {
+		fmt.Fprintf(os.Stderr, "warn: index reload failed: %v\n", err)
+	}
 }
 
 // Root returns the absolute path the index was built from.
