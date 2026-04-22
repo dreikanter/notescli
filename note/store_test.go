@@ -3,6 +3,7 @@ package note
 import (
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 )
 
@@ -60,8 +61,8 @@ func TestScanSkipsInvalidFiles(t *testing.T) {
 	}
 
 	for _, n := range notes {
-		if n.BaseName == "random_file" || n.BaseName == "not-a-note" {
-			t.Errorf("Scan should have skipped %q", n.BaseName)
+		if strings.Contains(n.RelPath, "random_file") || strings.Contains(n.RelPath, "not-a-note") {
+			t.Errorf("Scan should have skipped %q", n.RelPath)
 		}
 	}
 }
@@ -162,9 +163,9 @@ func TestResolveRefDateEmptyQueryFiltersByDate(t *testing.T) {
 
 func TestFilter(t *testing.T) {
 	notes := []Note{
-		{RelPath: "2026/01/20260106_8823.md", BaseName: "20260106_8823", Type: ""},
-		{RelPath: "2026/01/20260102_8814.todo.md", BaseName: "20260102_8814", Type: "todo"},
-		{RelPath: "2024/12/20241203_6973_disable-letter_opener.md", BaseName: "20241203_6973_disable-letter_opener", Type: ""},
+		{RelPath: "2026/01/20260106_8823.md", Type: ""},
+		{RelPath: "2026/01/20260102_8814.todo.md", Type: "todo"},
+		{RelPath: "2024/12/20241203_6973_disable-letter_opener.md", Type: ""},
 	}
 
 	tests := []struct {

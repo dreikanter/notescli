@@ -6,77 +6,69 @@ import (
 
 func TestParseFilename(t *testing.T) {
 	tests := []struct {
-		name         string
-		input        string
-		wantDate     string
-		wantID       string
-		wantSlug     string
-		wantType     string
-		wantBaseName string
-		wantErr      bool
+		name     string
+		input    string
+		wantDate string
+		wantID   string
+		wantSlug string
+		wantType string
+		wantErr  bool
 	}{
 		{
-			name:         "simple without slug or type",
-			input:        "20260106_8823",
-			wantDate:     "20260106",
-			wantID:       "8823",
-			wantSlug:     "",
-			wantType:     "",
-			wantBaseName: "20260106_8823",
+			name:     "simple without slug or type",
+			input:    "20260106_8823",
+			wantDate: "20260106",
+			wantID:   "8823",
+			wantSlug: "",
+			wantType: "",
 		},
 		{
-			name:         "with slug only",
-			input:        "20241203_6973_disable-letter_opener",
-			wantDate:     "20241203",
-			wantID:       "6973",
-			wantSlug:     "disable-letter_opener",
-			wantType:     "",
-			wantBaseName: "20241203_6973_disable-letter_opener",
+			name:     "with slug only",
+			input:    "20241203_6973_disable-letter_opener",
+			wantDate: "20241203",
+			wantID:   "6973",
+			wantSlug: "disable-letter_opener",
+			wantType: "",
 		},
 		{
-			name:         "with type only",
-			input:        "20260102_8814.todo",
-			wantDate:     "20260102",
-			wantID:       "8814",
-			wantSlug:     "",
-			wantType:     "todo",
-			wantBaseName: "20260102_8814",
+			name:     "with type only",
+			input:    "20260102_8814.todo",
+			wantDate: "20260102",
+			wantID:   "8814",
+			wantSlug: "",
+			wantType: "todo",
 		},
 		{
-			name:         "with slug and type",
-			input:        "20260102_8814_standup.todo",
-			wantDate:     "20260102",
-			wantID:       "8814",
-			wantSlug:     "standup",
-			wantType:     "todo",
-			wantBaseName: "20260102_8814_standup",
+			name:     "with slug and type",
+			input:    "20260102_8814_standup.todo",
+			wantDate: "20260102",
+			wantID:   "8814",
+			wantSlug: "standup",
+			wantType: "todo",
 		},
 		{
-			name:         "backlog type",
-			input:        "20260312_9219.backlog",
-			wantDate:     "20260312",
-			wantID:       "9219",
-			wantSlug:     "",
-			wantType:     "backlog",
-			wantBaseName: "20260312_9219",
+			name:     "backlog type",
+			input:    "20260312_9219.backlog",
+			wantDate: "20260312",
+			wantID:   "9219",
+			wantSlug: "",
+			wantType: "backlog",
 		},
 		{
-			name:         "weekly type",
-			input:        "20260312_9219.weekly",
-			wantDate:     "20260312",
-			wantID:       "9219",
-			wantSlug:     "",
-			wantType:     "weekly",
-			wantBaseName: "20260312_9219",
+			name:     "weekly type",
+			input:    "20260312_9219.weekly",
+			wantDate: "20260312",
+			wantID:   "9219",
+			wantSlug: "",
+			wantType: "weekly",
 		},
 		{
-			name:         "unknown dot suffix treated as filename-reported type",
-			input:        "20260312_9219_foo.bar",
-			wantDate:     "20260312",
-			wantID:       "9219",
-			wantSlug:     "foo",
-			wantType:     "bar",
-			wantBaseName: "20260312_9219_foo",
+			name:     "unknown dot suffix treated as filename-reported type",
+			input:    "20260312_9219_foo.bar",
+			wantDate: "20260312",
+			wantID:   "9219",
+			wantSlug: "foo",
+			wantType: "bar",
 		},
 		{
 			// Multi-dot basenames can't come from NoteFilename (unsafe types
@@ -87,13 +79,12 @@ func TestParseFilename(t *testing.T) {
 			wantErr: true,
 		},
 		{
-			name:         "custom type name (no registry gate)",
-			input:        "20260106_8823.meeting",
-			wantDate:     "20260106",
-			wantID:       "8823",
-			wantSlug:     "",
-			wantType:     "meeting",
-			wantBaseName: "20260106_8823",
+			name:     "custom type name (no registry gate)",
+			input:    "20260106_8823.meeting",
+			wantDate: "20260106",
+			wantID:   "8823",
+			wantSlug: "",
+			wantType: "meeting",
 		},
 		{
 			name:    "missing parts",
@@ -106,22 +97,20 @@ func TestParseFilename(t *testing.T) {
 			wantErr: true,
 		},
 		{
-			name:         "short year in date",
-			input:        "2026010_1234",
-			wantDate:     "2026010",
-			wantID:       "1234",
-			wantSlug:     "",
-			wantType:     "",
-			wantBaseName: "2026010_1234",
+			name:     "short year in date",
+			input:    "2026010_1234",
+			wantDate: "2026010",
+			wantID:   "1234",
+			wantSlug: "",
+			wantType: "",
 		},
 		{
-			name:         "distant future date",
-			input:        "120260106_8823",
-			wantDate:     "120260106",
-			wantID:       "8823",
-			wantSlug:     "",
-			wantType:     "",
-			wantBaseName: "120260106_8823",
+			name:     "distant future date",
+			input:    "120260106_8823",
+			wantDate: "120260106",
+			wantID:   "8823",
+			wantSlug: "",
+			wantType: "",
 		},
 		{
 			name:    "date too short for MMDD",
@@ -168,9 +157,6 @@ func TestParseFilename(t *testing.T) {
 			}
 			if got.Type != tt.wantType {
 				t.Errorf("Type = %q, want %q", got.Type, tt.wantType)
-			}
-			if got.BaseName != tt.wantBaseName {
-				t.Errorf("BaseName = %q, want %q", got.BaseName, tt.wantBaseName)
 			}
 		})
 	}

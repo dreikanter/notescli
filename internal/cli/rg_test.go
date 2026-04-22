@@ -69,7 +69,6 @@ func TestRgExcludesNonMarkdown(t *testing.T) {
 	if err == nil {
 		t.Fatalf("expected no matches, got output: %q", out)
 	}
-	_ = out
 }
 
 func TestRgCaseInsensitive(t *testing.T) {

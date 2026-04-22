@@ -23,12 +23,11 @@ func HasSpecialBehavior(s string) bool {
 
 // Note represents a single note file in the store.
 type Note struct {
-	RelPath  string // relative path from store root, e.g. "2026/01/20260106_8823.md"
-	Date     string // date as Y...YMMDD, e.g. "20260106"
-	ID       string // "8823"
-	Slug     string // descriptive slug, e.g. "api-redesign", or ""
-	Type     string // type reported by the filename dot-suffix; any string accepted. Frontmatter type is canonical when available.
-	BaseName string // filename without extensions, e.g. "20260106_8823" or "20260102_8814_standup"
+	RelPath string // relative path from store root, e.g. "2026/01/20260106_8823.md"
+	Date    string // date as Y...YMMDD, e.g. "20260106"
+	ID      string // "8823"
+	Slug    string // descriptive slug, e.g. "api-redesign", or ""
+	Type    string // type reported by the filename dot-suffix; any string accepted. Frontmatter type is canonical when available.
 }
 
 // isFilenameCacheSafeType reports whether a note type can round-trip through
@@ -80,11 +79,10 @@ func ParseFilename(baseName string) (Note, error) {
 	}
 
 	return Note{
-		Date:     date,
-		ID:       id,
-		Slug:     slug,
-		Type:     noteType,
-		BaseName: remaining,
+		Date: date,
+		ID:   id,
+		Slug: slug,
+		Type: noteType,
 	}, nil
 }
 
