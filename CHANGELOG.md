@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.1.91] - 2026-04-22
+
+### Added
+
+- `note.Frontmatter` now has a reserved `Aliases []string` field (`yaml:"aliases,omitempty"`). Notes whose `aliases:` previously landed in `Frontmatter.Extra` now populate the typed field, so downstream publishers (notes-pub permalink redirects, notes-view rename-history resolution) no longer need to decode the `yaml.Node` themselves. notes-cli does not itself consume `aliases` yet; the field is reserved to stabilize the contract and avoid future collisions — see `SCHEMA.md` ([#139])
+
 ## [0.1.90] - 2026-04-22
 
 ### Added
@@ -582,3 +588,4 @@
 [#132]: https://github.com/dreikanter/notes-cli/pull/132
 [#136]: https://github.com/dreikanter/notes-cli/pull/135
 [#146]: https://github.com/dreikanter/notes-cli/pull/146
+[#139]: https://github.com/dreikanter/notes-cli/issues/139

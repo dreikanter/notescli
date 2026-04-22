@@ -35,6 +35,7 @@ type Frontmatter struct {
 	Type        string               `yaml:"type,omitempty"`
 	Date        time.Time            `yaml:"date,omitempty"`
 	Tags        []string             `yaml:"tags,omitempty"`
+	Aliases     []string             `yaml:"aliases,omitempty"`
 	Description string               `yaml:"description,omitempty"`
 	Public      bool                 `yaml:"public,omitempty"`
 	Extra       map[string]yaml.Node `yaml:"-"`
@@ -43,7 +44,7 @@ type Frontmatter struct {
 // IsZero reports whether f has no fields set, including Extra.
 func (f Frontmatter) IsZero() bool {
 	return f.Title == "" && f.Slug == "" && f.Type == "" && f.Date.IsZero() &&
-		len(f.Tags) == 0 && f.Description == "" && !f.Public && len(f.Extra) == 0
+		len(f.Tags) == 0 && len(f.Aliases) == 0 && f.Description == "" && !f.Public && len(f.Extra) == 0
 }
 
 // UnmarshalYAML decodes a mapping node into f. Reserved keys populate the
@@ -83,6 +84,10 @@ func (f *Frontmatter) UnmarshalYAML(node *yaml.Node) error {
 		case "tags":
 			if err := value.Decode(&f.Tags); err != nil {
 				return fmt.Errorf("frontmatter tags: %w", err)
+			}
+		case "aliases":
+			if err := value.Decode(&f.Aliases); err != nil {
+				return fmt.Errorf("frontmatter aliases: %w", err)
 			}
 		case "description":
 			if err := value.Decode(&f.Description); err != nil {
@@ -166,6 +171,7 @@ func (f Frontmatter) MarshalYAML() (interface{}, error) {
 	appendString("type", f.Type)
 	appendTime("date", f.Date)
 	appendList("tags", f.Tags)
+	appendList("aliases", f.Aliases)
 	appendString("description", f.Description)
 	appendBool("public", f.Public)
 
