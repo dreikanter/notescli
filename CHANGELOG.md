@@ -34,7 +34,7 @@
 
 ### Added
 
-- `note.Frontmatter` now has a reserved `Date time.Time` field (`yaml:"date,omitempty"`). Notes whose `date:` previously landed in `Frontmatter.Extra` now populate the typed field, and consumers no longer need to decode the `yaml.Node` themselves. Round-trip preserves the input format: date-only values (midnight UTC) serialize as `YYYY-MM-DD`; values with a non-zero time-of-day serialize as RFC3339. Consumers that need a date when `date:` is absent should fall back to the UID-derived date from the filename prefix, then file mtime — see `SCHEMA.md` ([#146])
+- `note.Frontmatter` now has a reserved `Date time.Time` field (`yaml:"date,omitempty"`). Notes whose `date:` previously landed in `Frontmatter.Extra` now populate the typed field, and consumers no longer need to decode the `yaml.Node` themselves. Round-trip preserves the input format: date-only values (midnight UTC) serialize as `YYYY-MM-DD`; values with a non-zero time-of-day serialize as RFC3339. Consumers that need a date when `date:` is absent should fall back to the UID-derived date from the filename prefix, then file mtime — see `SCHEMA.md` ([#138])
 
 ## [0.1.89] - 2026-04-22
 
@@ -613,7 +613,7 @@
 [#136]: https://github.com/dreikanter/notes-cli/pull/135
 [#139]: https://github.com/dreikanter/notes-cli/issues/139
 [#141]: https://github.com/dreikanter/notes-cli/issues/141
-[#146]: https://github.com/dreikanter/notes-cli/pull/146
+[#138]: https://github.com/dreikanter/notes-cli/issues/138
 [#149]: https://github.com/dreikanter/notes-cli/pull/149
 [#150]: https://github.com/dreikanter/notes-cli/pull/150
 [#145]: https://github.com/dreikanter/notes-cli/issues/145
