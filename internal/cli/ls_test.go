@@ -12,9 +12,7 @@ func runLs(t *testing.T, args ...string) (string, error) {
 
 	root := testdataPath(t)
 	lsCmd.ResetFlags()
-	lsCmd.Flags().Int("limit", 0, "maximum number of notes to list (0 = no limit)")
-	lsCmd.Flags().String("name", "", "filter by filename fragment (case-insensitive substring)")
-	addFilterFlags(lsCmd)
+	registerLsFlags()
 
 	buf := new(bytes.Buffer)
 	rootCmd.SetOut(buf)

@@ -13,15 +13,7 @@ func runNew(t *testing.T, root string, stdin string, args ...string) (string, er
 	t.Helper()
 
 	newCmd.ResetFlags()
-	newCmd.Flags().String("slug", "", "descriptive slug appended to filename")
-	newCmd.Flags().String("type", "", "note type (free-form; todo/backlog/weekly get special behavior)")
-	newCmd.Flags().StringSlice("tag", nil, "tag for frontmatter (repeatable)")
-	newCmd.Flags().String("description", "", "description for frontmatter")
-	newCmd.Flags().String("title", "", "title for frontmatter")
-	newCmd.Flags().Bool("public", false, "mark note as public in frontmatter")
-	newCmd.Flags().Bool("private", false, "mark note as private in frontmatter (default)")
-	newCmd.Flags().Bool("upsert", false, "return existing note if today already has one matching --type/--slug")
-	newCmd.MarkFlagsMutuallyExclusive("public", "private")
+	registerNewFlags()
 
 	buf := new(bytes.Buffer)
 	rootCmd.SetOut(buf)

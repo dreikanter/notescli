@@ -46,9 +46,13 @@ var lsCmd = &cobra.Command{
 	},
 }
 
-func init() {
+func registerLsFlags() {
 	lsCmd.Flags().Int("limit", 0, "maximum number of notes to list (0 = no limit)")
 	lsCmd.Flags().String("name", "", "filter by filename fragment (case-insensitive substring)")
 	addFilterFlags(lsCmd)
+}
+
+func init() {
+	registerLsFlags()
 	rootCmd.AddCommand(lsCmd)
 }

@@ -13,7 +13,7 @@ func runRm(t *testing.T, root string, args ...string) (string, error) {
 	t.Helper()
 
 	rmCmd.ResetFlags()
-	rmCmd.Flags().Bool("today", false, "only match notes created today")
+	registerRmFlags()
 
 	buf := new(bytes.Buffer)
 	rootCmd.SetOut(buf)

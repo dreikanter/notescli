@@ -262,9 +262,13 @@ func mergeAnnotation(existing note.Frontmatter, gen annotateResult) note.Frontma
 	return merged
 }
 
-func init() {
+func registerAnnotateFlags() {
 	annotateCmd.Flags().String("model", annotateDefaultModel, "Claude model to use")
 	annotateCmd.Flags().Int("max-chars", 0, "truncate note body to this many characters before annotating (0 = no limit)")
 	annotateCmd.Flags().Duration("timeout", annotateDefaultTimeout, "maximum time to wait for the claude CLI to respond (0 = no timeout)")
+}
+
+func init() {
+	registerAnnotateFlags()
 	rootCmd.AddCommand(annotateCmd)
 }

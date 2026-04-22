@@ -64,41 +64,43 @@ var updateCmd = &cobra.Command{
 			return fmt.Errorf("%s: %w", oldPath, err)
 		}
 
+		contentChanged := false
 		if cmd.Flags().Changed("title") {
 			updated.Title = updateTitle
+			contentChanged = true
 		}
 		if cmd.Flags().Changed("description") {
 			updated.Description = updateDescription
+			contentChanged = true
 		}
 		if updateNoTags {
 			updated.Tags = nil
+			contentChanged = true
 		} else if cmd.Flags().Changed("tag") {
 			updated.Tags = updateTags
+			contentChanged = true
 		}
-
 		if updateNoSlug {
 			updated.Slug = ""
+			contentChanged = true
 		} else if cmd.Flags().Changed("slug") {
 			updated.Slug = updateSlug
+			contentChanged = true
 		}
 		if updatePrivate {
 			updated.Public = false
+			contentChanged = true
 		} else if cmd.Flags().Changed("public") {
 			updated.Public = true
+			contentChanged = true
 		}
 		if updateNoType {
 			updated.Type = ""
+			contentChanged = true
 		} else if cmd.Flags().Changed("type") {
 			updated.Type = updateType
+			contentChanged = true
 		}
-
-		// Any non-sync flag => rewrite the frontmatter in place (no rename).
-		contentChanged := cmd.Flags().Changed("title") ||
-			cmd.Flags().Changed("description") ||
-			cmd.Flags().Changed("tag") || updateNoTags ||
-			cmd.Flags().Changed("slug") || updateNoSlug ||
-			cmd.Flags().Changed("type") || updateNoType ||
-			cmd.Flags().Changed("public") || updatePrivate
 
 		if contentChanged {
 			newContent := note.FormatNote(updated, body)
@@ -152,7 +154,7 @@ var updateCmd = &cobra.Command{
 	},
 }
 
-func init() {
+func registerUpdateFlags() {
 	updateCmd.Flags().StringSlice("tag", nil, "tag for frontmatter (repeatable); replaces existing tags")
 	updateCmd.Flags().Bool("no-tags", false, "remove all tags from frontmatter")
 	updateCmd.Flags().String("title", "", "title for frontmatter (empty string clears it)")
@@ -168,5 +170,9 @@ func init() {
 	updateCmd.MarkFlagsMutuallyExclusive("type", "no-type")
 	updateCmd.MarkFlagsMutuallyExclusive("tag", "no-tags")
 	updateCmd.MarkFlagsMutuallyExclusive("public", "private")
+}
+
+func init() {
+	registerUpdateFlags()
 	rootCmd.AddCommand(updateCmd)
 }

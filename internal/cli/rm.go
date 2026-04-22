@@ -42,7 +42,11 @@ var rmCmd = &cobra.Command{
 	},
 }
 
-func init() {
+func registerRmFlags() {
 	rmCmd.Flags().Bool("today", false, "only match notes created today")
+}
+
+func init() {
+	registerRmFlags()
 	rootCmd.AddCommand(rmCmd)
 }

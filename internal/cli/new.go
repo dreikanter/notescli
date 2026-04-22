@@ -93,7 +93,7 @@ func isTerminal(f *os.File) bool {
 	return fi.Mode()&os.ModeCharDevice != 0
 }
 
-func init() {
+func registerNewFlags() {
 	newCmd.Flags().String("slug", "", "descriptive slug appended to filename")
 	newCmd.Flags().String("type", "", "note type (free-form; todo/backlog/weekly get special behavior)")
 	newCmd.Flags().StringSlice("tag", nil, "tag for frontmatter (repeatable)")
@@ -103,5 +103,9 @@ func init() {
 	newCmd.Flags().Bool("private", false, "mark note as private in frontmatter (default)")
 	newCmd.Flags().Bool("upsert", false, "return existing note if today already has one matching --type/--slug")
 	newCmd.MarkFlagsMutuallyExclusive("public", "private")
+}
+
+func init() {
+	registerNewFlags()
 	rootCmd.AddCommand(newCmd)
 }

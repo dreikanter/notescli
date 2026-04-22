@@ -14,7 +14,7 @@ func TestReadID(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	idf, err := ReadID(dir)
+	idf, err := readID(dir)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -25,7 +25,7 @@ func TestReadID(t *testing.T) {
 
 func TestReadIDMissing(t *testing.T) {
 	dir := t.TempDir()
-	_, err := ReadID(dir)
+	_, err := readID(dir)
 	if err == nil {
 		t.Fatal("expected error for missing id.json")
 	}
@@ -37,7 +37,7 @@ func TestReadIDInvalid(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	_, err := ReadID(dir)
+	_, err := readID(dir)
 	if err == nil {
 		t.Fatal("expected error for invalid JSON")
 	}
@@ -58,7 +58,7 @@ func TestNextID(t *testing.T) {
 	}
 
 	// Verify file was updated
-	idf, err := ReadID(dir)
+	idf, err := readID(dir)
 	if err != nil {
 		t.Fatalf("unexpected error reading back: %v", err)
 	}
@@ -129,7 +129,7 @@ func TestWriteIDAtomic(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	err := WriteID(dir, IDFile{LastID: 42})
+	err := writeID(dir, idFile{LastID: 42})
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}

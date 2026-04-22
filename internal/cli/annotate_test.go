@@ -16,9 +16,7 @@ func runAnnotate(t *testing.T, root string, args ...string) (string, error) {
 	t.Helper()
 
 	annotateCmd.ResetFlags()
-	annotateCmd.Flags().String("model", annotateDefaultModel, "Claude model to use")
-	annotateCmd.Flags().Int("max-chars", 0, "truncate note body to this many characters before annotating (0 = no limit)")
-	annotateCmd.Flags().Duration("timeout", annotateDefaultTimeout, "maximum time to wait for the claude CLI to respond (0 = no timeout)")
+	registerAnnotateFlags()
 
 	buf := new(bytes.Buffer)
 	rootCmd.SetOut(buf)
