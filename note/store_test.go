@@ -350,7 +350,7 @@ func TestValidateSlug(t *testing.T) {
 	}
 }
 
-func TestFilterByType(t *testing.T) {
+func TestFilterByTypes(t *testing.T) {
 	notes := []Note{
 		{Type: ""},
 		{Type: "todo"},
@@ -358,23 +358,24 @@ func TestFilterByType(t *testing.T) {
 		{Type: "todo"},
 	}
 
-	got := FilterByType(notes, "todo")
-	if len(got) != 2 {
-		t.Errorf("FilterByType(todo) returned %d, want 2", len(got))
+	tests := []struct {
+		name    string
+		types   []string
+		wantLen int
+	}{
+		{"single type todo", []string{"todo"}, 2},
+		{"single type backlog", []string{"backlog"}, 1},
+		{"empty type matches untyped", []string{""}, 1},
+		{"multiple types", []string{"todo", "backlog"}, 3},
+		{"no match", []string{"nope"}, 0},
 	}
 
-	got = FilterByType(notes, "backlog")
-	if len(got) != 1 {
-		t.Errorf("FilterByType(backlog) returned %d, want 1", len(got))
-	}
-
-	got = FilterByType(notes, "")
-	if len(got) != 1 {
-		t.Errorf("FilterByType('') returned %d, want 1", len(got))
-	}
-
-	got = FilterByType(notes, "nope")
-	if len(got) != 0 {
-		t.Errorf("FilterByType(nope) returned %d, want 0", len(got))
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := FilterByTypes(notes, tt.types)
+			if len(got) != tt.wantLen {
+				t.Errorf("FilterByTypes(%v) returned %d, want %d", tt.types, len(got), tt.wantLen)
+			}
+		})
 	}
 }

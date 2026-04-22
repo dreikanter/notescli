@@ -236,11 +236,6 @@ func FilterBySlug(notes []Note, slug string) []Note {
 	return results
 }
 
-// FilterByType returns notes with an exact type match.
-func FilterByType(notes []Note, noteType string) []Note {
-	return FilterByTypes(notes, []string{noteType})
-}
-
 // FilterByTypes returns notes whose type matches any of the given values.
 func FilterByTypes(notes []Note, types []string) []Note {
 	set := toSet(types)
