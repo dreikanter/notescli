@@ -294,21 +294,31 @@ func (i *Index) Tags() []string {
 // (zero, false, err) only for genuine failures (path outside root, symlink
 // resolution error). The bool-vs-error split lets callers distinguish
 // "note not found" from "I/O broke."
+//
+// The RLock covers only the snapshot of the index state; the path-resolution
+// syscalls and map/slice reads run after it's released, so a future Reload
+// writer is not blocked on filesystem round-trips. This relies on the
+// swap-only Reload discipline — the aliased slice and maps must remain
+// immutable for the lifetime of the snapshot.
 func (i *Index) Resolve(query string) (Entry, bool, error) {
 	query = strings.TrimSpace(query)
 
 	i.mu.RLock()
-	defer i.mu.RUnlock()
+	root := i.root
+	entries := i.entries
+	byID := i.byID
+	byRel := i.byRel
+	i.mu.RUnlock()
 
 	if query == "" {
-		if len(i.entries) == 0 {
+		if len(entries) == 0 {
 			return Entry{}, false, nil
 		}
-		return cloneEntry(i.entries[0]), true, nil
+		return cloneEntry(entries[0]), true, nil
 	}
 
 	if IsID(query) {
-		e, ok := i.byID[query]
+		e, ok := byID[query]
 		if !ok {
 			return Entry{}, false, nil
 		}
@@ -316,7 +326,7 @@ func (i *Index) Resolve(query string) (Entry, bool, error) {
 	}
 
 	if HasSpecialBehavior(query) {
-		for _, e := range i.entries {
+		for _, e := range entries {
 			if e.Type == query {
 				return cloneEntry(e), true, nil
 			}
@@ -324,18 +334,18 @@ func (i *Index) Resolve(query string) (Entry, bool, error) {
 	}
 
 	if filepath.IsAbs(query) || strings.ContainsAny(query, `/\`) {
-		rel, err := resolveRelPath(i.root, query)
+		rel, err := resolveRelPath(root, query)
 		if err != nil {
 			return Entry{}, false, err
 		}
-		e, ok := i.byRel[rel]
+		e, ok := byRel[rel]
 		if !ok {
 			return Entry{}, false, nil
 		}
 		return cloneEntry(e), true, nil
 	}
 
-	for _, e := range i.entries {
+	for _, e := range entries {
 		if e.Slug != "" && strings.Contains(e.Slug, query) {
 			return cloneEntry(e), true, nil
 		}
