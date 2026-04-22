@@ -162,6 +162,32 @@ func TestParseFilename(t *testing.T) {
 	}
 }
 
+func TestIsID(t *testing.T) {
+	cases := []struct {
+		in   string
+		want bool
+	}{
+		{"", false},
+		{"0", true},
+		{"1", true},
+		{"8823", true},
+		{"0001", true},
+		{"abc", false},
+		{"12a", false},
+		{"a12", false},
+		{"12 ", false},
+		{" 12", false},
+		{"-12", false},
+	}
+	for _, c := range cases {
+		t.Run(c.in, func(t *testing.T) {
+			if got := IsID(c.in); got != c.want {
+				t.Errorf("IsID(%q) = %v, want %v", c.in, got, c.want)
+			}
+		})
+	}
+}
+
 func TestHasSpecialBehavior(t *testing.T) {
 	if !HasSpecialBehavior("todo") {
 		t.Error("expected todo to have special behavior")

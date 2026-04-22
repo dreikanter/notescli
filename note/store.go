@@ -93,7 +93,7 @@ func ResolveRefDate(root, query, date string) (Note, error) {
 	}
 
 	// Step 1: numeric ID — strict, no fallthrough
-	if query != "" && isDigits(query) {
+	if IsID(query) {
 		for i := range notes {
 			if notes[i].ID == query {
 				return notes[i], nil
