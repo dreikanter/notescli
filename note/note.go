@@ -69,7 +69,7 @@ func ParseFilename(baseName string) (Note, error) {
 	}
 
 	id := parts[1]
-	if !isDigits(id) || id == "" {
+	if !IsID(id) {
 		return Note{}, fmt.Errorf("invalid id in filename: %s", baseName)
 	}
 
@@ -107,6 +107,14 @@ func NoteDirPath(root, date string) string {
 	year := date[:len(date)-4]
 	month := date[len(date)-4 : len(date)-2]
 	return filepath.Join(root, year, month)
+}
+
+// IsID reports whether s is a valid notes-cli note ID: a non-empty string
+// consisting only of ASCII digits. Downstream tools use this to detect
+// numeric ID references (e.g. wikilinks, CLI query arguments) without
+// re-implementing the predicate.
+func IsID(s string) bool {
+	return s != "" && isDigits(s)
 }
 
 func isDigits(s string) bool {

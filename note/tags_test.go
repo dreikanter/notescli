@@ -23,7 +23,7 @@ func TestExtractHashtagsBasic(t *testing.T) {
 	}
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
-			got := extractHashtags([]byte(c.in))
+			got := ExtractHashtags([]byte(c.in))
 			if !reflect.DeepEqual(got, c.want) {
 				t.Fatalf("got %v, want %v", got, c.want)
 			}
@@ -51,7 +51,7 @@ func TestExtractHashtagsNegative(t *testing.T) {
 	}
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
-			got := extractHashtags([]byte(c.in))
+			got := ExtractHashtags([]byte(c.in))
 			if len(got) != 0 {
 				t.Fatalf("expected no tags, got %v", got)
 			}
@@ -62,7 +62,7 @@ func TestExtractHashtagsNegative(t *testing.T) {
 func TestExtractHashtagsInlineCode(t *testing.T) {
 	in := "real #out and `inline #in` and #back"
 	want := []string{"out", "back"}
-	got := extractHashtags([]byte(in))
+	got := ExtractHashtags([]byte(in))
 	if !reflect.DeepEqual(got, want) {
 		t.Fatalf("got %v, want %v", got, want)
 	}
@@ -71,7 +71,7 @@ func TestExtractHashtagsInlineCode(t *testing.T) {
 func TestExtractHashtagsFencedBlock(t *testing.T) {
 	in := "before #a\n```\n#hidden\n#also-hidden\n```\nafter #b\n"
 	want := []string{"a", "b"}
-	got := extractHashtags([]byte(in))
+	got := ExtractHashtags([]byte(in))
 	if !reflect.DeepEqual(got, want) {
 		t.Fatalf("got %v, want %v", got, want)
 	}
@@ -80,7 +80,7 @@ func TestExtractHashtagsFencedBlock(t *testing.T) {
 func TestExtractHashtagsFencedBlockWithInfoString(t *testing.T) {
 	in := "top #ok\n```go\n// #comment\n```\nend #done\n"
 	want := []string{"ok", "done"}
-	got := extractHashtags([]byte(in))
+	got := ExtractHashtags([]byte(in))
 	if !reflect.DeepEqual(got, want) {
 		t.Fatalf("got %v, want %v", got, want)
 	}
@@ -89,7 +89,7 @@ func TestExtractHashtagsFencedBlockWithInfoString(t *testing.T) {
 func TestExtractHashtagsCRLF(t *testing.T) {
 	in := "before #a\r\n```\r\n#hidden\r\n```\r\nafter #b\r\n"
 	want := []string{"a", "b"}
-	got := extractHashtags([]byte(in))
+	got := ExtractHashtags([]byte(in))
 	if !reflect.DeepEqual(got, want) {
 		t.Fatalf("got %v, want %v", got, want)
 	}
@@ -98,7 +98,7 @@ func TestExtractHashtagsCRLF(t *testing.T) {
 func TestExtractHashtagsBareHash(t *testing.T) {
 	cases := []string{"#", "text # and #", "line #\nnext #"}
 	for _, in := range cases {
-		got := extractHashtags([]byte(in))
+		got := ExtractHashtags([]byte(in))
 		if len(got) != 0 {
 			t.Errorf("input %q: expected no tags, got %v", in, got)
 		}

@@ -70,7 +70,7 @@ func ExtractTags(root string) ([]string, error) {
 						local[strings.ToLower(t)] = struct{}{}
 					}
 				}
-				for _, t := range extractHashtags(body) {
+				for _, t := range ExtractHashtags(body) {
 					local[strings.ToLower(t)] = struct{}{}
 				}
 			}
@@ -95,7 +95,7 @@ func ExtractTags(root string) ([]string, error) {
 	return out, nil
 }
 
-// extractHashtags scans body text and returns hashtag tokens (without the
+// ExtractHashtags scans body text and returns hashtag tokens (without the
 // leading '#'), preserving source order and including duplicates. Rules:
 //   - Lines whose first non-whitespace content is a run of '#' followed by
 //     whitespace or end-of-line are Markdown headings and are skipped entirely.
@@ -112,7 +112,7 @@ func ExtractTags(root string) ([]string, error) {
 //   - Tag characters are [A-Za-z0-9_-]; other bytes terminate a tag. A bare
 //     '#' with no following tag byte produces no output. A tag immediately
 //     followed by another '#' (e.g. `#one#two`) is rejected.
-func extractHashtags(body []byte) []string {
+func ExtractHashtags(body []byte) []string {
 	var out []string
 	inFence := false
 	fence := []byte("```")

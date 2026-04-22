@@ -93,7 +93,7 @@ func ResolveRefDate(root, query, date string) (Note, error) {
 	}
 
 	// Step 1: numeric ID — strict, no fallthrough
-	if query != "" && isDigits(query) {
+	if IsID(query) {
 		for i := range notes {
 			if notes[i].ID == query {
 				return notes[i], nil
@@ -190,7 +190,7 @@ func FilterByTags(notes []Note, root string, tags []string) ([]Note, error) {
 		if parseErr != nil {
 			fmt.Fprintf(os.Stderr, "warn: %s: %v\n", path, parseErr)
 		}
-		hashtags := extractHashtags(body)
+		hashtags := ExtractHashtags(body)
 		noteTags := make([]string, 0, len(fm.Tags)+len(hashtags))
 		noteTags = append(noteTags, fm.Tags...)
 		noteTags = append(noteTags, hashtags...)

@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.1.89] - 2026-04-22
+
+### Added
+
+- `note.ExtractHashtags` is now exported (previously unexported `extractHashtags`). Downstream tools (notes-pub, notes-view) can reuse the same body-hashtag extraction rules — fenced code blocks, inline backticks, URL anchors, chained hashes — instead of re-implementing them ([#136])
+- `note.IsID` reports whether a string is a valid notes-cli note ID (non-empty, ASCII digits only). Replaces the ad-hoc `isNoteID` / `IsUID` helpers currently duplicated in consumer projects ([#136])
+- `note.NormalizeSlug` returns an ASCII-lowercase, URL-safe form of a string (non-alphanumeric runs collapse to `-`; leading/trailing dashes stripped). Shared normalization contract for filenames and URL path segments ([#136])
+- `note.DeriveSlug` returns the normalized slug for a note using the fallback chain: frontmatter slug → stem with id prefix stripped → empty. Consolidates the slug-resolution logic that consumers were each inventing ([#136])
+
 ## [0.1.86] - 2026-04-21
 
 ### Changed
@@ -565,3 +574,4 @@
 [#115]: https://github.com/dreikanter/notes-cli/issues/115
 [#131]: https://github.com/dreikanter/notes-cli/pull/131
 [#132]: https://github.com/dreikanter/notes-cli/pull/132
+[#136]: https://github.com/dreikanter/notes-cli/pull/135
