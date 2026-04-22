@@ -1,10 +1,21 @@
 # Changelog
 
-## [0.1.91] - 2026-04-22
+## [0.1.93] - 2026-04-22
+
+### Added
+
+- `note.Note.Time()` parses the UID-derived `Date` prefix (YYYYMMDD) into a `time.Time` at midnight UTC, returning `false` on malformed input. `note.ResolveEntryDate(n Note, fm Frontmatter, fi fs.FileInfo)` picks a canonical date for a note and returns its source label, walking the documented priority: UID-derived date (`"uid"`) → frontmatter `date` (`"frontmatter"`) → file mtime (`"mtime"`). Pass `fi == nil` to skip the mtime fallback. Downstream consumers (notes-pub, notes-view) no longer need to re-implement the chain ([#149])
+
+## [0.1.92] - 2026-04-22
 
 ### Added
 
 - `note.ScanOptions{Strict bool}` and a variadic `Scan(root string, opts ...ScanOptions) ([]Note, error)` signature let callers opt into a lenient walk. The default (no options, or `Strict: true`) preserves the existing YYYY/MM/*.md discipline; `Strict: false` walks every `.md` file under root with `filepath.WalkDir` regardless of nesting depth or parent-directory naming, matching the layout downstream tools like notes-view consume. Existing `Scan(root)` callers are unaffected ([#141])
+
+## [0.1.91] - 2026-04-22
+
+### Added
+
 - `note.Frontmatter` now has a reserved `Aliases []string` field (`yaml:"aliases,omitempty"`). Notes whose `aliases:` previously landed in `Frontmatter.Extra` now populate the typed field, so downstream publishers (notes-pub permalink redirects, notes-view rename-history resolution) no longer need to decode the `yaml.Node` themselves. notes-cli does not itself consume `aliases` yet; the field is reserved to stabilize the contract and avoid future collisions — see `SCHEMA.md` ([#139])
 
 ## [0.1.90] - 2026-04-22
@@ -588,6 +599,7 @@
 [#131]: https://github.com/dreikanter/notes-cli/pull/131
 [#132]: https://github.com/dreikanter/notes-cli/pull/132
 [#136]: https://github.com/dreikanter/notes-cli/pull/135
-[#146]: https://github.com/dreikanter/notes-cli/pull/146
-[#141]: https://github.com/dreikanter/notes-cli/issues/141
 [#139]: https://github.com/dreikanter/notes-cli/issues/139
+[#141]: https://github.com/dreikanter/notes-cli/issues/141
+[#146]: https://github.com/dreikanter/notes-cli/pull/146
+[#149]: https://github.com/dreikanter/notes-cli/pull/149

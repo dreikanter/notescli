@@ -41,6 +41,10 @@ is called out in `CHANGELOG.md` when a new reserved key is added.
   to file mtime as a last resort. Date-only values (midnight UTC)
   round-trip as `YYYY-MM-DD`; values with a non-zero time-of-day
   round-trip in RFC3339.
+- **Resolution:** `note.ResolveEntryDate` implements the canonical
+  priority — UID-derived date (`"uid"`) → frontmatter `date`
+  (`"frontmatter"`) → file mtime (`"mtime"`) — and returns the source
+  label so callers can surface or override the choice.
 - **Consumers:** notes-view (timeline / sidebar sort), notes-pub (feed
   `<published>` element, archive pages).
 
