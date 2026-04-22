@@ -33,3 +33,29 @@ func NormalizeSlug(s string) string {
 	}
 	return strings.TrimRight(b.String(), "-")
 }
+
+// DeriveSlug returns the normalized slug for a note. Priority:
+//  1. frontmatterSlug if non-empty.
+//  2. stem with the leading id prefix (and the following "_") stripped, when
+//     id is non-empty and stem starts with id. For notes-cli stems of the
+//     form "YYYYMMDD_NNNN[_slug]", callers typically pass the "YYYYMMDD_NNNN"
+//     UID portion as id so the residual is the slug segment.
+//  3. empty.
+//
+// The non-empty result is passed through NormalizeSlug so callers get a
+// single documented normalization contract regardless of source.
+func DeriveSlug(stem, id, frontmatterSlug string) string {
+	raw := frontmatterSlug
+	if raw == "" {
+		residue := stem
+		if id != "" && strings.HasPrefix(residue, id) {
+			residue = strings.TrimPrefix(residue, id)
+			residue = strings.TrimPrefix(residue, "_")
+		}
+		raw = residue
+	}
+	if raw == "" {
+		return ""
+	}
+	return NormalizeSlug(raw)
+}
