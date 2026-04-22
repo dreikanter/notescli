@@ -8,20 +8,20 @@ import (
 	"syscall"
 )
 
-// IDFile represents the id.json file that tracks the last allocated note ID.
-type IDFile struct {
+// idFile represents the id.json file that tracks the last allocated note ID.
+type idFile struct {
 	LastID int `json:"last_id"`
 }
 
-// ReadID reads the current last_id from id.json in the store root.
-func ReadID(root string) (IDFile, error) {
+// readID reads the current last_id from id.json in the store root.
+func readID(root string) (idFile, error) {
 	data, err := os.ReadFile(filepath.Join(root, "id.json"))
 	if err != nil {
-		return IDFile{}, fmt.Errorf("cannot read id.json: %w", err)
+		return idFile{}, fmt.Errorf("cannot read id.json: %w", err)
 	}
-	var idf IDFile
+	var idf idFile
 	if err := json.Unmarshal(data, &idf); err != nil {
-		return IDFile{}, fmt.Errorf("cannot parse id.json: %w", err)
+		return idFile{}, fmt.Errorf("cannot parse id.json: %w", err)
 	}
 	return idf, nil
 }
@@ -30,25 +30,25 @@ func ReadID(root string) (IDFile, error) {
 // The read-modify-write is serialized across processes via an exclusive flock on
 // the store root directory, so concurrent callers cannot duplicate IDs.
 func NextID(root string) (int, error) {
-	unlock, err := lockIDFile(root)
+	unlock, err := lockStoreRoot(root)
 	if err != nil {
 		return 0, err
 	}
 	defer unlock()
 
-	idf, err := ReadID(root)
+	idf, err := readID(root)
 	if err != nil {
 		return 0, err
 	}
 	idf.LastID++
-	if err := WriteID(root, idf); err != nil {
+	if err := writeID(root, idf); err != nil {
 		return 0, err
 	}
 	return idf.LastID, nil
 }
 
-// WriteID atomically writes the IDFile to id.json using a temp file + rename.
-func WriteID(root string, idf IDFile) error {
+// writeID atomically writes the idFile to id.json using a temp file + rename.
+func writeID(root string, idf idFile) error {
 	data, err := json.Marshal(idf)
 	if err != nil {
 		return fmt.Errorf("cannot marshal id.json: %w", err)
@@ -77,12 +77,12 @@ func WriteID(root string, idf IDFile) error {
 	return nil
 }
 
-// lockIDFile acquires an exclusive flock on the store root directory, blocking
+// lockStoreRoot acquires an exclusive flock on the store root directory, blocking
 // until it is available. Locking the directory (rather than a sibling lockfile)
 // avoids leaving artifacts behind and sidesteps the unlink-race that cleanable
 // lockfiles suffer from. The returned function releases the lock and closes
 // the file descriptor.
-func lockIDFile(root string) (func(), error) {
+func lockStoreRoot(root string) (func(), error) {
 	f, err := os.Open(root)
 	if err != nil {
 		return nil, fmt.Errorf("cannot open notes root for locking: %w", err)
