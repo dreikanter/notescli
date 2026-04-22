@@ -71,64 +71,56 @@ func TestResolveEntryDate(t *testing.T) {
 
 	cases := []struct {
 		name       string
-		note       Note
-		fm         Frontmatter
+		entry      Entry
 		fi         fs.FileInfo
 		wantTime   time.Time
 		wantSource string
 	}{
 		{
 			name:       "uid wins over frontmatter and mtime",
-			note:       Note{Date: "20260106"},
-			fm:         Frontmatter{Date: fmTime},
+			entry:      Entry{Note: Note{Date: "20260106"}, Frontmatter: Frontmatter{Date: fmTime}},
 			fi:         fakeFileInfo{mtime: mtime},
 			wantTime:   uidTime,
 			wantSource: "uid",
 		},
 		{
 			name:       "frontmatter when uid malformed",
-			note:       Note{Date: "bogus"},
-			fm:         Frontmatter{Date: fmTime},
+			entry:      Entry{Note: Note{Date: "bogus"}, Frontmatter: Frontmatter{Date: fmTime}},
 			fi:         fakeFileInfo{mtime: mtime},
 			wantTime:   fmTime,
 			wantSource: "frontmatter",
 		},
 		{
 			name:       "mtime when uid malformed and frontmatter zero",
-			note:       Note{Date: ""},
-			fm:         Frontmatter{},
+			entry:      Entry{Note: Note{Date: ""}},
 			fi:         fakeFileInfo{mtime: mtime},
 			wantTime:   mtime,
 			wantSource: "mtime",
 		},
 		{
 			name:       "nil fi skips mtime fallback",
-			note:       Note{Date: "bad"},
-			fm:         Frontmatter{},
+			entry:      Entry{Note: Note{Date: "bad"}},
 			fi:         nil,
 			wantTime:   time.Time{},
 			wantSource: "",
 		},
 		{
 			name:       "nil fi still uses uid when valid",
-			note:       Note{Date: "20260106"},
-			fm:         Frontmatter{},
+			entry:      Entry{Note: Note{Date: "20260106"}},
 			fi:         nil,
 			wantTime:   uidTime,
 			wantSource: "uid",
 		},
 		{
 			name:       "nil fi still uses frontmatter when uid malformed",
-			note:       Note{Date: ""},
-			fm:         Frontmatter{Date: fmTime},
+			entry:      Entry{Note: Note{Date: ""}, Frontmatter: Frontmatter{Date: fmTime}},
 			fi:         nil,
 			wantTime:   fmTime,
 			wantSource: "frontmatter",
 		},
 		{
 			name:       "uid wins even when frontmatter is zero",
-			note:       Note{Date: "20260106"},
-			fm:         Frontmatter{},
+			entry:      Entry{Note: Note{Date: "20260106"}},
 			fi:         fakeFileInfo{mtime: mtime},
 			wantTime:   uidTime,
 			wantSource: "uid",
@@ -137,7 +129,7 @@ func TestResolveEntryDate(t *testing.T) {
 
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
-			got, src := ResolveEntryDate(tc.note, tc.fm, tc.fi)
+			got, src := ResolveEntryDate(tc.entry, tc.fi)
 			if src != tc.wantSource {
 				t.Errorf("source = %q, want %q", src, tc.wantSource)
 			}

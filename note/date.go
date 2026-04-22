@@ -17,25 +17,22 @@ func (n Note) Time() (time.Time, bool) {
 	return t, true
 }
 
-// ResolveEntryDate picks a single canonical date for a note, returning a
+// ResolveEntryDate picks a single canonical date for an entry, returning a
 // source label so callers can surface or override the choice.
 //
 // Priority (first match wins):
-//  1. UID-derived date — Note.Date parses cleanly as YYYYMMDD ("uid").
-//  2. Frontmatter date — fm.Date is non-zero ("frontmatter").
+//  1. UID-derived date — e.Date parses cleanly as YYYYMMDD ("uid").
+//  2. Frontmatter date — e.Frontmatter.Date is non-zero ("frontmatter").
 //  3. File mtime — fi is non-nil ("mtime").
 //
 // fi may be nil to skip the mtime fallback. When no source resolves, the
 // zero time.Time and an empty source label are returned.
-//
-// The signature takes Note and Frontmatter explicitly until the Entry type
-// from #142 lands; callers will then pass entry.Note and entry.Frontmatter.
-func ResolveEntryDate(n Note, fm Frontmatter, fi fs.FileInfo) (time.Time, string) {
-	if t, ok := n.Time(); ok {
+func ResolveEntryDate(e Entry, fi fs.FileInfo) (time.Time, string) {
+	if t, ok := e.Time(); ok {
 		return t, "uid"
 	}
-	if !fm.Date.IsZero() {
-		return fm.Date, "frontmatter"
+	if !e.Frontmatter.Date.IsZero() {
+		return e.Frontmatter.Date, "frontmatter"
 	}
 	if fi != nil {
 		return fi.ModTime(), "mtime"
