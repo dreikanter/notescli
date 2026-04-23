@@ -21,13 +21,12 @@ var appendCmd = &cobra.Command{
 			return err
 		}
 
-		// Check stdin is piped
-		if isTerminal(os.Stdin) {
+		in := cmd.InOrStdin()
+		if stdinIsTerminal(in) {
 			return fmt.Errorf("no input: pipe text to stdin (e.g. echo 'text' | notes append <target>)")
 		}
 
-		// Read and trim stdin
-		data, err := io.ReadAll(os.Stdin)
+		data, err := io.ReadAll(in)
 		if err != nil {
 			return fmt.Errorf("cannot read stdin: %w", err)
 		}

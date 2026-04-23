@@ -58,8 +58,9 @@ var newCmd = &cobra.Command{
 		}
 
 		var body string
-		if !isTerminal(os.Stdin) {
-			data, err := io.ReadAll(os.Stdin)
+		in := cmd.InOrStdin()
+		if !stdinIsTerminal(in) {
+			data, err := io.ReadAll(in)
 			if err != nil {
 				return fmt.Errorf("cannot read stdin: %w", err)
 			}
@@ -85,7 +86,15 @@ var newCmd = &cobra.Command{
 	},
 }
 
-func isTerminal(f *os.File) bool {
+// stdinIsTerminal reports whether in looks like an interactive terminal. Only
+// *os.File readers are heuristically inspected; any other reader (a pipe,
+// buffer, or other io.Reader injected via cmd.SetIn) is treated as non-terminal
+// so tests and piped invocations read the provided bytes.
+func stdinIsTerminal(in io.Reader) bool {
+	f, ok := in.(*os.File)
+	if !ok {
+		return false
+	}
 	fi, err := f.Stat()
 	if err != nil {
 		return true

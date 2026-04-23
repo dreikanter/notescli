@@ -6,6 +6,12 @@
 
 - `note/tags.go`: folded `*Index.mergedTagsSorted` back into `ExtractTags`. The helper was a method on `*Index` but declared in a different file from the rest of `Index`'s methods (`note/index.go`), and it had only one caller. Inlining drops the cross-file method and keeps `Index`'s surface in one place. No behavior change: nil on empty index, deduped/lowercased/sorted union of frontmatter tags and body hashtags, same locking discipline ([#167])
 
+## [0.1.108] - 2026-04-23
+
+### Changed
+
+- `notes new` and `notes append` now read stdin via `cmd.InOrStdin()` instead of reading `os.Stdin` directly, so tests (or any caller) can inject input by setting `rootCmd.SetIn(...)`. The terminal-detection heuristic is now `stdinIsTerminal(io.Reader)` and only runs the `Stat()` check when the reader is an `*os.File`; any other reader (pipe, `strings.Reader`, `bytes.Buffer`, etc.) is treated as non-terminal. `new_test.go` and `append_test.go` drop the `os.Stdin = r` / `os.Pipe` dance and use `rootCmd.SetIn(strings.NewReader(...))` ([#165])
+
 ## [0.1.107] - 2026-04-23
 
 ### Changed
@@ -716,4 +722,5 @@
 [#162]: https://github.com/dreikanter/notes-cli/pull/162
 [#161]: https://github.com/dreikanter/notes-cli/pull/161
 [#163]: https://github.com/dreikanter/notes-cli/pull/163
+[#165]: https://github.com/dreikanter/notes-cli/pull/165
 [#167]: https://github.com/dreikanter/notes-cli/pull/167
