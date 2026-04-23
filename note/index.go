@@ -479,7 +479,7 @@ func (i *Index) Resolve(query string, opts ...ResolveOption) (Entry, bool, error
 		return cloneEntry(entries[0]), true, nil
 	}
 
-	if IsID(query) {
+	if IsDigits(query) {
 		e, ok := byID[query]
 		if !ok {
 			return Entry{}, false, nil

@@ -84,7 +84,7 @@ func ParseFilename(baseName string) (Ref, error) {
 	}
 
 	id := parts[1]
-	if !IsID(id) {
+	if !IsDigits(id) {
 		return Ref{}, fmt.Errorf("invalid id in filename: %s", baseName)
 	}
 
@@ -124,17 +124,10 @@ func DirPath(root, date string) string {
 	return filepath.Join(root, year, month)
 }
 
-// IsID reports whether s is a valid notes-cli note ID: a non-empty string
-// consisting only of ASCII digits. Downstream tools use this to detect
-// numeric ID references (e.g. wikilinks, CLI query arguments) without
-// re-implementing the predicate.
-func IsID(s string) bool {
-	return IsDigits(s)
-}
-
 // IsDigits reports whether s is non-empty and every rune is an ASCII digit.
-// Use this when the caller cares about the digit-only shape of s (e.g.
-// YYYY/MM path segments), not about whether s is a valid note ID.
+// Use it to test numeric-ID references (wikilinks, CLI query arguments) or
+// digit-shaped path segments (YYYY/MM directories) without re-implementing
+// the predicate.
 func IsDigits(s string) bool {
 	if s == "" {
 		return false

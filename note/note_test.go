@@ -162,7 +162,7 @@ func TestParseFilename(t *testing.T) {
 	}
 }
 
-func TestIsID(t *testing.T) {
+func TestIsDigits(t *testing.T) {
 	cases := []struct {
 		in   string
 		want bool
@@ -181,8 +181,8 @@ func TestIsID(t *testing.T) {
 	}
 	for _, c := range cases {
 		t.Run(c.in, func(t *testing.T) {
-			if got := IsID(c.in); got != c.want {
-				t.Errorf("IsID(%q) = %v, want %v", c.in, got, c.want)
+			if got := IsDigits(c.in); got != c.want {
+				t.Errorf("IsDigits(%q) = %v, want %v", c.in, got, c.want)
 			}
 		})
 	}
