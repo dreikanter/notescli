@@ -29,6 +29,11 @@ type Entry struct {
 	// during Load. Read via MergedTags or BodyHashtags. Nil when Load ran with
 	// WithFrontmatter(false).
 	bodyHashtags []string
+
+	// mergedTags is the precomputed union of Frontmatter.Tags and bodyHashtags,
+	// lowercased, deduplicated, and sorted. Computed once during build().
+	// Nil when Load ran with WithFrontmatter(false).
+	mergedTags []string
 }
 
 // BodyHashtags returns a copy of the lowercased, deduplicated hashtags
@@ -47,26 +52,14 @@ func (e Entry) BodyHashtags() []string {
 // MergedTags returns the lowercased, deduplicated union of the entry's
 // frontmatter tags and body hashtags. This matches the tag source used by
 // FilterByTags: both frontmatter `tags:` values and in-body `#hashtag`
-// tokens. Result is sorted.
+// tokens. Result is sorted. The value is precomputed during Load; this
+// method returns a fresh copy so callers may mutate it freely.
 func (e Entry) MergedTags() []string {
-	set := make(map[string]struct{}, len(e.Frontmatter.Tags)+len(e.bodyHashtags))
-	for _, t := range e.Frontmatter.Tags {
-		if t == "" {
-			continue
-		}
-		set[strings.ToLower(t)] = struct{}{}
-	}
-	for _, t := range e.bodyHashtags {
-		set[t] = struct{}{}
-	}
-	if len(set) == 0 {
+	if len(e.mergedTags) == 0 {
 		return nil
 	}
-	out := make([]string, 0, len(set))
-	for t := range set {
-		out = append(out, t)
-	}
-	sort.Strings(out)
+	out := make([]string, len(e.mergedTags))
+	copy(out, e.mergedTags)
 	return out
 }
 
@@ -222,6 +215,7 @@ func (i *Index) build() error {
 							entries[j].Frontmatter = fm
 						}
 						entries[j].bodyHashtags = normalizeHashtags(ExtractHashtags(body))
+						entries[j].mergedTags = computeMergedTags(entries[j].Frontmatter.Tags, entries[j].bodyHashtags)
 					}
 				}
 				return nil
@@ -573,6 +567,7 @@ func cloneEntry(e Entry) Entry {
 	e.Frontmatter.Aliases = cloneStrings(e.Frontmatter.Aliases)
 	e.Frontmatter.Extra = cloneExtra(e.Frontmatter.Extra)
 	e.bodyHashtags = cloneStrings(e.bodyHashtags)
+	e.mergedTags = cloneStrings(e.mergedTags)
 	return e
 }
 
@@ -615,6 +610,32 @@ func cloneYAMLNode(n yaml.Node) yaml.Node {
 	}
 	n.Content = children
 	return n
+}
+
+// computeMergedTags builds the sorted, lowercased, deduplicated union of
+// frontmatter tags and body hashtags. bodyHashtags is assumed already
+// lowercased (as produced by normalizeHashtags). Returns nil when the
+// union is empty.
+func computeMergedTags(fmTags, bodyHashtags []string) []string {
+	set := make(map[string]struct{}, len(fmTags)+len(bodyHashtags))
+	for _, t := range fmTags {
+		if t == "" {
+			continue
+		}
+		set[strings.ToLower(t)] = struct{}{}
+	}
+	for _, t := range bodyHashtags {
+		set[t] = struct{}{}
+	}
+	if len(set) == 0 {
+		return nil
+	}
+	out := make([]string, 0, len(set))
+	for t := range set {
+		out = append(out, t)
+	}
+	sort.Strings(out)
+	return out
 }
 
 // normalizeHashtags lowercases and deduplicates a hashtag list from
