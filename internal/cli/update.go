@@ -47,7 +47,7 @@ var updateCmd = &cobra.Command{
 		if err != nil {
 			return err
 		}
-		n, err := note.ResolveRef(root, args[0])
+		n, err := resolveRef(cmd, root, args[0])
 		if err != nil {
 			return err
 		}

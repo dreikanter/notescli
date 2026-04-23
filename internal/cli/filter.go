@@ -18,6 +18,25 @@ func stderrLogger(cmd *cobra.Command) note.Logger {
 	}
 }
 
+// resolveRef loads the index with WithFrontmatter(false) and resolves query
+// through Index.Resolve. Misses wrap note.ErrNotFound so callers can match
+// with errors.Is. Commands that already hold an Index should call
+// idx.Resolve directly.
+func resolveRef(cmd *cobra.Command, root, query string, opts ...note.ResolveOption) (note.Ref, error) {
+	idx, err := note.Load(root, note.WithFrontmatter(false), note.WithLogger(stderrLogger(cmd)))
+	if err != nil {
+		return note.Ref{}, err
+	}
+	e, ok, err := idx.Resolve(query, opts...)
+	if err != nil {
+		return note.Ref{}, err
+	}
+	if !ok {
+		return note.Ref{}, fmt.Errorf("%w: %s", note.ErrNotFound, strings.TrimSpace(query))
+	}
+	return e.Ref, nil
+}
+
 // filterOpts holds the common filter flag values.
 type filterOpts struct {
 	Today bool

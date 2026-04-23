@@ -11,16 +11,16 @@ import (
 	"strings"
 )
 
-// ErrNotFound is returned (wrapped) by ResolveRef and resolveRelPath when a
-// note reference has no match in the store. Callers match with errors.Is:
+// ErrNotFound is returned (wrapped) from resolveRelPath when a path-like
+// query cannot be followed under the store root. Callers that wrap a miss
+// from Index.Resolve into an error should reuse this sentinel so users can
+// match with errors.Is:
 //
-//	_, err := note.ResolveRef(root, q)
 //	if errors.Is(err, note.ErrNotFound) { … }
 //
 // Index.Resolve and Index.ByID/ByRel/BySlug keep the (value, bool) miss
 // convention — the bool distinguishes "no match" from I/O failure without a
-// sentinel comparison. ResolveRef wraps because its public contract is
-// `(Ref, error)`; callers with an *Index can call Index.Resolve directly.
+// sentinel comparison.
 var ErrNotFound = errors.New("note not found")
 
 // ScanOptions configures Scan's directory traversal.
@@ -177,47 +177,18 @@ func scanLenient(root string, log Logger) ([]Ref, error) {
 	return notes, nil
 }
 
-// ResolveOption configures ResolveRef. All options are optional; pass zero or
-// more.
+// ResolveOption configures Index.Resolve. All options are optional; pass
+// zero or more.
 type ResolveOption func(*resolveConfig)
 
 type resolveConfig struct {
 	date string
 }
 
-// WithDate restricts ResolveRef candidates to notes matching the given
+// WithDate restricts Index.Resolve candidates to notes matching the given
 // YYYYMMDD date string. An empty string disables the filter (the default).
 func WithDate(date string) ResolveOption {
 	return func(c *resolveConfig) { c.date = date }
-}
-
-// ResolveRef resolves a note reference to a Ref using the following priority:
-//  1. Numeric ID — exact match; all-digit queries never fall through
-//  2. Type with special behavior (todo, backlog, weekly) — most recent match
-//  3. Path — absolute or relative path with separator, exact match under root
-//  4. Slug substring — most recent note whose slug contains the query
-//
-// Options narrow the candidate set before the priority chain runs; see
-// WithDate.
-//
-// Implementation routes through Index.Resolve on a WithFrontmatter(false)
-// load, so CLI commands that already hold an Index can call Index.Resolve
-// directly and skip this wrapper. A miss returns an error wrapping
-// [ErrNotFound]; callers match with errors.Is.
-func ResolveRef(root, query string, opts ...ResolveOption) (Ref, error) {
-	idx, err := Load(root, WithFrontmatter(false))
-	if err != nil {
-		return Ref{}, err
-	}
-
-	e, ok, err := idx.Resolve(query, opts...)
-	if err != nil {
-		return Ref{}, err
-	}
-	if !ok {
-		return Ref{}, fmt.Errorf("%w: %s", ErrNotFound, strings.TrimSpace(query))
-	}
-	return e.Ref, nil
 }
 
 // resolveRelPath converts a path-like query to a note RelPath under root.

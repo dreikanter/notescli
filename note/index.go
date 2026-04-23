@@ -436,8 +436,8 @@ func (i *Index) Tags() []string {
 	return out
 }
 
-// Resolve mirrors ResolveRef's priority chain against the cached index —
-// no rescan, no re-read:
+// Resolve looks up a note reference against the cached index — no rescan,
+// no re-read:
 //  1. empty query → most recent entry
 //  2. numeric ID → exact ByID match (strict; never falls through)
 //  3. type with special behavior → most recent entry with that Type

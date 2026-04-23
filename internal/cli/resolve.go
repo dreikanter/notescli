@@ -45,7 +45,7 @@ positional resolution to notes dated today.`,
 				date = time.Now().Format(note.DateFormat)
 			}
 
-			n, err := note.ResolveRef(root, args[0], note.WithDate(date))
+			n, err := resolveRef(cmd, root, args[0], note.WithDate(date))
 			if err != nil {
 				return err
 			}

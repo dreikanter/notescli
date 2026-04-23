@@ -7,7 +7,6 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/dreikanter/notes-cli/note"
 	"github.com/spf13/cobra"
 )
 
@@ -57,7 +56,7 @@ The editor value may include arguments, e.g. EDITOR="subl --wait".`,
 		if err != nil {
 			return err
 		}
-		n, err := note.ResolveRef(root, args[0])
+		n, err := resolveRef(cmd, root, args[0])
 		if err != nil {
 			return err
 		}

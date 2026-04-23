@@ -62,7 +62,7 @@ func annotateRunE(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return err
 	}
-	n, err := note.ResolveRef(root, args[0])
+	n, err := resolveRef(cmd, root, args[0])
 	if err != nil {
 		return err
 	}

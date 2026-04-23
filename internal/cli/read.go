@@ -27,7 +27,7 @@ var readCmd = &cobra.Command{
 			if f.active() {
 				return fmt.Errorf("cannot combine positional argument with filter flags")
 			}
-			n, err := note.ResolveRef(root, args[0])
+			n, err := resolveRef(cmd, root, args[0])
 			if err != nil {
 				return err
 			}

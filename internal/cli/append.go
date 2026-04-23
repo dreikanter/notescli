@@ -44,7 +44,7 @@ var appendCmd = &cobra.Command{
 				return fmt.Errorf("cannot combine positional argument with filter flags")
 			}
 
-			n, resolveErr := note.ResolveRef(root, args[0])
+			n, resolveErr := resolveRef(cmd, root, args[0])
 			if resolveErr != nil {
 				return resolveErr
 			}

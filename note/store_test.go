@@ -200,90 +200,22 @@ func TestScanLenientSkipsUnreadableDir(t *testing.T) {
 	}
 }
 
-func TestResolveRef(t *testing.T) {
+// TestResolveRelPathErrNotFound pins that Index.Resolve propagates the
+// ErrNotFound wrap from resolveRelPath when a path-like query cannot be
+// followed under the store root. Other miss paths (unknown id, unknown slug)
+// stay on the (value, bool) convention and return ok=false, err=nil.
+func TestResolveRelPathErrNotFound(t *testing.T) {
 	root := testdataPath(t)
-	absPath := filepath.Join(root, "2026/01/20260106_8823_999.md")
-
-	tests := []struct {
-		name    string
-		query   string
-		wantID  string
-		wantErr bool
-	}{
-		{"by id", "8823", "8823", false},
-		{"by id todo", "8814", "8814", false},
-		{"by type todo", "todo", "8814", false},
-		{"by slug exact", "disable-letter_opener", "6973", false},
-		{"by slug fragment", "letter_opener", "6973", false},
-		{"by partial slug", "meeting", "8818", false},
-		{"by absolute path", absPath, "8823", false},
-		{"absolute path with trailing slash errors", absPath + "/", "", true},
-		{"empty query returns most recent", "", "8823", false},
-		{"numeric non-id errors", "999", "", true},
-		{"numeric date fragment errors", "202601", "", true},
-		{"basename query does not substring-match path", "20260106_8823_999", "", true},
-		{"basename with md does not substring-match path", "20260106_8823_999.md", "", true},
-		{"date fragment inside slug query does not match path", "20260106", "", true},
-		{"not found id", "9999", "", true},
-		{"not found query", "nonexistent", "", true},
-		{"path outside root", "/tmp", "", true},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			got, err := ResolveRef(root, tt.query)
-			if tt.wantErr {
-				if err == nil {
-					t.Errorf("ResolveRef(%q) expected error, got nil", tt.query)
-				}
-				return
-			}
-			if err != nil {
-				t.Fatalf("ResolveRef(%q) unexpected error: %v", tt.query, err)
-			}
-			if got.ID != tt.wantID {
-				t.Errorf("ResolveRef(%q).ID = %q, want %q", tt.query, got.ID, tt.wantID)
-			}
-		})
-	}
-}
-
-func TestResolveRefWithDateEmptyQueryFiltersByDate(t *testing.T) {
-	root := testdataPath(t)
-	got, err := ResolveRef(root, "", WithDate("20260104"))
+	idx, err := Load(root, WithFrontmatter(false))
 	if err != nil {
-		t.Fatalf("ResolveRef WithDate empty query error: %v", err)
+		t.Fatalf("Load: %v", err)
 	}
-	if got.ID != "8818" {
-		t.Errorf("ResolveRef empty + WithDate(20260104) = %q, want 8818", got.ID)
+	_, _, err = idx.Resolve(filepath.Join(root, "2099/12/20991231_1.md"))
+	if err == nil {
+		t.Fatal("expected error for missing path")
 	}
-}
-
-// TestResolveRefErrNotFound pins that misses from ResolveRef wrap ErrNotFound
-// so callers can match with errors.Is — both the priority-chain miss path
-// (unknown slug / unknown id) and the path-resolution miss (a path that
-// EvalSymlinks cannot follow). Index.Resolve continues to keep the (value,
-// bool) convention for misses, unchanged.
-func TestResolveRefErrNotFound(t *testing.T) {
-	root := testdataPath(t)
-	cases := []struct {
-		name  string
-		query string
-	}{
-		{"unknown id", "9999"},
-		{"unknown slug", "no-such-slug-xyz"},
-		{"missing path", filepath.Join(root, "2099/12/20991231_1.md")},
-	}
-	for _, tc := range cases {
-		t.Run(tc.name, func(t *testing.T) {
-			_, err := ResolveRef(root, tc.query)
-			if err == nil {
-				t.Fatalf("expected error")
-			}
-			if !errors.Is(err, ErrNotFound) {
-				t.Errorf("errors.Is(err, ErrNotFound) = false (err=%v)", err)
-			}
-		})
+	if !errors.Is(err, ErrNotFound) {
+		t.Errorf("errors.Is(err, ErrNotFound) = false (err=%v)", err)
 	}
 }
 
