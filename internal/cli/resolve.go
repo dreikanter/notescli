@@ -54,24 +54,21 @@ positional resolution to notes dated today.`,
 			return nil
 		}
 
-		notes, err := note.Scan(root)
+		idx, err := note.Load(root, loadOptsFor(f))
 		if err != nil {
 			return err
 		}
 
-		notes, err = applyFilters(notes, root, f)
-		if err != nil {
-			return err
-		}
+		entries := applyFilters(idx.Entries(), f)
 
-		if len(notes) == 0 {
+		if len(entries) == 0 {
 			if f.active() {
 				return fmt.Errorf("no notes found matching filters: %s", f.describe())
 			}
 			return fmt.Errorf("no notes found")
 		}
 
-		fmt.Fprintln(cmd.OutOrStdout(), filepath.Join(root, notes[0].RelPath))
+		fmt.Fprintln(cmd.OutOrStdout(), filepath.Join(root, entries[0].RelPath))
 		return nil
 	},
 }

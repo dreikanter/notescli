@@ -53,25 +53,30 @@ func (f filterOpts) describe() string {
 	return strings.Join(parts, " ")
 }
 
-// applyFilters applies the common filter pipeline to a list of notes.
-func applyFilters(notes []note.Note, root string, f filterOpts) ([]note.Note, error) {
+// loadOptsFor picks Load options matching the fields this filter set touches.
+// Tag filters need merged frontmatter+body tags; every other filter only
+// touches filename-derived fields, so the frontmatter read is skipped.
+func loadOptsFor(f filterOpts) note.LoadOption {
+	return note.WithFrontmatter(len(f.Tags) > 0)
+}
+
+// applyFilters applies the common filter pipeline to a list of entries.
+// All stages operate on []Entry, so the tag filter reads tags directly from
+// the entries (populated once during Load) rather than re-scanning the store.
+func applyFilters(entries []note.Entry, f filterOpts) []note.Entry {
 	if f.Today {
-		notes = note.FilterByDate(notes, time.Now().Format(note.DateFormat))
+		entries = note.FilterByDate(entries, time.Now().Format(note.DateFormat))
 	}
 	if len(f.Types) > 0 {
-		notes = note.FilterByTypes(notes, f.Types)
+		entries = note.FilterByTypes(entries, f.Types)
 	}
 	if f.Slug != "" {
-		notes = note.FilterBySlug(notes, f.Slug)
+		entries = note.FilterBySlug(entries, f.Slug)
 	}
 	if len(f.Tags) > 0 {
-		var err error
-		notes, err = note.FilterByTags(notes, root, f.Tags)
-		if err != nil {
-			return nil, err
-		}
+		entries = note.FilterByTags(entries, f.Tags)
 	}
-	return notes, nil
+	return entries
 }
 
 // addFilterFlags registers the common filter flags on a command.

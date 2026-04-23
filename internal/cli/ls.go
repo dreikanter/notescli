@@ -21,26 +21,24 @@ var lsCmd = &cobra.Command{
 		if err != nil {
 			return err
 		}
-		notes, err := note.Scan(root)
+		idx, err := note.Load(root, loadOptsFor(f))
 		if err != nil {
 			return err
 		}
+		entries := idx.Entries()
 
 		if lsName != "" {
-			notes = note.Filter(notes, lsName)
+			entries = note.Filter(entries, lsName)
 		}
 
-		notes, err = applyFilters(notes, root, f)
-		if err != nil {
-			return err
+		entries = applyFilters(entries, f)
+
+		if lsLimit > 0 && len(entries) > lsLimit {
+			entries = entries[:lsLimit]
 		}
 
-		if lsLimit > 0 && len(notes) > lsLimit {
-			notes = notes[:lsLimit]
-		}
-
-		for _, n := range notes {
-			fmt.Fprintln(cmd.OutOrStdout(), filepath.Join(root, n.RelPath))
+		for _, e := range entries {
+			fmt.Fprintln(cmd.OutOrStdout(), filepath.Join(root, e.RelPath))
 		}
 		return nil
 	},

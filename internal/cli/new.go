@@ -40,19 +40,19 @@ var newCmd = &cobra.Command{
 		// --upsert: check if today already has a matching note
 		if upsert {
 			today := time.Now().Format(note.DateFormat)
-			notes, err := note.Scan(root)
+			idx, err := note.Load(root, note.WithFrontmatter(false))
 			if err != nil {
 				return err
 			}
-			notes = note.FilterByDate(notes, today)
+			entries := note.FilterByDate(idx.Entries(), today)
 			if noteType != "" {
-				notes = note.FilterByTypes(notes, []string{noteType})
+				entries = note.FilterByTypes(entries, []string{noteType})
 			}
 			if slug != "" {
-				notes = note.FilterBySlug(notes, slug)
+				entries = note.FilterBySlug(entries, slug)
 			}
-			if len(notes) > 0 {
-				fmt.Fprintln(cmd.OutOrStdout(), filepath.Join(root, notes[0].RelPath))
+			if len(entries) > 0 {
+				fmt.Fprintln(cmd.OutOrStdout(), filepath.Join(root, entries[0].RelPath))
 				return nil
 			}
 		}

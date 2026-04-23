@@ -51,20 +51,17 @@ var appendCmd = &cobra.Command{
 			}
 			targetPath = filepath.Join(root, n.RelPath)
 		} else if f.active() {
-			notes, scanErr := note.Scan(root)
-			if scanErr != nil {
-				return scanErr
+			idx, loadErr := note.Load(root, loadOptsFor(f))
+			if loadErr != nil {
+				return loadErr
 			}
 
-			notes, err = applyFilters(notes, root, f)
-			if err != nil {
-				return err
-			}
+			entries := applyFilters(idx.Entries(), f)
 
-			if len(notes) == 0 {
+			if len(entries) == 0 {
 				return fmt.Errorf("no notes found matching filters: %s", f.describe())
 			}
-			targetPath = filepath.Join(root, notes[0].RelPath)
+			targetPath = filepath.Join(root, entries[0].RelPath)
 		} else {
 			return fmt.Errorf("specify a note by positional argument or filter flags (--type, --slug, --tag, --today)")
 		}

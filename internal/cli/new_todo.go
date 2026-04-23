@@ -22,19 +22,20 @@ var newTodoCmd = &cobra.Command{
 		}
 		today := time.Now().Format(note.DateFormat)
 
-		notes, err := note.Scan(root)
+		idx, err := note.Load(root, note.WithFrontmatter(false))
 		if err != nil {
 			return err
 		}
+		entries := idx.Entries()
 
-		if existing := note.FindTodayTodo(notes, today); existing != nil {
+		if existing := note.FindTodayTodo(entries, today); existing != nil {
 			fmt.Fprintln(cmd.OutOrStdout(), filepath.Join(root, existing.RelPath))
 			return nil
 		}
 
 		// Find the most recent previous todo and roll over tasks
 		var carriedTasks []note.Task
-		prev := note.FindLatestTodo(notes, today)
+		prev := note.FindLatestTodo(entries, today)
 		if prev != nil {
 			prevPath := filepath.Join(root, prev.RelPath)
 			prevData, err := os.ReadFile(prevPath)

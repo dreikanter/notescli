@@ -214,46 +214,38 @@ func resolveRelPath(root, query string) (string, error) {
 	return rel, nil
 }
 
-// Filter returns all notes whose filename contains the fragment (case-insensitive).
-func Filter(notes []Note, fragment string) []Note {
+// Filter returns entries whose filename contains the fragment (case-insensitive).
+func Filter(entries []Entry, fragment string) []Entry {
 	fragment = strings.ToLower(fragment)
-	var results []Note
-	for _, n := range notes {
-		if strings.Contains(strings.ToLower(filepath.Base(n.RelPath)), fragment) {
-			results = append(results, n)
+	var results []Entry
+	for _, e := range entries {
+		if strings.Contains(strings.ToLower(filepath.Base(e.RelPath)), fragment) {
+			results = append(results, e)
 		}
 	}
 	return results
 }
 
-// FilterByTags returns notes that contain all of the given tags. Tag sources
-// mirror ExtractTags: frontmatter `tags:` fields and body hashtags (#word).
-// Comparison is case-insensitive.
+// FilterByTags returns entries whose merged tags (frontmatter `tags:` plus body
+// hashtags, case-folded) include every tag in tags. The caller supplies the
+// entries — typically from a single Load — so no additional filesystem walk
+// or frontmatter read happens here.
 //
-// Implementation routes through Load so the tag index is built from a single
-// concurrent file-read pass; the []Note signature is preserved as a shim for
-// callers that don't yet hold an Index. A per-note frontmatter parse error is
-// logged to stderr during Load and leaves the note's frontmatter tags empty;
-// body hashtags are still considered.
-func FilterByTags(notes []Note, root string, tags []string) ([]Note, error) {
-	if len(notes) == 0 {
-		return nil, nil
+// An entry whose frontmatter failed to parse during Load still considers its
+// body hashtags (Load logs the parse error and falls back to body-only);
+// entries from Load(WithFrontmatter(false)) have empty MergedTags and match
+// only if tags is also empty.
+func FilterByTags(entries []Entry, tags []string) []Entry {
+	if len(entries) == 0 {
+		return nil
 	}
-	idx, err := Load(root)
-	if err != nil {
-		return nil, err
-	}
-	var results []Note
-	for _, n := range notes {
-		e, ok := idx.ByRel(n.RelPath)
-		if !ok {
-			continue
-		}
+	var results []Entry
+	for _, e := range entries {
 		if hasAllTags(e.MergedTags(), tags) {
-			results = append(results, n)
+			results = append(results, e)
 		}
 	}
-	return results, nil
+	return results
 }
 
 // hasAllTags reports whether every entry in required appears in noteTags,
@@ -272,35 +264,35 @@ func hasAllTags(noteTags []string, required []string) bool {
 	return true
 }
 
-// FilterByDate returns notes whose Date field matches the given YYYYMMDD string.
-func FilterByDate(notes []Note, date string) []Note {
-	var results []Note
-	for _, n := range notes {
-		if n.Date == date {
-			results = append(results, n)
+// FilterByDate returns entries whose Date field matches the given YYYYMMDD string.
+func FilterByDate(entries []Entry, date string) []Entry {
+	var results []Entry
+	for _, e := range entries {
+		if e.Date == date {
+			results = append(results, e)
 		}
 	}
 	return results
 }
 
-// FilterBySlug returns notes with an exact slug match.
-func FilterBySlug(notes []Note, slug string) []Note {
-	var results []Note
-	for _, n := range notes {
-		if n.Slug == slug {
-			results = append(results, n)
+// FilterBySlug returns entries with an exact slug match.
+func FilterBySlug(entries []Entry, slug string) []Entry {
+	var results []Entry
+	for _, e := range entries {
+		if e.Slug == slug {
+			results = append(results, e)
 		}
 	}
 	return results
 }
 
-// FilterByTypes returns notes whose type matches any of the given values.
-func FilterByTypes(notes []Note, types []string) []Note {
+// FilterByTypes returns entries whose type matches any of the given values.
+func FilterByTypes(entries []Entry, types []string) []Entry {
 	set := toSet(types)
-	var results []Note
-	for _, n := range notes {
-		if _, ok := set[n.Type]; ok {
-			results = append(results, n)
+	var results []Entry
+	for _, e := range entries {
+		if _, ok := set[e.Type]; ok {
+			results = append(results, e)
 		}
 	}
 	return results

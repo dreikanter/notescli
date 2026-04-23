@@ -292,14 +292,14 @@ func TestDirPath(t *testing.T) {
 }
 
 func TestFindLatestTodo(t *testing.T) {
-	notes := []Note{
-		{Date: "20260312", Type: "todo", RelPath: "2026/03/20260312_100.todo.md"},
-		{Date: "20260311", Type: "todo", RelPath: "2026/03/20260311_99.todo.md"},
-		{Date: "20260310", Type: "", RelPath: "2026/03/20260310_98.md"},
-		{Date: "20260309", Type: "todo", RelPath: "2026/03/20260309_97.todo.md"},
+	entries := []Entry{
+		{Note: Note{Date: "20260312", Type: "todo", RelPath: "2026/03/20260312_100.todo.md"}},
+		{Note: Note{Date: "20260311", Type: "todo", RelPath: "2026/03/20260311_99.todo.md"}},
+		{Note: Note{Date: "20260310", Type: "", RelPath: "2026/03/20260310_98.md"}},
+		{Note: Note{Date: "20260309", Type: "todo", RelPath: "2026/03/20260309_97.todo.md"}},
 	}
 
-	got := FindLatestTodo(notes, "20260312")
+	got := FindLatestTodo(entries, "20260312")
 	if got == nil {
 		t.Fatal("expected to find a todo")
 	}
@@ -309,22 +309,22 @@ func TestFindLatestTodo(t *testing.T) {
 }
 
 func TestFindLatestTodoNone(t *testing.T) {
-	notes := []Note{
-		{Date: "20260312", Type: "todo"},
+	entries := []Entry{
+		{Note: Note{Date: "20260312", Type: "todo"}},
 	}
-	got := FindLatestTodo(notes, "20260312")
+	got := FindLatestTodo(entries, "20260312")
 	if got != nil {
 		t.Error("expected nil when no previous todo exists")
 	}
 }
 
 func TestFindTodayTodo(t *testing.T) {
-	notes := []Note{
-		{Date: "20260312", Type: "todo", RelPath: "2026/03/20260312_100.todo.md"},
-		{Date: "20260311", Type: "todo", RelPath: "2026/03/20260311_99.todo.md"},
+	entries := []Entry{
+		{Note: Note{Date: "20260312", Type: "todo", RelPath: "2026/03/20260312_100.todo.md"}},
+		{Note: Note{Date: "20260311", Type: "todo", RelPath: "2026/03/20260311_99.todo.md"}},
 	}
 
-	got := FindTodayTodo(notes, "20260312")
+	got := FindTodayTodo(entries, "20260312")
 	if got == nil {
 		t.Fatal("expected to find today's todo")
 	}
@@ -332,7 +332,7 @@ func TestFindTodayTodo(t *testing.T) {
 		t.Errorf("got date %s, want 20260312", got.Date)
 	}
 
-	got = FindTodayTodo(notes, "20260313")
+	got = FindTodayTodo(entries, "20260313")
 	if got != nil {
 		t.Error("expected nil for future date")
 	}

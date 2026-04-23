@@ -131,22 +131,22 @@ func FormatTodoContent(tasks []Task) string {
 	return strings.Join(lines, "\n\n") + "\n"
 }
 
-// FindLatestTodo finds the most recent todo note strictly before the given date.
-func FindLatestTodo(notes []Note, beforeDate string) *Note {
-	// notes are sorted newest-first
-	for i := range notes {
-		if notes[i].Type == "todo" && notes[i].Date < beforeDate {
-			return &notes[i]
+// FindLatestTodo finds the most recent todo entry strictly before the given date.
+func FindLatestTodo(entries []Entry, beforeDate string) *Entry {
+	// entries are sorted newest-first
+	for i := range entries {
+		if entries[i].Type == "todo" && entries[i].Date < beforeDate {
+			return &entries[i]
 		}
 	}
 	return nil
 }
 
-// FindTodayTodo finds a todo note matching today's date.
-func FindTodayTodo(notes []Note, today string) *Note {
-	for i := range notes {
-		if notes[i].Type == "todo" && notes[i].Date == today {
-			return &notes[i]
+// FindTodayTodo finds a todo entry matching today's date.
+func FindTodayTodo(entries []Entry, today string) *Entry {
+	for i := range entries {
+		if entries[i].Type == "todo" && entries[i].Date == today {
+			return &entries[i]
 		}
 	}
 	return nil

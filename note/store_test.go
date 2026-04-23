@@ -259,10 +259,10 @@ func TestResolveRefWithDateEmptyQueryFiltersByDate(t *testing.T) {
 }
 
 func TestFilter(t *testing.T) {
-	notes := []Note{
-		{RelPath: "2026/01/20260106_8823.md", Type: ""},
-		{RelPath: "2026/01/20260102_8814.todo.md", Type: "todo"},
-		{RelPath: "2024/12/20241203_6973_disable-letter_opener.md", Type: ""},
+	entries := []Entry{
+		{Note: Note{RelPath: "2026/01/20260106_8823.md", Type: ""}},
+		{Note: Note{RelPath: "2026/01/20260102_8814.todo.md", Type: "todo"}},
+		{Note: Note{RelPath: "2024/12/20241203_6973_disable-letter_opener.md", Type: ""}},
 	}
 
 	tests := []struct {
@@ -280,7 +280,7 @@ func TestFilter(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := Filter(notes, tt.fragment)
+			got := Filter(entries, tt.fragment)
 			if len(got) != tt.wantLen {
 				t.Errorf("Filter(%q) returned %d results, want %d", tt.fragment, len(got), tt.wantLen)
 			}
@@ -290,10 +290,11 @@ func TestFilter(t *testing.T) {
 
 func TestFilterByTags(t *testing.T) {
 	root := testdataPath(t)
-	notes, err := Scan(root)
+	idx, err := Load(root)
 	if err != nil {
-		t.Fatalf("Scan error: %v", err)
+		t.Fatalf("Load error: %v", err)
 	}
+	entries := idx.Entries()
 
 	tests := []struct {
 		name    string
@@ -313,12 +314,9 @@ func TestFilterByTags(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := FilterByTags(notes, root, tt.tags)
-			if err != nil {
-				t.Fatalf("FilterByTags(%v) error: %v", tt.tags, err)
-			}
+			got := FilterByTags(entries, tt.tags)
 			if len(got) != tt.wantLen {
-				t.Fatalf("FilterByTags(%v) returned %d notes, want %d", tt.tags, len(got), tt.wantLen)
+				t.Fatalf("FilterByTags(%v) returned %d entries, want %d", tt.tags, len(got), tt.wantLen)
 			}
 			for i, wantID := range tt.wantIDs {
 				if got[i].ID != wantID {
@@ -338,10 +336,11 @@ func TestFilterByTagsInlineHashtags(t *testing.T) {
 	writeNote(t, root, "2026/01/20260103_1003.md",
 		"---\ntags: [work]\n---\n\nno inline tags here.\n")
 
-	notes, err := Scan(root)
+	idx, err := Load(root)
 	if err != nil {
-		t.Fatalf("Scan error: %v", err)
+		t.Fatalf("Load error: %v", err)
 	}
+	entries := idx.Entries()
 
 	tests := []struct {
 		name    string
@@ -356,12 +355,9 @@ func TestFilterByTagsInlineHashtags(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := FilterByTags(notes, root, tt.tags)
-			if err != nil {
-				t.Fatalf("FilterByTags(%v) error: %v", tt.tags, err)
-			}
+			got := FilterByTags(entries, tt.tags)
 			if len(got) != len(tt.wantIDs) {
-				t.Fatalf("FilterByTags(%v) returned %d notes, want %d", tt.tags, len(got), len(tt.wantIDs))
+				t.Fatalf("FilterByTags(%v) returned %d entries, want %d", tt.tags, len(got), len(tt.wantIDs))
 			}
 			for i, wantID := range tt.wantIDs {
 				if got[i].ID != wantID {
@@ -373,47 +369,47 @@ func TestFilterByTagsInlineHashtags(t *testing.T) {
 }
 
 func TestFilterBySlug(t *testing.T) {
-	notes := []Note{
-		{Slug: ""},
-		{Slug: "api-redesign"},
-		{Slug: "disable-letter_opener"},
+	entries := []Entry{
+		{Note: Note{Slug: ""}},
+		{Note: Note{Slug: "api-redesign"}},
+		{Note: Note{Slug: "disable-letter_opener"}},
 	}
 
-	got := FilterBySlug(notes, "api-redesign")
+	got := FilterBySlug(entries, "api-redesign")
 	if len(got) != 1 {
 		t.Errorf("FilterBySlug(api-redesign) returned %d, want 1", len(got))
 	}
 
-	got = FilterBySlug(notes, "")
+	got = FilterBySlug(entries, "")
 	if len(got) != 1 {
 		t.Errorf("FilterBySlug('') returned %d, want 1", len(got))
 	}
 
-	got = FilterBySlug(notes, "nope")
+	got = FilterBySlug(entries, "nope")
 	if len(got) != 0 {
 		t.Errorf("FilterBySlug(nope) returned %d, want 0", len(got))
 	}
 }
 
 func TestFilterByDate(t *testing.T) {
-	notes := []Note{
-		{Date: "20260106", ID: "8823"},
-		{Date: "20260104", ID: "8818"},
-		{Date: "20260102", ID: "8814"},
-		{Date: "20241203", ID: "6973"},
+	entries := []Entry{
+		{Note: Note{Date: "20260106", ID: "8823"}},
+		{Note: Note{Date: "20260104", ID: "8818"}},
+		{Note: Note{Date: "20260102", ID: "8814"}},
+		{Note: Note{Date: "20241203", ID: "6973"}},
 	}
 
-	got := FilterByDate(notes, "20260106")
+	got := FilterByDate(entries, "20260106")
 	if len(got) != 1 || got[0].ID != "8823" {
 		t.Errorf("FilterByDate(20260106) = %v, want [{ID:8823}]", got)
 	}
 
-	got = FilterByDate(notes, "20260104")
+	got = FilterByDate(entries, "20260104")
 	if len(got) != 1 || got[0].ID != "8818" {
 		t.Errorf("FilterByDate(20260104) = %v, want [{ID:8818}]", got)
 	}
 
-	got = FilterByDate(notes, "20991231")
+	got = FilterByDate(entries, "20991231")
 	if len(got) != 0 {
 		t.Errorf("FilterByDate(no match) = %v, want []", got)
 	}
@@ -449,11 +445,11 @@ func TestValidateSlug(t *testing.T) {
 }
 
 func TestFilterByTypes(t *testing.T) {
-	notes := []Note{
-		{Type: ""},
-		{Type: "todo"},
-		{Type: "backlog"},
-		{Type: "todo"},
+	entries := []Entry{
+		{Note: Note{Type: ""}},
+		{Note: Note{Type: "todo"}},
+		{Note: Note{Type: "backlog"}},
+		{Note: Note{Type: "todo"}},
 	}
 
 	tests := []struct {
@@ -470,7 +466,7 @@ func TestFilterByTypes(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := FilterByTypes(notes, tt.types)
+			got := FilterByTypes(entries, tt.types)
 			if len(got) != tt.wantLen {
 				t.Errorf("FilterByTypes(%v) returned %d, want %d", tt.types, len(got), tt.wantLen)
 			}

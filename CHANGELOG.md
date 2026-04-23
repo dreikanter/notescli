@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.1.107] - 2026-04-23
+
+### Changed
+
+- `note.FilterByTags` no longer re-scans the store. Its signature is now `FilterByTags(entries []Entry, tags []string) []Entry` — the `root` argument and internal `Load` are gone; merged tags are read directly from `Entry.MergedTags()`. For `ls --tag foo` the prior two `WalkDir` passes (plus a second frontmatter read the first pass did not need) collapse to one walk with frontmatter ([#163])
+- `note.Filter`, `FilterByDate`, `FilterBySlug`, `FilterByTypes`, `FindTodayTodo`, and `FindLatestTodo` now take `[]Entry` so the CLI pipeline is uniformly `Load → []Entry → …`. `Entry` embeds `Note`, so field access inside these helpers is unchanged ([#163])
+- `internal/cli`: `applyFilters` takes and returns `[]note.Entry` (and no longer needs `root`). A new `loadOptsFor(f)` picks `note.WithFrontmatter(true)` only when a `--tag` filter is active, so commands that do not touch tags do not pay the frontmatter-read cost. Every CLI entry point (`ls`, `resolve`, `read`, `append`, `new --upsert`, `new-todo`) now does a single `note.Load` at the top and feeds `idx.Entries()` through the pipeline ([#163])
+
 ## [0.1.106] - 2026-04-23
 
 ### Changed
@@ -701,3 +709,4 @@
 [#159]: https://github.com/dreikanter/notes-cli/pull/159
 [#162]: https://github.com/dreikanter/notes-cli/pull/162
 [#161]: https://github.com/dreikanter/notes-cli/pull/161
+[#163]: https://github.com/dreikanter/notes-cli/pull/163

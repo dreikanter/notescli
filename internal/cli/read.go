@@ -33,20 +33,17 @@ var readCmd = &cobra.Command{
 			}
 			relPath = n.RelPath
 		} else if f.active() {
-			notes, err := note.Scan(root)
+			idx, err := note.Load(root, loadOptsFor(f))
 			if err != nil {
 				return err
 			}
 
-			notes, err = applyFilters(notes, root, f)
-			if err != nil {
-				return err
-			}
+			entries := applyFilters(idx.Entries(), f)
 
-			if len(notes) == 0 {
+			if len(entries) == 0 {
 				return fmt.Errorf("no notes found matching filters: %s", f.describe())
 			}
-			relPath = notes[0].RelPath
+			relPath = entries[0].RelPath
 		} else {
 			return fmt.Errorf("specify a note by positional argument or filter flags (--type, --slug, --tag, --today)")
 		}
