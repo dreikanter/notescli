@@ -1,5 +1,15 @@
 # Changelog
 
+## [0.2.20] - 2026-04-23
+
+### Changed
+
+- `new.go`: `findUpsertNote` and `readStdinBody` extracted from `RunE`; the upsert lookup and stdin read are now named helpers
+- `update.go`: `syncNoteFilename` extracted from `RunE`; the hard-link rename path is now a standalone function
+- `annotate.go`: `invokeAnnotate` extracted; it wraps schema build, context deadline, `runClaude`, and result parse into one call ([#212])
+
+[#212]: https://github.com/dreikanter/notes-cli/pull/212
+
 ## [0.2.19] - 2026-04-23
 
 ### Changed

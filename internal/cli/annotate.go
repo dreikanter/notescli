@@ -96,22 +96,7 @@ func annotateRunE(cmd *cobra.Command, args []string) error {
 		}
 	}
 
-	schema, err := buildAnnotateSchema(empty)
-	if err != nil {
-		return err
-	}
-	ctx := cmd.Context()
-	if timeout > 0 {
-		var cancel context.CancelFunc
-		ctx, cancel = context.WithTimeout(ctx, timeout)
-		defer cancel()
-	}
-	out, err := runClaude(ctx, model, schema, prompt)
-	if err != nil {
-		return err
-	}
-
-	gen, err := parseAnnotation(out)
+	gen, err := invokeAnnotate(cmd.Context(), model, timeout, empty, prompt)
 	if err != nil {
 		return err
 	}
@@ -128,6 +113,25 @@ func annotateRunE(cmd *cobra.Command, args []string) error {
 
 	fmt.Fprintln(cmd.OutOrStdout(), fullPath)
 	return nil
+}
+
+// invokeAnnotate builds the JSON Schema for the empty fields, optionally
+// applies a context deadline, calls runClaude, and parses the result.
+func invokeAnnotate(ctx context.Context, model string, timeout time.Duration, empty []string, prompt string) (annotateResult, error) {
+	schema, err := buildAnnotateSchema(empty)
+	if err != nil {
+		return annotateResult{}, err
+	}
+	if timeout > 0 {
+		var cancel context.CancelFunc
+		ctx, cancel = context.WithTimeout(ctx, timeout)
+		defer cancel()
+	}
+	out, err := runClaude(ctx, model, schema, prompt)
+	if err != nil {
+		return annotateResult{}, err
+	}
+	return parseAnnotation(out)
 }
 
 // runClaude executes the Claude Code CLI non-interactively and returns its stdout.

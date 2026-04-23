@@ -113,49 +113,61 @@ var updateCmd = &cobra.Command{
 			}
 		}
 
-		// --sync-filename: reconcile filename to match (already-updated) frontmatter.
-		// When frontmatter is silent on slug/type AND the user didn't touch
-		// those flags, fall back to the filename-reported value so the rename
-		// is a no-op instead of stripping a still-valid cache suffix.
 		newPath := oldPath
 		if syncFilename {
-			id, err := strconv.Atoi(n.ID)
-			if err != nil {
-				return fmt.Errorf("invalid note id %q: %w", n.ID, err)
-			}
-			syncSlug := updated.Slug
-			if syncSlug == "" && !cmd.Flags().Changed("slug") && !updateNoSlug {
-				syncSlug = n.Slug
-			}
-			syncType := updated.Type
-			if syncType == "" && !cmd.Flags().Changed("type") && !updateNoType {
-				syncType = n.Type
-			}
-			newFilename := note.Filename(n.Date, id, syncSlug, syncType)
-			dir := filepath.Dir(oldPath)
-			newPath = filepath.Join(dir, newFilename)
-			if newPath != oldPath {
-				// os.Link atomically reserves the target: returns EEXIST if it
-				// already exists, which os.Rename on Unix would silently clobber.
-				if err := os.Link(oldPath, newPath); err != nil {
-					if errors.Is(err, os.ErrExist) {
-						return fmt.Errorf("target note already exists: %s", newPath)
-					}
-					return fmt.Errorf("cannot link note: %w", err)
-				}
-				if err := os.Remove(oldPath); err != nil {
-					// Roll back the link so we don't leave both paths pointing
-					// to the same inode. Best-effort: a cleanup failure here
-					// isn't surfaced because the original error is more useful.
-					_ = os.Remove(newPath)
-					return fmt.Errorf("cannot remove old note: %w", err)
-				}
+			var syncErr error
+			newPath, syncErr = syncNoteFilename(cmd, n, updated, oldPath, updateNoSlug, updateNoType)
+			if syncErr != nil {
+				return syncErr
 			}
 		}
 
 		fmt.Fprintln(cmd.OutOrStdout(), newPath)
 		return nil
 	},
+}
+
+// syncNoteFilename reconciles the on-disk filename with the (already-updated)
+// frontmatter slug and type. When frontmatter is silent on slug/type and the
+// user did not touch those flags, the filename-reported value is used so the
+// rename is a no-op instead of stripping a still-valid cache suffix. The rename
+// uses hard-link + remove to atomically reserve the target and refuse a clobber.
+// Returns newPath, which equals oldPath when no rename is needed.
+func syncNoteFilename(cmd *cobra.Command, n note.Ref, updated note.Frontmatter, oldPath string, noSlug, noType bool) (string, error) {
+	id, err := strconv.Atoi(n.ID)
+	if err != nil {
+		return "", fmt.Errorf("invalid note id %q: %w", n.ID, err)
+	}
+	syncSlug := updated.Slug
+	if syncSlug == "" && !cmd.Flags().Changed("slug") && !noSlug {
+		syncSlug = n.Slug
+	}
+	syncType := updated.Type
+	if syncType == "" && !cmd.Flags().Changed("type") && !noType {
+		syncType = n.Type
+	}
+	newFilename := note.Filename(n.Date, id, syncSlug, syncType)
+	dir := filepath.Dir(oldPath)
+	newPath := filepath.Join(dir, newFilename)
+	if newPath == oldPath {
+		return oldPath, nil
+	}
+	// os.Link atomically reserves the target: returns EEXIST if it already
+	// exists, which os.Rename on Unix would silently clobber.
+	if err := os.Link(oldPath, newPath); err != nil {
+		if errors.Is(err, os.ErrExist) {
+			return "", fmt.Errorf("target note already exists: %s", newPath)
+		}
+		return "", fmt.Errorf("cannot link note: %w", err)
+	}
+	if err := os.Remove(oldPath); err != nil {
+		// Roll back the link so we don't leave both paths pointing to the
+		// same inode. Best-effort: a cleanup failure here isn't surfaced
+		// because the original error is more useful.
+		_ = os.Remove(newPath)
+		return "", fmt.Errorf("cannot remove old note: %w", err)
+	}
+	return newPath, nil
 }
 
 func registerUpdateFlags() {

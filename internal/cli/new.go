@@ -37,34 +37,20 @@ var newCmd = &cobra.Command{
 			return err
 		}
 
-		// --upsert: check if today already has a matching note
 		if upsert {
-			today := time.Now().Format(note.DateFormat)
-			idx, err := note.Load(root, note.WithFrontmatter(false), note.WithLogger(stderrLogger(cmd)))
+			path, found, err := findUpsertNote(cmd, root, noteType, slug)
 			if err != nil {
 				return err
 			}
-			entries := note.FilterByDate(idx.Entries(), today)
-			if noteType != "" {
-				entries = note.FilterByTypes(entries, []string{noteType})
-			}
-			if slug != "" {
-				entries = note.FilterBySlug(entries, slug)
-			}
-			if len(entries) > 0 {
-				fmt.Fprintln(cmd.OutOrStdout(), filepath.Join(root, entries[0].RelPath))
+			if found {
+				fmt.Fprintln(cmd.OutOrStdout(), path)
 				return nil
 			}
 		}
 
-		var body string
-		in := cmd.InOrStdin()
-		if !stdinIsTerminal(in) {
-			data, err := io.ReadAll(in)
-			if err != nil {
-				return fmt.Errorf("cannot read stdin: %w", err)
-			}
-			body = string(data)
+		body, err := readStdinBody(cmd)
+		if err != nil {
+			return err
 		}
 
 		fullPath, err := createNote(createNoteParams{
@@ -100,6 +86,41 @@ func stdinIsTerminal(in io.Reader) bool {
 		return true
 	}
 	return fi.Mode()&os.ModeCharDevice != 0
+}
+
+// findUpsertNote returns the absolute path of an existing today's note
+// matching noteType and slug, or ("", false, nil) when none exists.
+func findUpsertNote(cmd *cobra.Command, root, noteType, slug string) (string, bool, error) {
+	today := time.Now().Format(note.DateFormat)
+	idx, err := note.Load(root, note.WithFrontmatter(false), note.WithLogger(stderrLogger(cmd)))
+	if err != nil {
+		return "", false, err
+	}
+	entries := note.FilterByDate(idx.Entries(), today)
+	if noteType != "" {
+		entries = note.FilterByTypes(entries, []string{noteType})
+	}
+	if slug != "" {
+		entries = note.FilterBySlug(entries, slug)
+	}
+	if len(entries) == 0 {
+		return "", false, nil
+	}
+	return filepath.Join(root, entries[0].RelPath), true, nil
+}
+
+// readStdinBody reads stdin when it is not a terminal and returns its content.
+// Returns ("", nil) when stdin is a terminal (no piped input).
+func readStdinBody(cmd *cobra.Command) (string, error) {
+	in := cmd.InOrStdin()
+	if stdinIsTerminal(in) {
+		return "", nil
+	}
+	data, err := io.ReadAll(in)
+	if err != nil {
+		return "", fmt.Errorf("cannot read stdin: %w", err)
+	}
+	return string(data), nil
 }
 
 func registerNewFlags() {
