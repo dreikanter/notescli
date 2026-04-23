@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.2.17] - 2026-04-23
+
+### Changed
+
+- `lockStoreRoot` (the `syscall.Flock` helper used by `NextID`) moved from `note/id.go` into two build-tag files: `note/id_unix.go` (`//go:build unix`) and a no-op stub `note/id_other.go` (`//go:build !unix`). The package now compiles on non-Unix targets without a `syscall` dependency; behavior on Unix is unchanged ([#209])
+
+[#209]: https://github.com/dreikanter/notes-cli/pull/209
+
 ## [0.2.16] - 2026-04-23
 
 ### Changed
