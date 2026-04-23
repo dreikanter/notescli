@@ -8,6 +8,23 @@
 
 [#195]: https://github.com/dreikanter/notes-cli/pull/195
 
+## [0.2.2] - 2026-04-23
+
+### Changed
+
+- `note.TypesWithSpecialBehavior` unexported to `typesWithSpecialBehavior`; external importers can no longer `append` to the package-level slice and silently change CLI behavior globally. `note.HasSpecialBehavior(s)` remains the public predicate, and a new `note.SpecialBehaviorTypes()` returns a fresh copy of the list for callers that need the values. `SCHEMA.md` now references `HasSpecialBehavior` instead of the unexported slice ([#194])
+
+[#194]: https://github.com/dreikanter/notes-cli/pull/194
+
+## [0.2.1] - 2026-04-23
+
+### Changed
+
+- `note` package no longer writes to `os.Stderr`. Per-note frontmatter parse failures (`note/index.go`), `Index.Reload` build failures, and unreadable-subdirectory warnings during `Scan` now route through a new `note.Logger = func(error)`. Install one via `note.WithLogger` (LoadOption) or `note.WithScanLogger` (ScanOption); the default is a no-op so external importers (notes-pub, notes-view) can embed the package without inheriting its stderr output. The `notes` CLI wires a single `stderrLogger(cmd)` helper through every `note.Load` call, so user-visible output is unchanged ([#193])
+- `.github/workflows/tag.yml` preserves the major.minor segment of the latest tag instead of hardcoding `v0.1.*`; `CLAUDE.md`'s Versioning and Changelog sections are updated to match. Bumping minor now requires a manual `v0.X.0` tag, after which the workflow continues patch-bumping within that series ([#193])
+
+[#193]: https://github.com/dreikanter/notes-cli/pull/193
+
 ## [0.2.0] - 2026-04-23
 
 ### Changed

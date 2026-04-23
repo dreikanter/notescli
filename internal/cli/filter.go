@@ -9,6 +9,15 @@ import (
 	"github.com/spf13/cobra"
 )
 
+// stderrLogger returns a note.Logger that writes non-fatal warnings from
+// Load/Scan/Reload to cmd's stderr. The note package itself no longer writes
+// to os.Stderr — CLI commands wire this at the edge.
+func stderrLogger(cmd *cobra.Command) note.Logger {
+	return func(err error) {
+		fmt.Fprintf(cmd.ErrOrStderr(), "warn: %v\n", err)
+	}
+}
+
 // filterOpts holds the common filter flag values.
 type filterOpts struct {
 	Today bool
@@ -55,9 +64,14 @@ func (f filterOpts) describe() string {
 
 // loadOptsFor picks Load options matching the fields this filter set touches.
 // Tag filters need merged frontmatter+body tags; every other filter only
-// touches filename-derived fields, so the frontmatter read is skipped.
-func loadOptsFor(f filterOpts) note.LoadOption {
-	return note.WithFrontmatter(len(f.Tags) > 0)
+// touches filename-derived fields, so the frontmatter read is skipped. The
+// stderr logger is attached so the note package's per-note and subdirectory
+// warnings surface to the user.
+func loadOptsFor(cmd *cobra.Command, f filterOpts) []note.LoadOption {
+	return []note.LoadOption{
+		note.WithFrontmatter(len(f.Tags) > 0),
+		note.WithLogger(stderrLogger(cmd)),
+	}
 }
 
 // applyFilters applies the common filter pipeline to a list of entries.

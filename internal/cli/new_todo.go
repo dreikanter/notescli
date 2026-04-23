@@ -22,7 +22,7 @@ var newTodoCmd = &cobra.Command{
 		}
 		today := time.Now().Format(note.DateFormat)
 
-		idx, err := note.Load(root, note.WithFrontmatter(false))
+		idx, err := note.Load(root, note.WithFrontmatter(false), note.WithLogger(stderrLogger(cmd)))
 		if err != nil {
 			return err
 		}

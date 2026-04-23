@@ -50,7 +50,7 @@ var appendCmd = &cobra.Command{
 			}
 			targetPath = filepath.Join(root, n.RelPath)
 		} else if f.active() {
-			idx, loadErr := note.Load(root, loadOptsFor(f))
+			idx, loadErr := note.Load(root, loadOptsFor(cmd, f)...)
 			if loadErr != nil {
 				return loadErr
 			}

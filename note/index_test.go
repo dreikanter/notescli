@@ -518,3 +518,39 @@ func TestCloneEntryDeepCopiesExtra(t *testing.T) {
 		t.Errorf("custom[0].Value = %q, want \"one\" — nested Content was aliased", got.Content[0].Value)
 	}
 }
+
+// TestLoadLoggerCapturesParseWarnings pins that per-note frontmatter parse
+// failures are routed to the Logger installed via WithLogger instead of being
+// written directly to os.Stderr. External importers that embed this package
+// rely on this to keep their own logging disciplined.
+func TestLoadLoggerCapturesParseWarnings(t *testing.T) {
+	root := t.TempDir()
+	writeNote(t, root, "2026/01/20260101_1.md", "---\nbad: [unclosed\n---\n\nbody\n")
+	writeNote(t, root, "2026/01/20260102_2.md", "---\ntitle: ok\n---\n\nbody\n")
+
+	var captured []error
+	_, err := Load(root, WithLogger(func(err error) {
+		captured = append(captured, err)
+	}))
+	if err != nil {
+		t.Fatalf("Load: %v", err)
+	}
+	if len(captured) != 1 {
+		t.Fatalf("captured = %d warnings, want 1", len(captured))
+	}
+	if captured[0] == nil {
+		t.Fatal("captured warning is nil")
+	}
+}
+
+// TestLoadNilLoggerSilent pins that Load runs silently when no logger is
+// installed — no panic on the nil Logger call and no stderr output. Pairs
+// with the package rule that note/ never writes to os.Stderr on its own.
+func TestLoadNilLoggerSilent(t *testing.T) {
+	root := t.TempDir()
+	writeNote(t, root, "2026/01/20260101_1.md", "---\nbad: [unclosed\n---\n\nbody\n")
+
+	if _, err := Load(root); err != nil {
+		t.Fatalf("Load with nil logger: %v", err)
+	}
+}

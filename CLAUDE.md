@@ -16,7 +16,9 @@ Version is set at build time via git tags and `-ldflags`. The `Version` var in
 / `make build` using `git describe --tags`.
 
 Patch version auto-increments on each PR merge via GitHub Actions
-(`.github/workflows/tag.yml`), e.g. `v0.1.0` → `v0.1.1`.
+(`.github/workflows/tag.yml`), e.g. `v0.2.0` → `v0.2.1`. The major.minor
+pair is carried from the latest tag; bump it by tagging manually (e.g.
+`v0.3.0`) before the next merge.
 
 After merging a PR, reinstall locally:
 
@@ -46,7 +48,7 @@ Update `CHANGELOG.md` in every PR with an entry for the version that PR will cre
 Each PR merge auto-increments the patch version. To find the next version:
 
 ```sh
-git describe --tags   # e.g. v0.1.32 → next PR will be v0.1.33
+git describe --tags   # e.g. v0.2.3 → next PR will be v0.2.4
 ```
 
 Rules:

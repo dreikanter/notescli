@@ -54,7 +54,7 @@ positional resolution to notes dated today.`,
 			return nil
 		}
 
-		idx, err := note.Load(root, loadOptsFor(f))
+		idx, err := note.Load(root, loadOptsFor(cmd, f)...)
 		if err != nil {
 			return err
 		}

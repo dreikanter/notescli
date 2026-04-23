@@ -24,6 +24,7 @@ import (
 // need it.
 type ScanOptions struct {
 	Strict bool
+	logger Logger
 }
 
 // ScanOption configures Scan. All options are optional; pass zero or more.
@@ -35,27 +36,35 @@ func WithStrict(b bool) ScanOption {
 	return func(o *ScanOptions) { o.Strict = b }
 }
 
+// WithScanLogger installs a Logger for non-fatal warnings from Scan — today
+// that is "subdirectory unreadable, skipping" in both strict and lenient
+// modes. Default: no-op (the scan silently skips, matching the package rule
+// that note/ does not write to os.Stderr).
+func WithScanLogger(l Logger) ScanOption {
+	return func(o *ScanOptions) { o.logger = l }
+}
+
 // Scan enumerates notes under root.
 //
 // Called as Scan(root) it preserves the historical strict YYYY/MM/*.md
 // discipline. Pass WithStrict(false) to walk every *.md file under root
 // regardless of layout.
 //
-// Unreadable subdirectories are logged to stderr and skipped in both modes,
-// matching the per-note parse-error behavior, so a single permission glitch
-// can't break ls/tags/resolve.
+// Unreadable subdirectories are skipped in both modes so a single permission
+// glitch can't break ls/tags/resolve; pass WithScanLogger to surface those
+// warnings to the caller.
 func Scan(root string, opts ...ScanOption) ([]Ref, error) {
 	cfg := ScanOptions{Strict: true}
 	for _, o := range opts {
 		o(&cfg)
 	}
 	if cfg.Strict {
-		return scanStrict(root)
+		return scanStrict(root, cfg.logger)
 	}
-	return scanLenient(root)
+	return scanLenient(root, cfg.logger)
 }
 
-func scanStrict(root string) ([]Ref, error) {
+func scanStrict(root string, log Logger) ([]Ref, error) {
 	var notes []Ref
 
 	years, err := os.ReadDir(root)
@@ -71,7 +80,7 @@ func scanStrict(root string) ([]Ref, error) {
 		yearPath := filepath.Join(root, y.Name())
 		months, err := os.ReadDir(yearPath)
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "warn: %s: %v\n", yearPath, err)
+			log.log(fmt.Errorf("%s: %w", yearPath, err))
 			continue
 		}
 
@@ -83,7 +92,7 @@ func scanStrict(root string) ([]Ref, error) {
 			monthPath := filepath.Join(yearPath, m.Name())
 			files, err := os.ReadDir(monthPath)
 			if err != nil {
-				fmt.Fprintf(os.Stderr, "warn: %s: %v\n", monthPath, err)
+				log.log(fmt.Errorf("%s: %w", monthPath, err))
 				continue
 			}
 
@@ -111,7 +120,7 @@ func scanStrict(root string) ([]Ref, error) {
 	return notes, nil
 }
 
-func scanLenient(root string) ([]Ref, error) {
+func scanLenient(root string, log Logger) ([]Ref, error) {
 	var notes []Ref
 
 	walkErr := filepath.WalkDir(root, func(path string, d fs.DirEntry, err error) error {
@@ -119,7 +128,7 @@ func scanLenient(root string) ([]Ref, error) {
 			if path == root {
 				return err
 			}
-			fmt.Fprintf(os.Stderr, "warn: %s: %v\n", path, err)
+			log.log(fmt.Errorf("%s: %w", path, err))
 			if d != nil && d.IsDir() {
 				return fs.SkipDir
 			}
