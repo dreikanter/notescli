@@ -2,47 +2,7 @@ package note
 
 import (
 	"bytes"
-	"sort"
 )
-
-// ExtractTags scans the note store under root and returns a sorted,
-// deduplicated, lowercased list of tags. Sources: frontmatter `tags:` fields
-// and body hashtags (#word) in the prose. Returns a nil slice for an empty
-// store. A per-note frontmatter parse error is written to stderr and the
-// note's frontmatter tags are skipped (body hashtags are still collected).
-// Any file-read error aborts the scan.
-//
-// Implementation routes through Load so concurrent callers reuse a single
-// file-read pass; the worker pool and error-group coordination live in Load.
-func ExtractTags(root string) ([]string, error) {
-	idx, err := Load(root)
-	if err != nil {
-		return nil, err
-	}
-	idx.mu.RLock()
-	defer idx.mu.RUnlock()
-	if len(idx.entries) == 0 {
-		return nil, nil
-	}
-	set := make(map[string]struct{})
-	for _, t := range idx.allTags {
-		set[t] = struct{}{}
-	}
-	for _, e := range idx.entries {
-		for _, t := range e.bodyHashtags {
-			set[t] = struct{}{}
-		}
-	}
-	if len(set) == 0 {
-		return nil, nil
-	}
-	out := make([]string, 0, len(set))
-	for t := range set {
-		out = append(out, t)
-	}
-	sort.Strings(out)
-	return out, nil
-}
 
 // ExtractHashtags scans body text and returns hashtag tokens (without the
 // leading '#'), preserving source order and including duplicates. Rules:

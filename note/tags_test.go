@@ -116,121 +116,70 @@ func writeNote(t *testing.T, root, rel, content string) {
 	}
 }
 
-func TestExtractTagsEmpty(t *testing.T) {
-	root := t.TempDir()
-	got, err := ExtractTags(root)
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
-	if len(got) != 0 {
-		t.Fatalf("expected no tags, got %v", got)
-	}
-}
-
-func TestExtractTagsFrontmatterOnly(t *testing.T) {
+func TestEntryBodyHashtags(t *testing.T) {
 	root := t.TempDir()
 	writeNote(t, root, "2026/01/20260101_1001.md",
-		"---\ntags: [work, planning]\n---\n\nbody here.\n")
+		"---\ntags: [fm]\n---\n\nBody #alpha and #beta, #alpha again.\n")
 	writeNote(t, root, "2026/01/20260102_1002.md",
-		"---\ntags: [work]\n---\n\n")
+		"---\n---\n\nno hashtags here.\n")
+	writeNote(t, root, "2026/01/20260103_1003.md",
+		"no-frontmatter body #gamma\n")
 
-	got, err := ExtractTags(root)
+	idx, err := Load(root)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
-	want := []string{"planning", "work"}
-	if !reflect.DeepEqual(got, want) {
-		t.Fatalf("got %v, want %v", got, want)
+	byRel := make(map[string][]string)
+	for _, e := range idx.Entries() {
+		byRel[e.RelPath] = e.BodyHashtags()
+	}
+
+	if got := byRel["2026/01/20260101_1001.md"]; !reflect.DeepEqual(got, []string{"alpha", "beta"}) {
+		t.Errorf("1001 BodyHashtags = %v, want [alpha beta]", got)
+	}
+	if got := byRel["2026/01/20260102_1002.md"]; got != nil {
+		t.Errorf("1002 BodyHashtags = %v, want nil", got)
+	}
+	if got := byRel["2026/01/20260103_1003.md"]; !reflect.DeepEqual(got, []string{"gamma"}) {
+		t.Errorf("1003 BodyHashtags = %v, want [gamma]", got)
 	}
 }
 
-func TestExtractTagsBodyHashtagsOnly(t *testing.T) {
+func TestEntryBodyHashtagsWithoutFrontmatter(t *testing.T) {
 	root := t.TempDir()
 	writeNote(t, root, "2026/01/20260101_1001.md",
-		"Text with #alpha and #beta.\n")
-	writeNote(t, root, "2026/01/20260102_1002.md",
-		"More text #alpha only.\n")
+		"body #alpha #beta\n")
 
-	got, err := ExtractTags(root)
+	idx, err := Load(root, WithFrontmatter(false))
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
-	want := []string{"alpha", "beta"}
-	if !reflect.DeepEqual(got, want) {
-		t.Fatalf("got %v, want %v", got, want)
+	entries := idx.Entries()
+	if len(entries) != 1 {
+		t.Fatalf("got %d entries, want 1", len(entries))
+	}
+	if got := entries[0].BodyHashtags(); got != nil {
+		t.Errorf("BodyHashtags = %v, want nil when WithFrontmatter(false)", got)
 	}
 }
 
-func TestExtractTagsMergedAndDeduped(t *testing.T) {
+func TestEntryBodyHashtagsReturnsCopy(t *testing.T) {
 	root := t.TempDir()
 	writeNote(t, root, "2026/01/20260101_1001.md",
-		"---\ntags: [work, shared]\n---\n\nBody #shared #body-only\n")
-	writeNote(t, root, "2026/01/20260102_1002.md",
-		"no frontmatter here #work #another\n")
+		"---\n---\n\nbody #alpha #beta\n")
 
-	got, err := ExtractTags(root)
+	idx, err := Load(root)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
-	want := []string{"another", "body-only", "shared", "work"}
-	if !reflect.DeepEqual(got, want) {
-		t.Fatalf("got %v, want %v", got, want)
+	entries := idx.Entries()
+	first := entries[0].BodyHashtags()
+	if len(first) == 0 {
+		t.Fatal("expected hashtags")
 	}
-}
-
-func TestExtractTagsFrontmatterUniqueAcrossStore(t *testing.T) {
-	// The unique tag comes only from frontmatter; body hashtag coverage
-	// differs. A regression in ParseNote integration would drop fm-unique
-	// and fail this test.
-	root := t.TempDir()
-	writeNote(t, root, "2026/01/20260101_1001.md",
-		"---\ntags: [fm-unique]\n---\n\nbody mentions #body-unique only.\n")
-
-	got, err := ExtractTags(root)
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
-	want := []string{"body-unique", "fm-unique"}
-	if !reflect.DeepEqual(got, want) {
-		t.Fatalf("got %v, want %v", got, want)
-	}
-}
-
-func TestExtractTagsIgnoresCodeBlocks(t *testing.T) {
-	root := t.TempDir()
-	writeNote(t, root, "2026/01/20260101_1001.md",
-		"real #kept\n```\n#ignored\n```\nafter #also-kept\n")
-
-	got, err := ExtractTags(root)
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
-	want := []string{"also-kept", "kept"}
-	if !reflect.DeepEqual(got, want) {
-		t.Fatalf("got %v, want %v", got, want)
-	}
-}
-
-func TestExtractTagsLowercasesMixedCase(t *testing.T) {
-	root := t.TempDir()
-	writeNote(t, root, "2026/01/20260101_1001.md",
-		"---\ntags: [Work, PLANNING]\n---\n\nbody #Coffee and #coffee.\n")
-	writeNote(t, root, "2026/01/20260102_1002.md",
-		"no fm, #WORK here.\n")
-
-	got, err := ExtractTags(root)
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
-	want := []string{"coffee", "planning", "work"}
-	if !reflect.DeepEqual(got, want) {
-		t.Fatalf("got %v, want %v", got, want)
-	}
-}
-
-func TestExtractTagsNonexistentRoot(t *testing.T) {
-	_, err := ExtractTags(filepath.Join(t.TempDir(), "does-not-exist"))
-	if err == nil {
-		t.Fatal("expected error for missing root")
+	first[0] = "mutated"
+	second := entries[0].BodyHashtags()
+	if second[0] != "alpha" {
+		t.Errorf("mutation leaked: second[0] = %q, want %q", second[0], "alpha")
 	}
 }

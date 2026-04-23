@@ -26,16 +26,28 @@ type Entry struct {
 	Size        int64
 
 	// bodyHashtags holds the lowercased, deduplicated body hashtags extracted
-	// during Load. Read via MergedTags; the field is unexported because it
-	// only feeds migration shims (FilterByTags, ExtractTags). Nil when Load
-	// ran with WithFrontmatter(false).
+	// during Load. Read via MergedTags or BodyHashtags. Nil when Load ran with
+	// WithFrontmatter(false).
 	bodyHashtags []string
+}
+
+// BodyHashtags returns a copy of the lowercased, deduplicated hashtags
+// extracted from the note body. Order matches the field's build order.
+// Returns nil when Load ran with WithFrontmatter(false) or the body had no
+// hashtags. The returned slice may be freely mutated.
+func (e Entry) BodyHashtags() []string {
+	if len(e.bodyHashtags) == 0 {
+		return nil
+	}
+	out := make([]string, len(e.bodyHashtags))
+	copy(out, e.bodyHashtags)
+	return out
 }
 
 // MergedTags returns the lowercased, deduplicated union of the entry's
 // frontmatter tags and body hashtags. This matches the tag source used by
-// FilterByTags and ExtractTags: both frontmatter `tags:` values and in-body
-// `#hashtag` tokens. Result is sorted.
+// FilterByTags: both frontmatter `tags:` values and in-body `#hashtag`
+// tokens. Result is sorted.
 func (e Entry) MergedTags() []string {
 	set := make(map[string]struct{}, len(e.Frontmatter.Tags)+len(e.bodyHashtags))
 	for _, t := range e.Frontmatter.Tags {
@@ -127,7 +139,7 @@ func WithLogger(l Logger) LoadOption {
 
 // Load walks root once, parses frontmatter concurrently, and returns a
 // populated Index. A single concurrent pass replaces the Scan → FilterByTags
-// → ExtractTags re-read chain that duplicated I/O for each query.
+// re-read chain that duplicated I/O for each query.
 //
 // Per-note frontmatter parse errors are forwarded to the logger installed via
 // WithLogger (no-op by default) and leave that entry's Frontmatter zero; they

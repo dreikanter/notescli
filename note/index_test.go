@@ -191,7 +191,7 @@ func TestIndexByTagAndTags(t *testing.T) {
 
 // TestEntryMergedTags verifies that body hashtags are extracted during Load
 // and surface via Entry.MergedTags alongside frontmatter tags, case-folded
-// and deduped. This is the path FilterByTags and ExtractTags route through.
+// and deduped. This is the path FilterByTags routes through.
 func TestEntryMergedTags(t *testing.T) {
 	root := t.TempDir()
 	writeNote(t, root, "2026/01/20260101_1.md",
