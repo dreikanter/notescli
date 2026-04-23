@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.2.4] - 2026-04-23
+
+### Changed
+
+- `note.ErrNotFound = errors.New("note not found")` exported so callers can match misses with `errors.Is` instead of string-comparing. `ResolveRef` now wraps it on the priority-chain miss path (previously `fmt.Errorf("note not found: %s", …)` with no sentinel) and on the `resolveRelPath` EvalSymlinks miss. `Index.Resolve` keeps its `(Entry, bool, error)` shape — `bool=false` is a miss, `error` is reserved for I/O — and the `ErrNotFound` doc-comment spells out the convention so the two APIs stay distinguishable ([#196])
+
+[#196]: https://github.com/dreikanter/notes-cli/pull/196
+
 ## [0.2.0] - 2026-04-23
 
 ### Changed
