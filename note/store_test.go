@@ -260,9 +260,9 @@ func TestResolveRefWithDateEmptyQueryFiltersByDate(t *testing.T) {
 
 func TestFilter(t *testing.T) {
 	entries := []Entry{
-		{Note: Note{RelPath: "2026/01/20260106_8823.md", Type: ""}},
-		{Note: Note{RelPath: "2026/01/20260102_8814.todo.md", Type: "todo"}},
-		{Note: Note{RelPath: "2024/12/20241203_6973_disable-letter_opener.md", Type: ""}},
+		{Ref: Ref{RelPath: "2026/01/20260106_8823.md", Type: ""}},
+		{Ref: Ref{RelPath: "2026/01/20260102_8814.todo.md", Type: "todo"}},
+		{Ref: Ref{RelPath: "2024/12/20241203_6973_disable-letter_opener.md", Type: ""}},
 	}
 
 	tests := []struct {
@@ -370,9 +370,9 @@ func TestFilterByTagsInlineHashtags(t *testing.T) {
 
 func TestFilterBySlug(t *testing.T) {
 	entries := []Entry{
-		{Note: Note{Slug: ""}},
-		{Note: Note{Slug: "api-redesign"}},
-		{Note: Note{Slug: "disable-letter_opener"}},
+		{Ref: Ref{Slug: ""}},
+		{Ref: Ref{Slug: "api-redesign"}},
+		{Ref: Ref{Slug: "disable-letter_opener"}},
 	}
 
 	got := FilterBySlug(entries, "api-redesign")
@@ -393,10 +393,10 @@ func TestFilterBySlug(t *testing.T) {
 
 func TestFilterByDate(t *testing.T) {
 	entries := []Entry{
-		{Note: Note{Date: "20260106", ID: "8823"}},
-		{Note: Note{Date: "20260104", ID: "8818"}},
-		{Note: Note{Date: "20260102", ID: "8814"}},
-		{Note: Note{Date: "20241203", ID: "6973"}},
+		{Ref: Ref{Date: "20260106", ID: "8823"}},
+		{Ref: Ref{Date: "20260104", ID: "8818"}},
+		{Ref: Ref{Date: "20260102", ID: "8814"}},
+		{Ref: Ref{Date: "20241203", ID: "6973"}},
 	}
 
 	got := FilterByDate(entries, "20260106")
@@ -446,10 +446,10 @@ func TestValidateSlug(t *testing.T) {
 
 func TestFilterByTypes(t *testing.T) {
 	entries := []Entry{
-		{Note: Note{Type: ""}},
-		{Note: Note{Type: "todo"}},
-		{Note: Note{Type: "backlog"}},
-		{Note: Note{Type: "todo"}},
+		{Ref: Ref{Type: ""}},
+		{Ref: Ref{Type: "todo"}},
+		{Ref: Ref{Type: "backlog"}},
+		{Ref: Ref{Type: "todo"}},
 	}
 
 	tests := []struct {

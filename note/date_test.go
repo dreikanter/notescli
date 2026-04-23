@@ -6,7 +6,7 @@ import (
 	"time"
 )
 
-func TestNoteTime(t *testing.T) {
+func TestRefTime(t *testing.T) {
 	cases := []struct {
 		name   string
 		date   string
@@ -34,8 +34,8 @@ func TestNoteTime(t *testing.T) {
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
-			n := Note{Date: tc.date}
-			got, ok := n.Time()
+			r := Ref{Date: tc.date}
+			got, ok := r.Time()
 			if ok != tc.wantOK {
 				t.Fatalf("ok = %v, want %v", ok, tc.wantOK)
 			}
@@ -78,49 +78,49 @@ func TestResolveEntryDate(t *testing.T) {
 	}{
 		{
 			name:       "uid wins over frontmatter and mtime",
-			entry:      Entry{Note: Note{Date: "20260106"}, Frontmatter: Frontmatter{Date: fmTime}},
+			entry:      Entry{Ref: Ref{Date: "20260106"}, Frontmatter: Frontmatter{Date: fmTime}},
 			fi:         fakeFileInfo{mtime: mtime},
 			wantTime:   uidTime,
 			wantSource: "uid",
 		},
 		{
 			name:       "frontmatter when uid malformed",
-			entry:      Entry{Note: Note{Date: "bogus"}, Frontmatter: Frontmatter{Date: fmTime}},
+			entry:      Entry{Ref: Ref{Date: "bogus"}, Frontmatter: Frontmatter{Date: fmTime}},
 			fi:         fakeFileInfo{mtime: mtime},
 			wantTime:   fmTime,
 			wantSource: "frontmatter",
 		},
 		{
 			name:       "mtime when uid malformed and frontmatter zero",
-			entry:      Entry{Note: Note{Date: ""}},
+			entry:      Entry{Ref: Ref{Date: ""}},
 			fi:         fakeFileInfo{mtime: mtime},
 			wantTime:   mtime,
 			wantSource: "mtime",
 		},
 		{
 			name:       "nil fi skips mtime fallback",
-			entry:      Entry{Note: Note{Date: "bad"}},
+			entry:      Entry{Ref: Ref{Date: "bad"}},
 			fi:         nil,
 			wantTime:   time.Time{},
 			wantSource: "",
 		},
 		{
 			name:       "nil fi still uses uid when valid",
-			entry:      Entry{Note: Note{Date: "20260106"}},
+			entry:      Entry{Ref: Ref{Date: "20260106"}},
 			fi:         nil,
 			wantTime:   uidTime,
 			wantSource: "uid",
 		},
 		{
 			name:       "nil fi still uses frontmatter when uid malformed",
-			entry:      Entry{Note: Note{Date: ""}, Frontmatter: Frontmatter{Date: fmTime}},
+			entry:      Entry{Ref: Ref{Date: ""}, Frontmatter: Frontmatter{Date: fmTime}},
 			fi:         nil,
 			wantTime:   fmTime,
 			wantSource: "frontmatter",
 		},
 		{
 			name:       "uid wins even when frontmatter is zero",
-			entry:      Entry{Note: Note{Date: "20260106"}},
+			entry:      Entry{Ref: Ref{Date: "20260106"}},
 			fi:         fakeFileInfo{mtime: mtime},
 			wantTime:   uidTime,
 			wantSource: "uid",

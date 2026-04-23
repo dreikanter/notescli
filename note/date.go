@@ -9,12 +9,12 @@ import (
 // dates. Use with time.Parse / time.Format (and ParseInLocation for UTC).
 const DateFormat = "20060102"
 
-// Time parses Note.Date (the UID-derived YYYYMMDD prefix) to a time.Time at
+// Time parses Ref.Date (the UID-derived YYYYMMDD prefix) to a time.Time at
 // midnight UTC. It returns false when Date is not a valid YYYYMMDD value;
 // values outside the canonical 8-character form (e.g. short or long years)
 // are reported as malformed even though ParseFilename accepts them.
-func (n Note) Time() (time.Time, bool) {
-	t, err := time.ParseInLocation(DateFormat, n.Date, time.UTC)
+func (r Ref) Time() (time.Time, bool) {
+	t, err := time.ParseInLocation(DateFormat, r.Date, time.UTC)
 	if err != nil {
 		return time.Time{}, false
 	}

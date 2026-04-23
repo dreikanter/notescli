@@ -21,8 +21,12 @@ func HasSpecialBehavior(s string) bool {
 	return false
 }
 
-// Note represents a single note file in the store.
-type Note struct {
+// Ref is a filename-derived reference to a single note file in the store: the
+// fields Ref carries are exactly what ParseFilename can recover from the base
+// name plus the walker's RelPath. It is the lightweight half of the two-tier
+// model — pair with Frontmatter and stat metadata to get a fully-hydrated
+// Entry.
+type Ref struct {
 	RelPath string // relative path from store root, e.g. "2026/01/20260106_8823.md"
 	Date    string // date as Y...YMMDD, e.g. "20260106"
 	ID      string // "8823"
@@ -42,7 +46,7 @@ func isFilenameCacheSafeType(noteType string) bool {
 // Expected format: Y...YMMDD_ID[_slug][.TYPE], where MM and DD are zero-padded.
 // The dot-suffix is extracted as the filename-reported Type only when it round-
 // trips cleanly (see isFilenameCacheSafeType). Frontmatter `type` is canonical.
-func ParseFilename(baseName string) (Note, error) {
+func ParseFilename(baseName string) (Ref, error) {
 	noteType := ""
 	remaining := baseName
 
@@ -60,17 +64,17 @@ func ParseFilename(baseName string) (Note, error) {
 
 	parts := strings.SplitN(remaining, "_", 3)
 	if len(parts) < 2 {
-		return Note{}, fmt.Errorf("invalid note filename: %s", baseName)
+		return Ref{}, fmt.Errorf("invalid note filename: %s", baseName)
 	}
 
 	date := parts[0]
 	if len(date) < 5 || !IsDigits(date) {
-		return Note{}, fmt.Errorf("invalid date in filename: %s", baseName)
+		return Ref{}, fmt.Errorf("invalid date in filename: %s", baseName)
 	}
 
 	id := parts[1]
 	if !IsID(id) {
-		return Note{}, fmt.Errorf("invalid id in filename: %s", baseName)
+		return Ref{}, fmt.Errorf("invalid id in filename: %s", baseName)
 	}
 
 	slug := ""
@@ -78,7 +82,7 @@ func ParseFilename(baseName string) (Note, error) {
 		slug = parts[2]
 	}
 
-	return Note{
+	return Ref{
 		Date: date,
 		ID:   id,
 		Slug: slug,
