@@ -82,6 +82,7 @@ type Index struct {
 
 type loadConfig struct {
 	frontmatter bool
+	workers     int
 	scanOpts    ScanOptions
 }
 
@@ -94,6 +95,13 @@ type LoadOption func(*loadConfig)
 // are empty.
 func WithFrontmatter(b bool) LoadOption {
 	return func(c *loadConfig) { c.frontmatter = b }
+}
+
+// WithWorkers sets the number of concurrent file-parsing workers. Default
+// runtime.NumCPU(). Values <=0 fall back to the default; the effective worker
+// count is capped at the number of notes.
+func WithWorkers(n int) LoadOption {
+	return func(c *loadConfig) { c.workers = n }
 }
 
 // WithScanOptions forwards directory-traversal options to the underlying
@@ -112,10 +120,14 @@ func WithScanOptions(o ScanOptions) LoadOption {
 func Load(root string, opts ...LoadOption) (*Index, error) {
 	cfg := loadConfig{
 		frontmatter: true,
+		workers:     runtime.NumCPU(),
 		scanOpts:    ScanOptions{Strict: true},
 	}
 	for _, o := range opts {
 		o(&cfg)
+	}
+	if cfg.workers <= 0 {
+		cfg.workers = runtime.NumCPU()
 	}
 
 	idx := &Index{root: root, cfg: cfg}
@@ -140,7 +152,7 @@ func (i *Index) build() error {
 	}
 
 	if len(entries) > 0 {
-		workers := runtime.NumCPU()
+		workers := i.cfg.workers
 		if workers > len(entries) {
 			workers = len(entries)
 		}
