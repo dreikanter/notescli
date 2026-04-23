@@ -45,18 +45,18 @@ type Ref struct {
 	Type    string // type reported by the filename dot-suffix; any string accepted. Frontmatter type is canonical when available.
 }
 
-// isFilenameCacheSafeType reports whether a note type can round-trip through
-// the filename-suffix cache. Values containing '.', '/', or '\' cannot —
+// filenameRoundtripSafeType reports whether a note type can round-trip through
+// Filename / ParseFilename. Values containing '.', '/', or '\' cannot —
 // ParseFilename would mis-split them — so we omit them from the filename
 // entirely and rely on frontmatter as canonical.
-func isFilenameCacheSafeType(noteType string) bool {
+func filenameRoundtripSafeType(noteType string) bool {
 	return noteType != "" && !strings.ContainsAny(noteType, `./\`)
 }
 
 // ParseFilename parses a note base filename (without .md extension) into its components.
 // Expected format: Y...YMMDD_ID[_slug][.TYPE], where MM and DD are zero-padded.
 // The dot-suffix is extracted as the filename-reported Type only when it round-
-// trips cleanly (see isFilenameCacheSafeType). Frontmatter `type` is canonical.
+// trips cleanly (see filenameRoundtripSafeType). Frontmatter `type` is canonical.
 func ParseFilename(baseName string) (Ref, error) {
 	noteType := ""
 	remaining := baseName
@@ -67,7 +67,7 @@ func ParseFilename(baseName string) (Ref, error) {
 	if idx := strings.LastIndex(baseName, "."); idx >= 0 {
 		suffix := baseName[idx+1:]
 		prefix := baseName[:idx]
-		if isFilenameCacheSafeType(suffix) && !strings.Contains(prefix, ".") {
+		if filenameRoundtripSafeType(suffix) && !strings.Contains(prefix, ".") {
 			noteType = suffix
 			remaining = prefix
 		}
@@ -110,7 +110,7 @@ func Filename(date string, id int, slug, noteType string) string {
 	if slug != "" {
 		base = fmt.Sprintf("%s_%s", base, slug)
 	}
-	if isFilenameCacheSafeType(noteType) {
+	if filenameRoundtripSafeType(noteType) {
 		return base + "." + noteType + ".md"
 	}
 	return base + ".md"
