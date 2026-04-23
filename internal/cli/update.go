@@ -17,14 +17,14 @@ var updateCmd = &cobra.Command{
 	Short: "Update frontmatter; use --sync-filename to reconcile the filename",
 	Args:  cobra.ExactArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
-		updateTags, _ := cmd.Flags().GetStringSlice("tag")
-		updateNoTags, _ := cmd.Flags().GetBool("no-tags")
-		updateTitle, _ := cmd.Flags().GetString("title")
-		updateDescription, _ := cmd.Flags().GetString("description")
-		updateSlug, _ := cmd.Flags().GetString("slug")
-		updateNoSlug, _ := cmd.Flags().GetBool("no-slug")
-		updateType, _ := cmd.Flags().GetString("type")
-		updateNoType, _ := cmd.Flags().GetBool("no-type")
+		tags, _ := cmd.Flags().GetStringSlice("tag")
+		noTags, _ := cmd.Flags().GetBool("no-tags")
+		title, _ := cmd.Flags().GetString("title")
+		description, _ := cmd.Flags().GetString("description")
+		slug, _ := cmd.Flags().GetString("slug")
+		noSlug, _ := cmd.Flags().GetBool("no-slug")
+		noteType, _ := cmd.Flags().GetString("type")
+		noType, _ := cmd.Flags().GetBool("no-type")
 		syncFilename, _ := cmd.Flags().GetBool("sync-filename")
 
 		hasFlag := false
@@ -38,7 +38,7 @@ var updateCmd = &cobra.Command{
 		}
 
 		if cmd.Flags().Changed("slug") {
-			if err := note.ValidateSlug(updateSlug); err != nil {
+			if err := note.ValidateSlug(slug); err != nil {
 				return err
 			}
 		}
@@ -65,25 +65,25 @@ var updateCmd = &cobra.Command{
 
 		contentChanged := false
 		if cmd.Flags().Changed("title") {
-			updated.Title = updateTitle
+			updated.Title = title
 			contentChanged = true
 		}
 		if cmd.Flags().Changed("description") {
-			updated.Description = updateDescription
+			updated.Description = description
 			contentChanged = true
 		}
-		if updateNoTags {
+		if noTags {
 			updated.Tags = nil
 			contentChanged = true
 		} else if cmd.Flags().Changed("tag") {
-			updated.Tags = updateTags
+			updated.Tags = tags
 			contentChanged = true
 		}
-		if updateNoSlug {
+		if noSlug {
 			updated.Slug = ""
 			contentChanged = true
 		} else if cmd.Flags().Changed("slug") {
-			updated.Slug = updateSlug
+			updated.Slug = slug
 			contentChanged = true
 		}
 		if cmd.Flags().Changed("private") {
@@ -95,11 +95,11 @@ var updateCmd = &cobra.Command{
 			updated.Public = v
 			contentChanged = true
 		}
-		if updateNoType {
+		if noType {
 			updated.Type = ""
 			contentChanged = true
 		} else if cmd.Flags().Changed("type") {
-			updated.Type = updateType
+			updated.Type = noteType
 			contentChanged = true
 		}
 
@@ -116,7 +116,7 @@ var updateCmd = &cobra.Command{
 		newPath := oldPath
 		if syncFilename {
 			var syncErr error
-			newPath, syncErr = syncNoteFilename(cmd, n, updated, oldPath, updateNoSlug, updateNoType)
+			newPath, syncErr = syncNoteFilename(cmd, n, updated, oldPath, noSlug, noType)
 			if syncErr != nil {
 				return syncErr
 			}

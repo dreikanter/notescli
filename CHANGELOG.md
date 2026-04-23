@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.2.21] - 2026-04-23
+
+### Changed
+
+- `internal/cli/update.go` local vars renamed: `updateTags`→`tags`, `updateNoTags`→`noTags`, `updateTitle`→`title`, `updateDescription`→`description`, `updateSlug`→`slug`, `updateNoSlug`→`noSlug`, `updateType`→`noteType`, `updateNoType`→`noType`. The `update` prefix was redundant inside a file already scoped to the update command ([#213])
+
+[#213]: https://github.com/dreikanter/notes-cli/pull/213
+
 ## [0.2.20] - 2026-04-23
 
 ### Changed
