@@ -628,7 +628,7 @@
 [#115]: https://github.com/dreikanter/notes-cli/issues/115
 [#131]: https://github.com/dreikanter/notes-cli/pull/131
 [#132]: https://github.com/dreikanter/notes-cli/pull/132
-[#136]: https://github.com/dreikanter/notes-cli/pull/135
+[#136]: https://github.com/dreikanter/notes-cli/pull/136
 [#139]: https://github.com/dreikanter/notes-cli/issues/139
 [#141]: https://github.com/dreikanter/notes-cli/issues/141
 [#138]: https://github.com/dreikanter/notes-cli/issues/138
