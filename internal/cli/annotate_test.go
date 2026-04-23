@@ -53,7 +53,10 @@ func TestAnnotateEmptyFieldsAllFilled(t *testing.T) {
 }
 
 func TestBuildAnnotateSchemaAllFields(t *testing.T) {
-	s := buildAnnotateSchema([]string{"title", "description", "tags"})
+	s, err := buildAnnotateSchema([]string{"title", "description", "tags"})
+	if err != nil {
+		t.Fatalf("buildAnnotateSchema: %v", err)
+	}
 
 	var parsed map[string]any
 	if err := json.Unmarshal([]byte(s), &parsed); err != nil {
@@ -87,7 +90,10 @@ func TestBuildAnnotateSchemaAllFields(t *testing.T) {
 }
 
 func TestBuildAnnotateSchemaTagsOnly(t *testing.T) {
-	s := buildAnnotateSchema([]string{"tags"})
+	s, err := buildAnnotateSchema([]string{"tags"})
+	if err != nil {
+		t.Fatalf("buildAnnotateSchema: %v", err)
+	}
 	var parsed map[string]any
 	if err := json.Unmarshal([]byte(s), &parsed); err != nil {
 		t.Fatalf("invalid JSON: %v", err)

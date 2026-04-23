@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.1.103] - 2026-04-23
+
+### Changed
+
+- `note.NoteFilename` and `note.NoteDirPath` renamed to `note.Filename` and `note.DirPath` to drop the package-name stutter (`note.Note*`) that repeated at every call site. Tests and the one surviving doc-comment reference were updated in the same pass ([#159])
+- `notes update` now reads the parsed bool value for both `--public` and `--private` instead of hardcoding `true`/`false` on `Changed()`. Previously `--public=false` would flip `Public` to `true` (the inverse of intent) and `--private=false` was a no-op. `MarkFlagsMutuallyExclusive("public","private")` still prevents both being set at once ([#159])
+- `buildAnnotateSchema` in `internal/cli/annotate.go` now returns `(string, error)` and propagates the `json.Marshal` failure instead of silently discarding it with `_`. The input is controlled so today's callers can't trigger the error, but the pattern violated the "no silent error swallowing" rule ([#159])
+- `CLAUDE.md` documents the CHANGELOG workflow explicitly: open the PR first, note the assigned number, then add the CHANGELOG entry referencing that number in a follow-up atomic commit. Avoids the chicken-and-egg of trying to predict the PR number before creation ([#159])
+
 ## [0.1.101] - 2026-04-23
 
 ### Changed
@@ -676,3 +685,4 @@
 [#134]: https://github.com/dreikanter/notes-cli/issues/134
 [#156]: https://github.com/dreikanter/notes-cli/pull/156
 [#158]: https://github.com/dreikanter/notes-cli/pull/158
+[#159]: https://github.com/dreikanter/notes-cli/pull/159

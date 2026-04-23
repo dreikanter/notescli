@@ -48,6 +48,13 @@ Rules:
 - Use the exact next patch version as the heading
 - Reference the PR number (`[#N]`) in the entry and add its link at the bottom
 
+Workflow: the PR number is assigned on creation, so add the CHANGELOG entry as
+a follow-up commit on the same branch:
+1. Open the PR without the CHANGELOG entry.
+2. Note the assigned PR number.
+3. Add the CHANGELOG entry referencing that number in its own atomic commit.
+4. Push; the PR updates in place.
+
 ## Pull Requests
 
 Use `.github/pull_request_template.md` for all PR bodies. When running `gh pr create`, pass its content via `--body`.

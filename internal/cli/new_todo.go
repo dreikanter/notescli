@@ -57,8 +57,8 @@ var newTodoCmd = &cobra.Command{
 			return err
 		}
 
-		filename := note.NoteFilename(today, id, "", "todo")
-		dir := note.NoteDirPath(root, today)
+		filename := note.Filename(today, id, "", "todo")
+		dir := note.DirPath(root, today)
 		if err := os.MkdirAll(dir, rootDirMode(root)); err != nil {
 			return fmt.Errorf("cannot create directory %s: %w", dir, err)
 		}
