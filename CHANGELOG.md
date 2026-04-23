@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.2.16] - 2026-04-23
+
+### Changed
+
+- `Entry.MergedTags()` no longer recomputes on every call. The merged set (frontmatter tags ∪ body hashtags, lowercased, deduplicated, sorted) is now built once per entry during `Index.build()` and stored in an unexported `mergedTags` field; `MergedTags()` returns a fresh copy. `cloneEntry` clones the cached slice alongside the other slice fields ([#208])
+
+[#208]: https://github.com/dreikanter/notes-cli/pull/208
+
 ## [0.2.15] - 2026-04-23
 
 ### Changed
