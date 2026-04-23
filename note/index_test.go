@@ -2,6 +2,7 @@ package note
 
 import (
 	"fmt"
+	"os"
 	"path/filepath"
 	"testing"
 
@@ -552,5 +553,47 @@ func TestLoadNilLoggerSilent(t *testing.T) {
 
 	if _, err := Load(root); err != nil {
 		t.Fatalf("Load with nil logger: %v", err)
+	}
+}
+
+// TestReloadSurfacesBuildError pins that a build failure during Reload (here:
+// the root disappeared between Load and Reload) is both forwarded to the
+// installed logger and delivered through the returned channel as a non-nil
+// error. Long-lived services that want to observe repeated reload failures
+// can react to either signal.
+func TestReloadSurfacesBuildError(t *testing.T) {
+	root := t.TempDir()
+
+	var logged []error
+	idx, err := Load(root, WithLogger(func(err error) { logged = append(logged, err) }))
+	if err != nil {
+		t.Fatalf("initial Load: %v", err)
+	}
+
+	// Remove the root so the next build's Scan fails with a hard error.
+	if err := os.RemoveAll(root); err != nil {
+		t.Fatalf("RemoveAll(root): %v", err)
+	}
+
+	reloadErr := <-idx.Reload()
+	if reloadErr == nil {
+		t.Fatal("Reload() returned nil on channel; expected build error")
+	}
+	if len(logged) == 0 {
+		t.Error("build error not forwarded to logger")
+	}
+}
+
+// TestReloadChannelNilOnSuccess pins that a successful reload closes the
+// returned channel with no value, so `err := <-ch` reads the zero value.
+func TestReloadChannelNilOnSuccess(t *testing.T) {
+	root := t.TempDir()
+	idx, err := Load(root)
+	if err != nil {
+		t.Fatalf("Load: %v", err)
+	}
+
+	if err := <-idx.Reload(); err != nil {
+		t.Errorf("<-Reload() on empty store = %v, want nil", err)
 	}
 }

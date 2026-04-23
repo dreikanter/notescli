@@ -76,9 +76,13 @@ type Index struct {
 	// buildMu guards curDone and queuedDone — the Reload state machine.
 	// Separate from mu so rebuild bookkeeping does not contend with read
 	// lookups. See Reload for the scheduling semantics.
+	//
+	// Each channel is buffered (cap 1) so runBuild can deposit the build error
+	// (or leave the buffer empty on success) before close, independent of
+	// whether any caller is ready to read.
 	buildMu    sync.Mutex
-	curDone    chan struct{} // in-flight build's completion signal; nil when idle
-	queuedDone chan struct{} // follow-up build queued while curDone runs; nil when none
+	curDone    chan error // in-flight build's completion signal; nil when idle
+	queuedDone chan error // follow-up build queued while curDone runs; nil when none
 }
 
 type loadConfig struct {
@@ -262,27 +266,34 @@ func (i *Index) build() error {
 
 // Reload requests an index rebuild and returns a channel that closes when a
 // build has completed that reflects the tree state at or after this call.
+// The channel yields the build error (nil on success); a read after the
+// channel closes returns the zero value — so `err := <-ch` works regardless
+// of the build outcome. The installed WithLogger also receives the error.
 //
 // Scheduling rules:
 //   - Idle: start a new build immediately.
 //   - Build in-flight: coalesce — queue at most one follow-up. Every caller
 //     that arrives while the in-flight build runs receives the same follow-up's
 //     done channel, so they only observe completion after a full walk that
-//     started after their request.
+//     started after their request. With coalescing, only the first reader of
+//     the shared channel observes the build error; subsequent reads are nil
+//     (the channel closes and only one value is buffered). Long-lived
+//     services that need to react to repeated failures should read from the
+//     first call per rebuild or install a logger.
 //
 // Callers that only need "the current build" can read the returned channel;
 // callers that do not care (e.g. warmup on a navigation) may ignore it.
-func (i *Index) Reload() <-chan struct{} {
+func (i *Index) Reload() <-chan error {
 	i.buildMu.Lock()
 	if i.curDone == nil {
-		done := make(chan struct{})
+		done := make(chan error, 1)
 		i.curDone = done
 		i.buildMu.Unlock()
 		go i.runBuild(done)
 		return done
 	}
 	if i.queuedDone == nil {
-		i.queuedDone = make(chan struct{})
+		i.queuedDone = make(chan error, 1)
 	}
 	done := i.queuedDone
 	i.buildMu.Unlock()
@@ -295,8 +306,10 @@ func (i *Index) Reload() <-chan struct{} {
 //
 // The state-machine cleanup runs in a deferred block so that even if build
 // panics, waiters on done are released and any queued follow-up still gets
-// scheduled — without this, waiting callers would block forever.
-func (i *Index) runBuild(done chan struct{}) {
+// scheduled — without this, waiting callers would block forever. A build
+// error is sent to done (buffered cap 1) before close so the first reader
+// sees it; a reader that arrives after close gets the zero value (nil).
+func (i *Index) runBuild(done chan error) {
 	defer func() {
 		i.buildMu.Lock()
 		next := i.queuedDone
@@ -313,6 +326,12 @@ func (i *Index) runBuild(done chan struct{}) {
 
 	if err := i.build(); err != nil {
 		i.cfg.logger.log(fmt.Errorf("index reload failed: %w", err))
+		// Non-blocking send: the channel is buffered cap 1 and this is the
+		// only producer, so the select-default is belt-and-braces.
+		select {
+		case done <- err:
+		default:
+		}
 	}
 }
 
