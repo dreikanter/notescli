@@ -1,5 +1,16 @@
 # Changelog
 
+## [0.3.0] - 2026-04-23
+
+### Added
+
+- `note/domain.go`: `StoreEntry` and `StoreMeta` domain types (temporary names; renamed to `Entry` / `Meta` in the cleanup phase).
+- `note/storage.go`: `Store` interface, `QueryOpt` type, and filter constructors `WithType`, `WithSlug`, `WithTag`, `WithExactDate`, `WithBeforeDate`. The new `WithExactDate` coexists with the legacy `WithDate(string) ResolveOption`; it will be renamed to `WithDate` once the legacy Resolve path is removed.
+
+No implementations and no behaviour changes — this PR only establishes the contract the subsequent migration phases build on ([#230]).
+
+[#230]: https://github.com/dreikanter/notes-cli/pull/230
+
 ## [0.2.21] - 2026-04-23
 
 ### Changed
