@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.1.106] - 2026-04-23
+
+### Changed
+
+- `note.ResolveRef` and `note.ResolveRefDate` collapsed into a single `ResolveRef(root, query, opts...)` with a `WithDate` functional option, matching the `Load` options pattern. The `Date` suffix described a parameter rather than the operation, and `ResolveRef` was a zero-value wrapper over `ResolveRefDate(root, query, "")`. Date-aware call sites (`resolve`, `rm`) now pass `note.WithDate(date)`; plain callers keep their existing two-arg form. Adding future constraints (e.g. `WithType`) becomes a one-liner ([#161])
+
 ## [0.1.105] - 2026-04-23
 
 ### Changed
@@ -693,3 +699,4 @@
 [#158]: https://github.com/dreikanter/notes-cli/pull/158
 [#159]: https://github.com/dreikanter/notes-cli/pull/159
 [#162]: https://github.com/dreikanter/notes-cli/pull/162
+[#161]: https://github.com/dreikanter/notes-cli/pull/161
