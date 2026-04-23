@@ -4,7 +4,8 @@
 
 ### Changed
 
-- `notes new` and `notes new-todo` now write the new note file via the existing `writeAtomic` helper (tmp + rename), matching every other note-write path in the CLI (`append`, `annotate`, `update`, and the rollover-update step of `new-todo`). A mid-write crash can no longer leave a truncated note at the target path; failure modes collapse to "nothing written" or "fully written" ([#134])
+- `notes new` and `notes new-todo` now write the new note file via the existing `writeAtomic` helper (tmp + rename), matching every other note-write path in the CLI (`append`, `annotate`, `update`, and the rollover-update step of `new-todo`). A mid-write crash can no longer leave a truncated note at the target path; failure modes collapse to "nothing written" or "fully written" ([#134], [#156])
+- `note/watch`: dropped the internal `strictDirPrefix` helper. Its strict-mode semantics were identical to `shouldWatchDir`, so `addTree`'s descent-pruning branch now simply returns `fs.SkipDir` whenever `shouldWatchDir` rejects a directory in strict mode. No behavior change; the fixed-depth YYYY/MM strict layout has nowhere deeper worth descending to ([#134], [#156])
 
 ## [0.1.99] - 2026-04-22
 
@@ -666,3 +667,4 @@
 [#144]: https://github.com/dreikanter/notes-cli/issues/144
 [#140]: https://github.com/dreikanter/notes-cli/issues/140
 [#134]: https://github.com/dreikanter/notes-cli/issues/134
+[#156]: https://github.com/dreikanter/notes-cli/pull/156

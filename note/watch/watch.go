@@ -155,7 +155,10 @@ func (w *Watcher) addTree(dir string) error {
 			_ = w.fsw.Add(path)
 			return nil
 		}
-		if w.strict && !w.strictDirPrefix(path) {
+		if w.strict {
+			// shouldWatchDir returning false in strict mode means this path
+			// doesn't conform to YYYY/MM at its depth; the strict layout is
+			// fixed-depth, so there's nowhere deeper worth descending to.
 			return fs.SkipDir
 		}
 		return nil
@@ -183,28 +186,6 @@ func (w *Watcher) shouldWatchDir(path string) bool {
 	default:
 		return false
 	}
-}
-
-// strictDirPrefix reports whether a directory could still lead to a watched
-// YYYY/MM directory — i.e. whether WalkDir should keep descending in strict
-// mode. Returns true for root and for year directories; false once a
-// non-conforming component is seen or depth exceeds two.
-func (w *Watcher) strictDirPrefix(path string) bool {
-	rel, err := filepath.Rel(w.root, path)
-	if err != nil || rel == "." {
-		return true
-	}
-	parts := strings.Split(filepath.ToSlash(rel), "/")
-	if len(parts) > 2 {
-		return false
-	}
-	if !note.IsID(parts[0]) {
-		return false
-	}
-	if len(parts) == 2 && (len(parts[1]) != 2 || !note.IsID(parts[1])) {
-		return false
-	}
-	return true
 }
 
 // strictNotePath reports whether path points at a YYYY/MM/*.md file under root.
