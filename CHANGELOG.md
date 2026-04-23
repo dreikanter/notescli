@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.2.15] - 2026-04-23
+
+### Changed
+
+- `Index.Snapshot()` added: returns a lightweight `Snapshot` value (slice-header copy, no deep copy) under a short read-lock. `Snapshot` exposes `Entries() []Entry` and `Len() int` and is safe to hold after the lock is released. Callers that need a stable view of the index after `Load` can use `Snapshot()` instead of `Entries()` ([#207])
+
+[#207]: https://github.com/dreikanter/notes-cli/pull/207
+
 ## [0.2.14] - 2026-04-23
 
 ### Changed
