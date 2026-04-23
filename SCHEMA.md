@@ -27,7 +27,7 @@ is called out in `CHANGELOG.md` when a new reserved key is added.
 - **Type:** string
 - **Semantics:** note category. Any value is valid. A small set of
   values (`todo`, `backlog`, `weekly`) trigger special notes-cli
-  behavior; see `note.TypesWithSpecialBehavior`. The filename may
+  behavior; see `note.HasSpecialBehavior`. The filename may
   carry a cached copy as a `.type` dot-suffix; on mismatch,
   frontmatter wins.
 - **Consumers:** notes-cli (filters, rollover), notes-pub / notes-view

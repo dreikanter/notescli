@@ -21,7 +21,7 @@ var lsCmd = &cobra.Command{
 		if err != nil {
 			return err
 		}
-		idx, err := note.Load(root, loadOptsFor(f))
+		idx, err := note.Load(root, loadOptsFor(cmd, f)...)
 		if err != nil {
 			return err
 		}

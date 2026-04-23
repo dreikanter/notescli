@@ -19,10 +19,11 @@ jobs:
         run: |
           LATEST=$(git tag --sort=-v:refname | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' | head -1)
           if [ -z "$LATEST" ]; then
-            NEXT="v0.1.0"
+            NEXT="v0.2.0"
           else
+            MAJOR_MINOR=$(echo "$LATEST" | cut -d. -f1,2)
             PATCH=$(echo "$LATEST" | cut -d. -f3)
-            NEXT="v0.1.$((PATCH + 1))"
+            NEXT="$MAJOR_MINOR.$((PATCH + 1))"
           fi
           git tag "$NEXT"
           git push origin "$NEXT"
