@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.2.22] - 2026-04-23
+
+### Changed
+
+- CLAUDE.md: added rule prohibiting session URLs and tooling attribution in PR bodies, commit messages, and repository artifacts ([#214])
+
+[#214]: https://github.com/dreikanter/notes-cli/pull/214
+
 ## [0.2.21] - 2026-04-23
 
 ### Changed
