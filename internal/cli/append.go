@@ -78,7 +78,7 @@ var appendCmd = &cobra.Command{
 		}
 		result := existingStr + "\n" + content + "\n"
 
-		if err := writeAtomic(targetPath, []byte(result)); err != nil {
+		if err := note.WriteAtomic(targetPath, []byte(result)); err != nil {
 			return err
 		}
 

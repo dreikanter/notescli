@@ -122,7 +122,7 @@ func annotateRunE(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	if err := writeAtomic(fullPath, newContent); err != nil {
+	if err := note.WriteAtomic(fullPath, newContent); err != nil {
 		return err
 	}
 

@@ -47,7 +47,7 @@ var newTodoCmd = &cobra.Command{
 			result := note.RolloverTasks(prevLines)
 			carriedTasks = result.CarriedTasks
 
-			if err := writeAtomic(prevPath, []byte(strings.Join(result.UpdatedLines, "\n"))); err != nil {
+			if err := note.WriteAtomic(prevPath, []byte(strings.Join(result.UpdatedLines, "\n"))); err != nil {
 				return fmt.Errorf("cannot update previous todo: %w", err)
 			}
 		}
@@ -60,7 +60,7 @@ var newTodoCmd = &cobra.Command{
 
 		filename := note.Filename(today, id, "", "todo")
 		dir := note.DirPath(root, today)
-		if err := os.MkdirAll(dir, rootDirMode(root)); err != nil {
+		if err := os.MkdirAll(dir, note.StoreDirMode(root)); err != nil {
 			return fmt.Errorf("cannot create directory %s: %w", dir, err)
 		}
 
@@ -71,7 +71,7 @@ var newTodoCmd = &cobra.Command{
 			return err
 		}
 
-		if err := writeAtomic(fullPath, content); err != nil {
+		if err := note.WriteAtomic(fullPath, content); err != nil {
 			return err
 		}
 
