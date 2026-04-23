@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.1.110] - 2026-04-23
+
+### Changed
+
+- `note/tags.go`: folded `*Index.mergedTagsSorted` back into `ExtractTags`. The helper was a method on `*Index` but declared in a different file from the rest of `Index`'s methods (`note/index.go`), and it had only one caller. Inlining drops the cross-file method and keeps `Index`'s surface in one place. No behavior change: nil on empty index, deduped/lowercased/sorted union of frontmatter tags and body hashtags, same locking discipline ([#167])
+
 ## [0.1.108] - 2026-04-23
 
 ### Changed
@@ -717,3 +723,4 @@
 [#161]: https://github.com/dreikanter/notes-cli/pull/161
 [#163]: https://github.com/dreikanter/notes-cli/pull/163
 [#165]: https://github.com/dreikanter/notes-cli/pull/165
+[#167]: https://github.com/dreikanter/notes-cli/pull/167
