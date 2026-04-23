@@ -39,7 +39,7 @@ var newCmd = &cobra.Command{
 
 		// --upsert: check if today already has a matching note
 		if upsert {
-			today := time.Now().Format("20060102")
+			today := time.Now().Format(note.DateFormat)
 			notes, err := note.Scan(root)
 			if err != nil {
 				return err

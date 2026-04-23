@@ -42,7 +42,7 @@ positional resolution to notes dated today.`,
 
 			var date string
 			if f.Today {
-				date = time.Now().Format("20060102")
+				date = time.Now().Format(note.DateFormat)
 			}
 
 			n, err := note.ResolveRefDate(root, args[0], date)

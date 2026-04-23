@@ -5,6 +5,8 @@ import (
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/dreikanter/notes-cli/note"
 )
 
 func runRead(t *testing.T, args ...string) (string, error) {
@@ -68,7 +70,7 @@ func TestReadBySlugFilter(t *testing.T) {
 
 func TestReadByTodayFilter(t *testing.T) {
 	// No notes in testdata match today's date, so this should error.
-	today := time.Now().Format("20060102")
+	today := time.Now().Format(note.DateFormat)
 	_, err := runRead(t, "--today")
 	if err == nil {
 		t.Fatalf("expected error for --today with no matching notes (today=%s), got nil", today)

@@ -24,7 +24,7 @@ var rmCmd = &cobra.Command{
 
 		var date string
 		if today {
-			date = time.Now().Format("20060102")
+			date = time.Now().Format(note.DateFormat)
 		}
 
 		n, err := note.ResolveRefDate(root, args[0], date)

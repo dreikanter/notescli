@@ -7,6 +7,8 @@ import (
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/dreikanter/notes-cli/note"
 )
 
 func testdataPath(t *testing.T) string {
@@ -148,7 +150,7 @@ func TestResolveTodayFilterExcludesOldNotes(t *testing.T) {
 
 func TestResolveTodayFilterMatchesToday(t *testing.T) {
 	root := t.TempDir()
-	today := time.Now().Format("20060102")
+	today := time.Now().Format(note.DateFormat)
 	month := today[:6]
 	dir := filepath.Join(root, today[:4], month[4:6])
 	if err := os.MkdirAll(dir, 0o755); err != nil {

@@ -56,7 +56,7 @@ func (f filterOpts) describe() string {
 // applyFilters applies the common filter pipeline to a list of notes.
 func applyFilters(notes []note.Note, root string, f filterOpts) ([]note.Note, error) {
 	if f.Today {
-		notes = note.FilterByDate(notes, time.Now().Format("20060102"))
+		notes = note.FilterByDate(notes, time.Now().Format(note.DateFormat))
 	}
 	if len(f.Types) > 0 {
 		notes = note.FilterByTypes(notes, f.Types)

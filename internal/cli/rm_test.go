@@ -7,6 +7,8 @@ import (
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/dreikanter/notes-cli/note"
 )
 
 func runRm(t *testing.T, root string, args ...string) (string, error) {
@@ -70,7 +72,7 @@ func TestRmNonExistentErrors(t *testing.T) {
 
 func TestRmTodayFlag(t *testing.T) {
 	root := t.TempDir()
-	today := time.Now().Format("20060102")
+	today := time.Now().Format(note.DateFormat)
 	dir := filepath.Join(root, today[:4], today[4:6])
 	if err := os.MkdirAll(dir, 0o755); err != nil {
 		t.Fatal(err)

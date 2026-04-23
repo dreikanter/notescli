@@ -8,6 +8,8 @@ import (
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/dreikanter/notes-cli/note"
 )
 
 func runNewTodo(t *testing.T, root string, args ...string) (string, error) {
@@ -40,7 +42,7 @@ func TestNewTodoCreatesFromPrevious(t *testing.T) {
 		t.Fatalf("unexpected error: %v", err)
 	}
 
-	today := time.Now().Format("20060102")
+	today := time.Now().Format(note.DateFormat)
 	if !strings.Contains(filepath.Base(out), today) {
 		t.Errorf("expected today's date %s in filename, got %q", today, filepath.Base(out))
 	}
