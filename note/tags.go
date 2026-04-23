@@ -19,36 +19,29 @@ func ExtractTags(root string) ([]string, error) {
 	if err != nil {
 		return nil, err
 	}
-	return idx.mergedTagsSorted(), nil
-}
-
-// mergedTagsSorted returns the sorted, deduplicated, lowercased union of all
-// entries' frontmatter tags and body hashtags. Returns nil on an empty index
-// to match ExtractTags's pre-migration behavior.
-func (i *Index) mergedTagsSorted() []string {
-	i.mu.RLock()
-	defer i.mu.RUnlock()
-	if len(i.entries) == 0 {
-		return nil
+	idx.mu.RLock()
+	defer idx.mu.RUnlock()
+	if len(idx.entries) == 0 {
+		return nil, nil
 	}
 	set := make(map[string]struct{})
-	for _, t := range i.allTags {
+	for _, t := range idx.allTags {
 		set[t] = struct{}{}
 	}
-	for _, e := range i.entries {
+	for _, e := range idx.entries {
 		for _, t := range e.bodyHashtags {
 			set[t] = struct{}{}
 		}
 	}
 	if len(set) == 0 {
-		return nil
+		return nil, nil
 	}
 	out := make([]string, 0, len(set))
 	for t := range set {
 		out = append(out, t)
 	}
 	sort.Strings(out)
-	return out
+	return out, nil
 }
 
 // ExtractHashtags scans body text and returns hashtag tokens (without the

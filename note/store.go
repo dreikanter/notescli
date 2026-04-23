@@ -64,7 +64,7 @@ func scanStrict(root string) ([]Note, error) {
 	}
 
 	for _, y := range years {
-		if !y.IsDir() || !isDigits(y.Name()) {
+		if !y.IsDir() || !IsDigits(y.Name()) {
 			continue
 		}
 
@@ -76,7 +76,7 @@ func scanStrict(root string) ([]Note, error) {
 		}
 
 		for _, m := range months {
-			if !m.IsDir() || len(m.Name()) != 2 || !isDigits(m.Name()) {
+			if !m.IsDir() || len(m.Name()) != 2 || !IsDigits(m.Name()) {
 				continue
 			}
 
@@ -318,7 +318,7 @@ func ValidateSlug(slug string) error {
 	if slug == "" {
 		return nil
 	}
-	if isDigits(slug) {
+	if IsDigits(slug) {
 		return fmt.Errorf("slug %q is all digits, which conflicts with note ID resolution", slug)
 	}
 	if !slugRe.MatchString(slug) {

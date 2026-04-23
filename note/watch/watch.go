@@ -180,9 +180,9 @@ func (w *Watcher) shouldWatchDir(path string) bool {
 	parts := strings.Split(filepath.ToSlash(rel), "/")
 	switch len(parts) {
 	case 1:
-		return note.IsID(parts[0])
+		return note.IsDigits(parts[0])
 	case 2:
-		return note.IsID(parts[0]) && len(parts[1]) == 2 && note.IsID(parts[1])
+		return note.IsDigits(parts[0]) && len(parts[1]) == 2 && note.IsDigits(parts[1])
 	default:
 		return false
 	}
@@ -198,10 +198,10 @@ func (w *Watcher) strictNotePath(path string) bool {
 	if len(parts) != 3 {
 		return false
 	}
-	if !note.IsID(parts[0]) {
+	if !note.IsDigits(parts[0]) {
 		return false
 	}
-	if len(parts[1]) != 2 || !note.IsID(parts[1]) {
+	if len(parts[1]) != 2 || !note.IsDigits(parts[1]) {
 		return false
 	}
 	return true

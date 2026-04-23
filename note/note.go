@@ -64,7 +64,7 @@ func ParseFilename(baseName string) (Note, error) {
 	}
 
 	date := parts[0]
-	if len(date) < 5 || !isDigits(date) {
+	if len(date) < 5 || !IsDigits(date) {
 		return Note{}, fmt.Errorf("invalid date in filename: %s", baseName)
 	}
 
@@ -114,10 +114,16 @@ func DirPath(root, date string) string {
 // numeric ID references (e.g. wikilinks, CLI query arguments) without
 // re-implementing the predicate.
 func IsID(s string) bool {
-	return s != "" && isDigits(s)
+	return IsDigits(s)
 }
 
-func isDigits(s string) bool {
+// IsDigits reports whether s is non-empty and every rune is an ASCII digit.
+// Use this when the caller cares about the digit-only shape of s (e.g.
+// YYYY/MM path segments), not about whether s is a valid note ID.
+func IsDigits(s string) bool {
+	if s == "" {
+		return false
+	}
 	for _, c := range s {
 		if c < '0' || c > '9' {
 			return false
