@@ -33,7 +33,7 @@ var readCmd = &cobra.Command{
 			}
 			relPath = n.RelPath
 		} else if f.active() {
-			idx, err := note.Load(root, loadOptsFor(f))
+			idx, err := note.Load(root, loadOptsFor(cmd, f)...)
 			if err != nil {
 				return err
 			}

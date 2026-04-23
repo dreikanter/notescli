@@ -84,6 +84,7 @@ type loadConfig struct {
 	frontmatter bool
 	workers     int
 	scanOpts    ScanOptions
+	logger      Logger
 }
 
 // LoadOption configures Load. All options are optional; pass zero or more.
@@ -110,13 +111,22 @@ func WithScanOptions(o ScanOptions) LoadOption {
 	return func(c *loadConfig) { c.scanOpts = o }
 }
 
+// WithLogger installs a Logger that receives non-fatal errors from Load, the
+// underlying Scan, and subsequent Index.Reload runs — per-note frontmatter
+// parse failures, unreadable subdirectories, and reload-build errors. Default:
+// no-op (the package does not write to os.Stderr; wire a logger at the
+// application edge if you want that).
+func WithLogger(l Logger) LoadOption {
+	return func(c *loadConfig) { c.logger = l }
+}
+
 // Load walks root once, parses frontmatter concurrently, and returns a
 // populated Index. A single concurrent pass replaces the Scan → FilterByTags
 // → ExtractTags re-read chain that duplicated I/O for each query.
 //
-// Per-note frontmatter parse errors are logged to stderr (matching ParseNote's
-// existing behavior) and leave that entry's Frontmatter zero; they never abort
-// the load. Any file-read or stat error aborts the load.
+// Per-note frontmatter parse errors are forwarded to the logger installed via
+// WithLogger (no-op by default) and leave that entry's Frontmatter zero; they
+// never abort the load. Any file-read or stat error aborts the load.
 func Load(root string, opts ...LoadOption) (*Index, error) {
 	cfg := loadConfig{
 		frontmatter: true,
@@ -141,7 +151,7 @@ func Load(root string, opts ...LoadOption) (*Index, error) {
 // worker pool, and atomically swaps the new state in under i.mu. Called by
 // Load for the initial population and by runBuild for subsequent reloads.
 func (i *Index) build() error {
-	notes, err := Scan(i.root, WithStrict(i.cfg.scanOpts.Strict))
+	notes, err := Scan(i.root, WithStrict(i.cfg.scanOpts.Strict), WithScanLogger(i.cfg.logger))
 	if err != nil {
 		return err
 	}
@@ -189,7 +199,7 @@ func (i *Index) build() error {
 						}
 						fm, body, parseErr := ParseNote(data)
 						if parseErr != nil {
-							fmt.Fprintf(os.Stderr, "warn: %s: %v\n", path, parseErr)
+							i.cfg.logger.log(fmt.Errorf("%s: %w", path, parseErr))
 							body = data
 						} else {
 							entries[j].Frontmatter = fm
@@ -301,7 +311,7 @@ func (i *Index) runBuild(done chan struct{}) {
 	}()
 
 	if err := i.build(); err != nil {
-		fmt.Fprintf(os.Stderr, "warn: index reload failed: %v\n", err)
+		i.cfg.logger.log(fmt.Errorf("index reload failed: %w", err))
 	}
 }
 
