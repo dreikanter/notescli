@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.2.0] - 2026-04-23
+
+### Changed
+
+- Rename `note.Note` → `note.Ref` to drop the package/type stutter. `Entry` now embeds `Ref` instead of `Note`, and `ResolveRef` / `Scan` / `ParseFilename` now return `Ref`. The `Ref` field name replaces `Note` in `Entry` struct literals. No cross-package changes required — external callers only consume `note.Entry` and never reference `note.Note` by name. ([#164])
+
+[#164]: https://github.com/dreikanter/notes-cli/pull/164
+
 ## [0.1.111] - 2026-04-23
 
 ### Changed
