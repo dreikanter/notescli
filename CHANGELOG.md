@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.2.3] - 2026-04-23
+
+### Changed
+
+- `note.cloneEntry` now deep-copies `Frontmatter.Extra` — the map, each `yaml.Node` value, and the nested `Content` slices — so a web-service consumer that mutates `Extra` after a lookup cannot race other readers of the same `Index` entry. Previously only `Tags`, `Aliases`, and `bodyHashtags` were cloned, and the doc-comment warned that `Extra` was aliased; that footgun is gone ([#195])
+
+[#195]: https://github.com/dreikanter/notes-cli/pull/195
+
 ## [0.2.0] - 2026-04-23
 
 ### Changed
