@@ -57,8 +57,8 @@ func createNote(p createNoteParams) (string, error) {
 		return "", err
 	}
 
-	filename := note.NoteFilename(today, id, p.Slug, p.Type)
-	dir := note.NoteDirPath(p.Root, today)
+	filename := note.Filename(today, id, p.Slug, p.Type)
+	dir := note.DirPath(p.Root, today)
 
 	if err := os.MkdirAll(dir, rootDirMode(p.Root)); err != nil {
 		return "", fmt.Errorf("cannot create directory %s: %w", dir, err)

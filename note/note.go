@@ -47,7 +47,7 @@ func ParseFilename(baseName string) (Note, error) {
 	remaining := baseName
 
 	// Only treat the dot-suffix as a type if the remaining base is itself
-	// dot-free — i.e. the suffix round-trips through NoteFilename. Otherwise
+	// dot-free — i.e. the suffix round-trips through Filename. Otherwise
 	// leave Type empty and let the caller rely on frontmatter.
 	if idx := strings.LastIndex(baseName, "."); idx >= 0 {
 		suffix := baseName[idx+1:]
@@ -86,11 +86,11 @@ func ParseFilename(baseName string) (Note, error) {
 	}, nil
 }
 
-// NoteFilename generates a note filename from date, id, optional slug, and optional type.
+// Filename generates a note filename from date, id, optional slug, and optional type.
 // Type is encoded as a secondary file extension (e.g. ".todo.md") only when it's
 // safe to round-trip through ParseFilename; values with '.' or path separators
 // are omitted from the filename, with frontmatter remaining canonical.
-func NoteFilename(date string, id int, slug, noteType string) string {
+func Filename(date string, id int, slug, noteType string) string {
 	base := fmt.Sprintf("%s_%d", date, id)
 	if slug != "" {
 		base = fmt.Sprintf("%s_%s", base, slug)
@@ -101,9 +101,9 @@ func NoteFilename(date string, id int, slug, noteType string) string {
 	return base + ".md"
 }
 
-// NoteDirPath returns the year/month directory path for a given date string (Y...YMMDD),
+// DirPath returns the year/month directory path for a given date string (Y...YMMDD),
 // where MM and DD are zero-padded.
-func NoteDirPath(root, date string) string {
+func DirPath(root, date string) string {
 	year := date[:len(date)-4]
 	month := date[len(date)-4 : len(date)-2]
 	return filepath.Join(root, year, month)

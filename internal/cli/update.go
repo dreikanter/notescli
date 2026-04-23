@@ -130,7 +130,7 @@ var updateCmd = &cobra.Command{
 			if syncType == "" && !cmd.Flags().Changed("type") && !updateNoType {
 				syncType = n.Type
 			}
-			newFilename := note.NoteFilename(n.Date, id, syncSlug, syncType)
+			newFilename := note.Filename(n.Date, id, syncSlug, syncType)
 			dir := filepath.Dir(oldPath)
 			newPath = filepath.Join(dir, newFilename)
 			if newPath != oldPath {

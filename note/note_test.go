@@ -71,7 +71,7 @@ func TestParseFilename(t *testing.T) {
 			wantType: "bar",
 		},
 		{
-			// Multi-dot basenames can't come from NoteFilename (unsafe types
+			// Multi-dot basenames can't come from Filename (unsafe types
 			// are omitted), so a stray '.' in the prefix means the suffix is
 			// not a cached type — leave Type empty.
 			name:    "multi-dot basename rejects suffix as type",

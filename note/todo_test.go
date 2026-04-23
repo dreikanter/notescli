@@ -256,7 +256,7 @@ func TestFormatTodoContentEmpty(t *testing.T) {
 	}
 }
 
-func TestNoteFilename(t *testing.T) {
+func TestFilename(t *testing.T) {
 	tests := []struct {
 		date     string
 		id       int
@@ -276,15 +276,15 @@ func TestNoteFilename(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		got := NoteFilename(tt.date, tt.id, tt.slug, tt.noteType)
+		got := Filename(tt.date, tt.id, tt.slug, tt.noteType)
 		if got != tt.want {
-			t.Errorf("NoteFilename(%q, %d, %q, %q) = %q, want %q", tt.date, tt.id, tt.slug, tt.noteType, got, tt.want)
+			t.Errorf("Filename(%q, %d, %q, %q) = %q, want %q", tt.date, tt.id, tt.slug, tt.noteType, got, tt.want)
 		}
 	}
 }
 
-func TestNoteDirPath(t *testing.T) {
-	got := NoteDirPath("/archive", "20260312")
+func TestDirPath(t *testing.T) {
+	got := DirPath("/archive", "20260312")
 	want := "/archive/2026/03"
 	if got != want {
 		t.Errorf("got %q, want %q", got, want)
