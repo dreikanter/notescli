@@ -12,6 +12,12 @@
 
 - `note.FilterByTags`, `note.ExtractTags`, `note.ResolveRef`, and `note.ResolveRefDate` now route through `note.Load` + `Index` instead of re-walking and re-reading the store on every call. Behavior is unchanged: tag sources still merge frontmatter `tags:` with body hashtags, the resolve priority chain (ID → type → path → slug substring) is identical, and a per-note frontmatter parse error still logs to stderr and falls back to body hashtags only. Callers that already hold an `Index` can skip the wrappers and call `Index.Resolve` / `Entry.MergedTags` directly to avoid a second file-read pass. `Entry.MergedTags()` returns the sorted, lowercased, deduplicated union of frontmatter tags and body hashtags for a single entry ([#144])
 
+## [0.1.97] - 2026-04-22
+
+### Changed
+
+- Documentation only: corrected the `CHANGELOG.md` reference for the `Frontmatter.Date` field (promoted in v0.1.90) from PR #146 to issue [#138]. No code change ([#153])
+
 ## [0.1.96] - 2026-04-22
 
 ### Added
@@ -62,6 +68,18 @@
 - `note.IsID` reports whether a string is a valid notes-cli note ID (non-empty, ASCII digits only). Replaces the ad-hoc `isNoteID` / `IsUID` helpers currently duplicated in consumer projects ([#136])
 - `note.NormalizeSlug` returns an ASCII-lowercase, URL-safe form of a string (non-alphanumeric runs collapse to `-`; leading/trailing dashes stripped). Shared normalization contract for filenames and URL path segments ([#136])
 - `note.DeriveSlug` returns the normalized slug for a note using the fallback chain: frontmatter slug → stem with id prefix stripped → empty. Consolidates the slug-resolution logic that consumers were each inventing ([#136])
+
+## [0.1.88] - 2026-04-22
+
+### Removed
+
+- Internal cleanup (no user-visible behavior change): drop the unused `Note.BaseName` field (assigned by `ParseFilename` but read only by two test assertions; `RelPath`/`Date`/`ID`/`Slug` already cover note identity) and a dead `_ = out` line in `TestRgExcludesNonMarkdown` ([#135])
+
+## [0.1.87] - 2026-04-22
+
+### Changed
+
+- Internal refactor (no user-visible behavior change): per-command flag setup split into `registerXxxFlags()` helpers for `update`, `new`, `annotate`, `ls`, and `rm` so test setups can reuse them instead of duplicating flag wiring; `note.FilterByType` removed in favor of the existing multi-value `FilterByTypes`; `readID`, `writeID`, and `lockStoreRoot` unexported; `update` command's `contentChanged` initialization moved ahead of the conditional blocks ([#133])
 
 ## [0.1.86] - 2026-04-21
 
@@ -628,7 +646,10 @@
 [#115]: https://github.com/dreikanter/notes-cli/issues/115
 [#131]: https://github.com/dreikanter/notes-cli/pull/131
 [#132]: https://github.com/dreikanter/notes-cli/pull/132
-[#136]: https://github.com/dreikanter/notes-cli/pull/135
+[#133]: https://github.com/dreikanter/notes-cli/pull/133
+[#135]: https://github.com/dreikanter/notes-cli/pull/135
+[#136]: https://github.com/dreikanter/notes-cli/pull/136
+[#153]: https://github.com/dreikanter/notes-cli/pull/153
 [#139]: https://github.com/dreikanter/notes-cli/issues/139
 [#141]: https://github.com/dreikanter/notes-cli/issues/141
 [#138]: https://github.com/dreikanter/notes-cli/issues/138
