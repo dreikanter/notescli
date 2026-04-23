@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.2.19] - 2026-04-23
+
+### Changed
+
+- `runExternalSearch(cmd, args, tool, notInstalled, buildArgs)` extracted to `internal/cli/search.go`. Both `grep` and `rg` delegate to it; each command's `RunE` now only provides the tool-specific `buildArgs` closure. The `notInstalled` string triggers a `exec.LookPath` pre-check when non-empty ([#211])
+
+[#211]: https://github.com/dreikanter/notes-cli/pull/211
+
 ## [0.2.18] - 2026-04-23
 
 ### Changed

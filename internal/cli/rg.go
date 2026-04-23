@@ -1,12 +1,6 @@
 package cli
 
-import (
-	"fmt"
-	"os"
-	"os/exec"
-
-	"github.com/spf13/cobra"
-)
+import "github.com/spf13/cobra"
 
 var rgCmd = &cobra.Command{
 	Use:   "rg [flags] <pattern>",
@@ -17,28 +11,13 @@ The following flag is injected automatically: --glob *.md. The notes path is app
 	DisableFlagParsing: true,
 	SilenceErrors:      true,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		for _, arg := range args {
-			if arg == "--help" || arg == "-h" {
-				return cmd.Help()
-			}
-		}
-
-		if _, err := exec.LookPath("rg"); err != nil {
-			return fmt.Errorf("ripgrep (rg) is not installed; install it from https://github.com/BurntSushi/ripgrep")
-		}
-
-		root, err := notesRoot()
-		if err != nil {
-			return err
-		}
-		rgArgs := append([]string{"--glob", "*.md"}, args...)
-		rgArgs = append(rgArgs, root)
-
-		rg := exec.Command("rg", rgArgs...)
-		rg.Stdout = os.Stdout
-		rg.Stderr = os.Stderr
-
-		return rg.Run()
+		return runExternalSearch(
+			cmd, args, "rg",
+			"ripgrep (rg) is not installed; install it from https://github.com/BurntSushi/ripgrep",
+			func(root string, passThrough []string) []string {
+				return append(append([]string{"--glob", "*.md"}, passThrough...), root)
+			},
+		)
 	},
 }
 

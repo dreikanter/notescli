@@ -1,11 +1,6 @@
 package cli
 
-import (
-	"os"
-	"os/exec"
-
-	"github.com/spf13/cobra"
-)
+import "github.com/spf13/cobra"
 
 var grepCmd = &cobra.Command{
 	Use:   "grep [flags] <pattern>",
@@ -16,24 +11,9 @@ The following flags are injected automatically: -r (recursive), --include=*.md, 
 	DisableFlagParsing: true,
 	SilenceErrors:      true,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		for _, arg := range args {
-			if arg == "--help" || arg == "-h" {
-				return cmd.Help()
-			}
-		}
-
-		root, err := notesRoot()
-		if err != nil {
-			return err
-		}
-		grepArgs := append([]string{"-r", "--include=*.md", "--exclude-dir=.git"}, args...)
-		grepArgs = append(grepArgs, root)
-
-		grep := exec.Command("grep", grepArgs...)
-		grep.Stdout = os.Stdout
-		grep.Stderr = os.Stderr
-
-		return grep.Run()
+		return runExternalSearch(cmd, args, "grep", "", func(root string, passThrough []string) []string {
+			return append(append([]string{"-r", "--include=*.md", "--exclude-dir=.git"}, passThrough...), root)
+		})
 	},
 }
 
