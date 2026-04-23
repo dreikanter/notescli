@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.1.112] - 2026-04-23
+
+### Changed
+
+- `note` package no longer writes to `os.Stderr`. Per-note frontmatter parse failures (`note/index.go`), `Index.Reload` build failures, and unreadable-subdirectory warnings during `Scan` now route through a new `note.Logger = func(error)`. Install one via `note.WithLogger` (LoadOption) or `note.WithScanLogger` (ScanOption); the default is a no-op so external importers (notes-pub, notes-view) can embed the package without inheriting its stderr output. The `notes` CLI wires a single `stderrLogger(cmd)` helper through every `note.Load` call, so user-visible output is unchanged ([#193])
+
+[#193]: https://github.com/dreikanter/notes-cli/pull/193
+
 ## [0.2.0] - 2026-04-23
 
 ### Changed
