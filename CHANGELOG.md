@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.2.10] - 2026-04-23
+
+### Changed
+
+- `note.ResolveRef` removed. It called `Load(root, WithFrontmatter(false))` on every invocation, so external callers using it in a loop paid for a full store walk per call; the docs already steered callers toward `Index.Resolve`. External consumers should `Load` once and call `idx.Resolve(query, opts...)`, wrapping a `false`-bool miss in `note.ErrNotFound` when the caller's contract is `(_, error)`. The CLI now routes all seven call sites (`edit`, `append`, `annotate`, `read`, `resolve`, `update`, `rm`) through an internal `cli.resolveRef` helper that preserves the previous error surface ([#202])
+
+[#202]: https://github.com/dreikanter/notes-cli/pull/202
+
 ## [0.2.9] - 2026-04-23
 
 ### Changed
