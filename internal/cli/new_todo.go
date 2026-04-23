@@ -28,14 +28,14 @@ var newTodoCmd = &cobra.Command{
 		}
 		entries := idx.Entries()
 
-		if existing := note.FindTodayTodo(entries, today); existing != nil {
+		if existing := findTodayTodo(entries, today); existing != nil {
 			fmt.Fprintln(cmd.OutOrStdout(), filepath.Join(root, existing.RelPath))
 			return nil
 		}
 
 		// Find the most recent previous todo and roll over tasks
 		var carriedTasks []note.Task
-		prev := note.FindLatestTodo(entries, today)
+		prev := findLatestTodo(entries, today)
 		if prev != nil {
 			prevPath := filepath.Join(root, prev.RelPath)
 			prevData, err := os.ReadFile(prevPath)
@@ -78,6 +78,26 @@ var newTodoCmd = &cobra.Command{
 		fmt.Fprintln(cmd.OutOrStdout(), fullPath)
 		return nil
 	},
+}
+
+// findLatestTodo finds the most recent todo entry strictly before the given date.
+func findLatestTodo(entries []note.Entry, beforeDate string) *note.Entry {
+	for i := range entries {
+		if entries[i].Type == "todo" && entries[i].Date < beforeDate {
+			return &entries[i]
+		}
+	}
+	return nil
+}
+
+// findTodayTodo finds a todo entry matching today's date.
+func findTodayTodo(entries []note.Entry, today string) *note.Entry {
+	for i := range entries {
+		if entries[i].Type == "todo" && entries[i].Date == today {
+			return &entries[i]
+		}
+	}
+	return nil
 }
 
 func init() {

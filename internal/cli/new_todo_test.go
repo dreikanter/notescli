@@ -110,3 +110,50 @@ func TestNewTodoWritesTypeFrontmatter(t *testing.T) {
 		t.Errorf("expected type: todo in frontmatter, got:\n%s", string(data))
 	}
 }
+
+func TestFindLatestTodo(t *testing.T) {
+	entries := []note.Entry{
+		{Ref: note.Ref{Date: "20260312", Type: "todo", RelPath: "2026/03/20260312_100.todo.md"}},
+		{Ref: note.Ref{Date: "20260311", Type: "todo", RelPath: "2026/03/20260311_99.todo.md"}},
+		{Ref: note.Ref{Date: "20260310", Type: "", RelPath: "2026/03/20260310_98.md"}},
+		{Ref: note.Ref{Date: "20260309", Type: "todo", RelPath: "2026/03/20260309_97.todo.md"}},
+	}
+
+	got := findLatestTodo(entries, "20260312")
+	if got == nil {
+		t.Fatal("expected to find a todo")
+	}
+	if got.Date != "20260311" {
+		t.Errorf("got date %s, want 20260311", got.Date)
+	}
+}
+
+func TestFindLatestTodoNone(t *testing.T) {
+	entries := []note.Entry{
+		{Ref: note.Ref{Date: "20260312", Type: "todo"}},
+	}
+	got := findLatestTodo(entries, "20260312")
+	if got != nil {
+		t.Error("expected nil when no previous todo exists")
+	}
+}
+
+func TestFindTodayTodo(t *testing.T) {
+	entries := []note.Entry{
+		{Ref: note.Ref{Date: "20260312", Type: "todo", RelPath: "2026/03/20260312_100.todo.md"}},
+		{Ref: note.Ref{Date: "20260311", Type: "todo", RelPath: "2026/03/20260311_99.todo.md"}},
+	}
+
+	got := findTodayTodo(entries, "20260312")
+	if got == nil {
+		t.Fatal("expected to find today's todo")
+	}
+	if got.Date != "20260312" {
+		t.Errorf("got date %s, want 20260312", got.Date)
+	}
+
+	got = findTodayTodo(entries, "20260313")
+	if got != nil {
+		t.Error("expected nil for future date")
+	}
+}

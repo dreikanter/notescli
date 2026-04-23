@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.2.13] - 2026-04-23
+
+### Changed
+
+- `note.FindLatestTodo` and `note.FindTodayTodo` removed from the `note` package. Both functions hardcode `Type == "todo"` and iterate `[]Entry` by date — CLI policy, not a library primitive. They are now unexported helpers in `internal/cli/new_todo.go`, their sole caller. `ParseTask`, `ExtractTasks`, `RolloverTasks`, and `FormatTodoContent` remain in `note` as reusable primitives ([#205])
+
+[#205]: https://github.com/dreikanter/notes-cli/pull/205
+
 ## [0.2.12] - 2026-04-23
 
 ### Changed
