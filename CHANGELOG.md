@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.2.7] - 2026-04-23
+
+### Changed
+
+- `note.IsID` removed; it was a one-line alias for `note.IsDigits` with no stricter semantics to enforce. Internal callers (`ParseFilename`, `Index.Resolve`) now call `IsDigits` directly. External consumers that imported `note.IsID` for wikilink / CLI argument detection should switch to `note.IsDigits`, which keeps identical behavior (non-empty, ASCII digits only) ([#199])
+
+[#199]: https://github.com/dreikanter/notes-cli/pull/199
+
 ## [0.2.6] - 2026-04-23
 
 ### Changed
