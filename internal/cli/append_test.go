@@ -2,7 +2,6 @@ package cli
 
 import (
 	"bytes"
-	"io"
 	"os"
 	"path/filepath"
 	"strings"
@@ -46,22 +45,8 @@ func runAppend(t *testing.T, root string, stdin string, args ...string) (string,
 	buf := new(bytes.Buffer)
 	rootCmd.SetOut(buf)
 	rootCmd.SetErr(buf)
+	rootCmd.SetIn(strings.NewReader(stdin))
 	rootCmd.SetArgs(append([]string{"append", "--path", root}, args...))
-
-	// Replace stdin
-	oldStdin := os.Stdin
-	defer func() { os.Stdin = oldStdin }()
-
-	r, w, err := os.Pipe()
-	if err != nil {
-		t.Fatalf("cannot create pipe: %v", err)
-	}
-	os.Stdin = r
-
-	go func() {
-		_, _ = io.WriteString(w, stdin)
-		w.Close()
-	}()
 
 	execErr := rootCmd.Execute()
 	return strings.TrimSpace(buf.String()), execErr

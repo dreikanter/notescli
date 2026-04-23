@@ -11,6 +11,11 @@
 ### Changed
 
 - `note.IsDigits` exported as a non-empty ASCII-digit predicate, carved out of the existing internal `isDigits`. `IsID` now delegates to it (same semantics, no behavior change). `note/watch/watch.go`'s `shouldWatchDir` and `strictNotePath` now call `note.IsDigits` instead of `note.IsID` — the check there is about a `YYYY` or `MM` directory segment being digits, not about the segment being a note ID. Internal `isDigits` callers (`ParseFilename` date check, `Scan`'s year/month directory filters, `ValidateSlug`'s all-digits rejection) follow the rename ([#166])
+## [0.1.108] - 2026-04-23
+
+### Changed
+
+- `notes new` and `notes append` now read stdin via `cmd.InOrStdin()` instead of reading `os.Stdin` directly, so tests (or any caller) can inject input by setting `rootCmd.SetIn(...)`. The terminal-detection heuristic is now `stdinIsTerminal(io.Reader)` and only runs the `Stat()` check when the reader is an `*os.File`; any other reader (pipe, `strings.Reader`, `bytes.Buffer`, etc.) is treated as non-terminal. `new_test.go` and `append_test.go` drop the `os.Stdin = r` / `os.Pipe` dance and use `rootCmd.SetIn(strings.NewReader(...))` ([#165])
 
 ## [0.1.107] - 2026-04-23
 
@@ -722,5 +727,6 @@
 [#162]: https://github.com/dreikanter/notes-cli/pull/162
 [#161]: https://github.com/dreikanter/notes-cli/pull/161
 [#163]: https://github.com/dreikanter/notes-cli/pull/163
+[#165]: https://github.com/dreikanter/notes-cli/pull/165
 [#166]: https://github.com/dreikanter/notes-cli/pull/166
 [#167]: https://github.com/dreikanter/notes-cli/pull/167
