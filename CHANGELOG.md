@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.2.6] - 2026-04-23
+
+### Changed
+
+- Rename `isFilenameCacheSafeType` → `filenameRoundtripSafeType` in `note/note.go`. The predicate has nothing to do with a cache; it reports whether a type round-trips cleanly through `Filename` / `ParseFilename`. Unexported helper, no external callers affected ([#198])
+
+[#198]: https://github.com/dreikanter/notes-cli/pull/198
+
 ## [0.2.5] - 2026-04-23
 
 ### Changed
