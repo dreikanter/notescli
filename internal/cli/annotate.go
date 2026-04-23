@@ -96,7 +96,10 @@ func annotateRunE(cmd *cobra.Command, args []string) error {
 		}
 	}
 
-	schema := buildAnnotateSchema(empty)
+	schema, err := buildAnnotateSchema(empty)
+	if err != nil {
+		return err
+	}
 	ctx := cmd.Context()
 	if timeout > 0 {
 		var cancel context.CancelFunc
@@ -187,7 +190,7 @@ func annotateEmptyFields(f note.Frontmatter) []string {
 
 // buildAnnotateSchema returns a JSON Schema string requiring only the given fields.
 // Fields must be a subset of {"title", "description", "tags"}.
-func buildAnnotateSchema(fields []string) string {
+func buildAnnotateSchema(fields []string) (string, error) {
 	props := map[string]any{}
 	for _, f := range fields {
 		switch f {
@@ -207,8 +210,11 @@ func buildAnnotateSchema(fields []string) string {
 		"required":             fields,
 		"additionalProperties": false,
 	}
-	b, _ := json.Marshal(schema)
-	return string(b)
+	b, err := json.Marshal(schema)
+	if err != nil {
+		return "", fmt.Errorf("cannot marshal annotate schema: %w", err)
+	}
+	return string(b), nil
 }
 
 // annotateEnvelope mirrors the outer JSON written by `claude -p --output-format json`.
