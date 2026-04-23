@@ -44,7 +44,7 @@ func WithStrict(b bool) ScanOption {
 // Unreadable subdirectories are logged to stderr and skipped in both modes,
 // matching the per-note parse-error behavior, so a single permission glitch
 // can't break ls/tags/resolve.
-func Scan(root string, opts ...ScanOption) ([]Note, error) {
+func Scan(root string, opts ...ScanOption) ([]Ref, error) {
 	cfg := ScanOptions{Strict: true}
 	for _, o := range opts {
 		o(&cfg)
@@ -55,8 +55,8 @@ func Scan(root string, opts ...ScanOption) ([]Note, error) {
 	return scanLenient(root)
 }
 
-func scanStrict(root string) ([]Note, error) {
-	var notes []Note
+func scanStrict(root string) ([]Ref, error) {
+	var notes []Ref
 
 	years, err := os.ReadDir(root)
 	if err != nil {
@@ -111,8 +111,8 @@ func scanStrict(root string) ([]Note, error) {
 	return notes, nil
 }
 
-func scanLenient(root string) ([]Note, error) {
-	var notes []Note
+func scanLenient(root string) ([]Ref, error) {
+	var notes []Ref
 
 	walkErr := filepath.WalkDir(root, func(path string, d fs.DirEntry, err error) error {
 		if err != nil {
@@ -169,7 +169,7 @@ func WithDate(date string) ResolveOption {
 	return func(c *resolveConfig) { c.date = date }
 }
 
-// ResolveRef resolves a note reference to a Note using the following priority:
+// ResolveRef resolves a note reference to a Ref using the following priority:
 //  1. Numeric ID — exact match; all-digit queries never fall through
 //  2. Type with special behavior (todo, backlog, weekly) — most recent match
 //  3. Path — absolute or relative path with separator, exact match under root
@@ -181,20 +181,20 @@ func WithDate(date string) ResolveOption {
 // Implementation routes through Index.Resolve on a WithFrontmatter(false)
 // load, so CLI commands that already hold an Index can call Index.Resolve
 // directly and skip this wrapper.
-func ResolveRef(root, query string, opts ...ResolveOption) (Note, error) {
+func ResolveRef(root, query string, opts ...ResolveOption) (Ref, error) {
 	idx, err := Load(root, WithFrontmatter(false))
 	if err != nil {
-		return Note{}, err
+		return Ref{}, err
 	}
 
 	e, ok, err := idx.Resolve(query, opts...)
 	if err != nil {
-		return Note{}, err
+		return Ref{}, err
 	}
 	if !ok {
-		return Note{}, fmt.Errorf("note not found: %s", strings.TrimSpace(query))
+		return Ref{}, fmt.Errorf("note not found: %s", strings.TrimSpace(query))
 	}
-	return e.Note, nil
+	return e.Ref, nil
 }
 
 // resolveRelPath converts a path-like query to a note RelPath under root.

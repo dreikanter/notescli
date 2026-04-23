@@ -293,10 +293,10 @@ func TestDirPath(t *testing.T) {
 
 func TestFindLatestTodo(t *testing.T) {
 	entries := []Entry{
-		{Note: Note{Date: "20260312", Type: "todo", RelPath: "2026/03/20260312_100.todo.md"}},
-		{Note: Note{Date: "20260311", Type: "todo", RelPath: "2026/03/20260311_99.todo.md"}},
-		{Note: Note{Date: "20260310", Type: "", RelPath: "2026/03/20260310_98.md"}},
-		{Note: Note{Date: "20260309", Type: "todo", RelPath: "2026/03/20260309_97.todo.md"}},
+		{Ref: Ref{Date: "20260312", Type: "todo", RelPath: "2026/03/20260312_100.todo.md"}},
+		{Ref: Ref{Date: "20260311", Type: "todo", RelPath: "2026/03/20260311_99.todo.md"}},
+		{Ref: Ref{Date: "20260310", Type: "", RelPath: "2026/03/20260310_98.md"}},
+		{Ref: Ref{Date: "20260309", Type: "todo", RelPath: "2026/03/20260309_97.todo.md"}},
 	}
 
 	got := FindLatestTodo(entries, "20260312")
@@ -310,7 +310,7 @@ func TestFindLatestTodo(t *testing.T) {
 
 func TestFindLatestTodoNone(t *testing.T) {
 	entries := []Entry{
-		{Note: Note{Date: "20260312", Type: "todo"}},
+		{Ref: Ref{Date: "20260312", Type: "todo"}},
 	}
 	got := FindLatestTodo(entries, "20260312")
 	if got != nil {
@@ -320,8 +320,8 @@ func TestFindLatestTodoNone(t *testing.T) {
 
 func TestFindTodayTodo(t *testing.T) {
 	entries := []Entry{
-		{Note: Note{Date: "20260312", Type: "todo", RelPath: "2026/03/20260312_100.todo.md"}},
-		{Note: Note{Date: "20260311", Type: "todo", RelPath: "2026/03/20260311_99.todo.md"}},
+		{Ref: Ref{Date: "20260312", Type: "todo", RelPath: "2026/03/20260312_100.todo.md"}},
+		{Ref: Ref{Date: "20260311", Type: "todo", RelPath: "2026/03/20260311_99.todo.md"}},
 	}
 
 	got := FindTodayTodo(entries, "20260312")

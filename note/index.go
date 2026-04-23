@@ -14,12 +14,12 @@ import (
 	"golang.org/x/sync/errgroup"
 )
 
-// Entry is a fully-hydrated note record: the filename-derived Note plus
+// Entry is a fully-hydrated note record: the filename-derived Ref plus
 // frontmatter and file stat metadata. It is the unit Index exposes to
 // downstream consumers (notes-view, notes-pub) that previously maintained
 // their own in-memory indexes.
 type Entry struct {
-	Note
+	Ref
 	Frontmatter Frontmatter
 	ModTime     time.Time
 	Size        int64
@@ -148,7 +148,7 @@ func (i *Index) build() error {
 
 	entries := make([]Entry, len(notes))
 	for j, n := range notes {
-		entries[j] = Entry{Note: n}
+		entries[j] = Entry{Ref: n}
 	}
 
 	if len(entries) > 0 {
