@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.2.2] - 2026-04-23
+
+### Changed
+
+- `note.TypesWithSpecialBehavior` unexported to `typesWithSpecialBehavior`; external importers can no longer `append` to the package-level slice and silently change CLI behavior globally. `note.HasSpecialBehavior(s)` remains the public predicate, and a new `note.SpecialBehaviorTypes()` returns a fresh copy of the list for callers that need the values. `SCHEMA.md` now references `HasSpecialBehavior` instead of the unexported slice ([#194])
+
+[#194]: https://github.com/dreikanter/notes-cli/pull/194
+
 ## [0.2.1] - 2026-04-23
 
 ### Changed

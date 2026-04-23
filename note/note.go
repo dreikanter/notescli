@@ -6,14 +6,25 @@ import (
 	"strings"
 )
 
-// TypesWithSpecialBehavior lists note types that trigger notes-cli-specific
+// typesWithSpecialBehavior lists note types that trigger notes-cli-specific
 // handling (e.g., daily rollover, weekly review conventions). Any string is a
 // valid `type` value; this list is a soft registry, not a validation gate.
-var TypesWithSpecialBehavior = []string{"todo", "backlog", "weekly"}
+// It is unexported because external importers must not be able to mutate it
+// and change CLI behavior globally — ask via HasSpecialBehavior instead.
+var typesWithSpecialBehavior = []string{"todo", "backlog", "weekly"}
+
+// SpecialBehaviorTypes returns a fresh copy of the soft registry of note
+// types with notes-cli-specific handling. The returned slice may be freely
+// mutated without affecting the package-internal list.
+func SpecialBehaviorTypes() []string {
+	out := make([]string, len(typesWithSpecialBehavior))
+	copy(out, typesWithSpecialBehavior)
+	return out
+}
 
 // HasSpecialBehavior reports whether s is a type with special notes-cli behavior.
 func HasSpecialBehavior(s string) bool {
-	for _, t := range TypesWithSpecialBehavior {
+	for _, t := range typesWithSpecialBehavior {
 		if s == t {
 			return true
 		}
