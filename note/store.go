@@ -12,35 +12,44 @@ import (
 
 // ScanOptions configures Scan's directory traversal.
 //
-// Strict=true (the default when no options are passed) restricts discovery to
-// the canonical YYYY/MM/*.md layout used by notes-cli: only top-level directories
-// whose name is all digits are considered years, and only their two-digit
-// all-digit subdirectories are considered months. Other entries are ignored.
+// Strict=true (the default) restricts discovery to the canonical YYYY/MM/*.md
+// layout used by notes-cli: only top-level directories whose name is all
+// digits are considered years, and only their two-digit all-digit
+// subdirectories are considered months. Other entries are ignored.
 //
 // Strict=false walks the entire tree under root with filepath.WalkDir and
-// considers every *.md file whose base name parses via ParseFilename, regardless
-// of nesting depth or parent directory naming. This is the layout downstream
-// tools such as notes-view consume; opt in explicitly when you need it.
+// considers every *.md file whose base name parses via ParseFilename,
+// regardless of nesting depth or parent directory naming. This is the layout
+// downstream tools such as notes-view consume; opt in explicitly when you
+// need it.
 type ScanOptions struct {
 	Strict bool
+}
+
+// ScanOption configures Scan. All options are optional; pass zero or more.
+type ScanOption func(*ScanOptions)
+
+// WithStrict sets Scan's strict-layout mode. Default true. Set false to walk
+// every *.md file under root regardless of layout.
+func WithStrict(b bool) ScanOption {
+	return func(o *ScanOptions) { o.Strict = b }
 }
 
 // Scan enumerates notes under root.
 //
 // Called as Scan(root) it preserves the historical strict YYYY/MM/*.md
-// discipline. Pass ScanOptions{Strict: false} to walk every *.md file under
-// root regardless of layout. Only the first option in opts is consulted;
-// additional values are ignored.
+// discipline. Pass WithStrict(false) to walk every *.md file under root
+// regardless of layout.
 //
 // Unreadable subdirectories are logged to stderr and skipped in both modes,
 // matching the per-note parse-error behavior, so a single permission glitch
 // can't break ls/tags/resolve.
-func Scan(root string, opts ...ScanOptions) ([]Note, error) {
-	strict := true
-	if len(opts) > 0 {
-		strict = opts[0].Strict
+func Scan(root string, opts ...ScanOption) ([]Note, error) {
+	cfg := ScanOptions{Strict: true}
+	for _, o := range opts {
+		o(&cfg)
 	}
-	if strict {
+	if cfg.Strict {
 		return scanStrict(root)
 	}
 	return scanLenient(root)

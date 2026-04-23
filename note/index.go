@@ -141,7 +141,7 @@ func Load(root string, opts ...LoadOption) (*Index, error) {
 // worker pool, and atomically swaps the new state in under i.mu. Called by
 // Load for the initial population and by runBuild for subsequent reloads.
 func (i *Index) build() error {
-	notes, err := Scan(i.root, i.cfg.scanOpts)
+	notes, err := Scan(i.root, WithStrict(i.cfg.scanOpts.Strict))
 	if err != nil {
 		return err
 	}

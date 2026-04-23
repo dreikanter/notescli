@@ -102,7 +102,7 @@ func TestScanSkipsUnreadableDir(t *testing.T) {
 	}
 }
 
-// TestScanStrictExplicit verifies passing ScanOptions{Strict: true} matches the
+// TestScanStrictExplicit verifies passing WithStrict(true) matches the
 // no-options default and continues to ignore non-YYYY layouts.
 func TestScanStrictExplicit(t *testing.T) {
 	root := t.TempDir()
@@ -110,7 +110,7 @@ func TestScanStrictExplicit(t *testing.T) {
 	writeNote(t, root, "drafts/20260102_2.md", "body\n")
 	writeNote(t, root, "inbox/2026/01/20260103_3.md", "body\n")
 
-	notes, err := Scan(root, ScanOptions{Strict: true})
+	notes, err := Scan(root, WithStrict(true))
 	if err != nil {
 		t.Fatalf("Scan strict error: %v", err)
 	}
@@ -131,7 +131,7 @@ func TestScanLenient(t *testing.T) {
 	writeNote(t, root, "drafts/not-a-note.md", "body\n")
 	writeNote(t, root, "drafts/random_file.txt", "body\n")
 
-	notes, err := Scan(root, ScanOptions{Strict: false})
+	notes, err := Scan(root, WithStrict(false))
 	if err != nil {
 		t.Fatalf("Scan lenient error: %v", err)
 	}
@@ -190,7 +190,7 @@ func TestScanLenientSkipsUnreadableDir(t *testing.T) {
 	}
 	t.Cleanup(func() { _ = os.Chmod(bad, 0o755) })
 
-	notes, err := Scan(root, ScanOptions{Strict: false})
+	notes, err := Scan(root, WithStrict(false))
 	if err != nil {
 		t.Fatalf("Scan lenient error: %v", err)
 	}
