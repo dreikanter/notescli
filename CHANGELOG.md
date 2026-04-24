@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.3.4] - 2026-04-24
+
+### Changed
+
+- `internal/cli/read.go`: `notes read` now takes a single `<id>` integer argument and resolves it via `store.Get(id)`. The filter flags (`--type`, `--slug`, `--tag`, `--today`) are removed — users discover IDs via `notes ls` or `notes resolve`. `--no-frontmatter` is preserved. Raw file bytes still come from disk (via `store.AbsPath`) so on-disk YAML formatting is unchanged ([#234]).
+
+[#234]: https://github.com/dreikanter/notes-cli/pull/234
+
 ## [0.3.3] - 2026-04-24
 
 ### Changed

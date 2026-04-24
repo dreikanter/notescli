@@ -1,40 +1,44 @@
 package cli
 
 import (
+	"errors"
 	"fmt"
 	"os"
-	"path/filepath"
+	"strconv"
 
 	"github.com/dreikanter/notes-cli/note"
 	"github.com/spf13/cobra"
 )
 
 var readCmd = &cobra.Command{
-	Use:   "read [<id|type|query>]",
-	Short: "Read a note by ref or filter flags",
-	Args:  cobra.MaximumNArgs(1),
+	Use:   "read <id>",
+	Short: "Read a note by numeric ID",
+	Args:  cobra.ExactArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
-		root, err := notesRoot()
+		id, err := strconv.Atoi(args[0])
+		if err != nil {
+			return fmt.Errorf("id must be an integer: %s", args[0])
+		}
+
+		store, err := notesStore()
 		if err != nil {
 			return err
 		}
-		f := readFilterFlags(cmd)
+
+		entry, err := store.Get(id)
+		if err != nil {
+			if errors.Is(err, note.ErrNotFound) {
+				return fmt.Errorf("note %d not found", id)
+			}
+			return err
+		}
+
+		data, err := os.ReadFile(store.AbsPath(entry))
+		if err != nil {
+			return err
+		}
+
 		noFrontmatter, _ := cmd.Flags().GetBool("no-frontmatter")
-
-		entry, ok, err := resolveOrFilter(cmd, root, args, f)
-		if err != nil {
-			return err
-		}
-		if !ok {
-			return fmt.Errorf("specify a note by positional argument or filter flags (--type, --slug, --tag, --today)")
-		}
-		relPath := entry.RelPath
-
-		data, err := os.ReadFile(filepath.Join(root, relPath))
-		if err != nil {
-			return err
-		}
-
 		if noFrontmatter {
 			data = note.StripFrontmatter(data)
 		}
@@ -45,7 +49,6 @@ var readCmd = &cobra.Command{
 }
 
 func registerReadFlags() {
-	addFilterFlags(readCmd)
 	readCmd.Flags().Bool("no-frontmatter", false, "exclude YAML frontmatter from output")
 }
 
