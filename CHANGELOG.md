@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.3.5] - 2026-04-24
+
+### Changed
+
+- `internal/cli/rm.go`: `notes rm` now takes a single `<id>` integer argument and deletes via `store.Delete(id)`. The `--today` flag is removed — users get today's ID from `notes ls --today` or `notes resolve`. Non-existent IDs surface `note.ErrNotFound` as a clear "not found" message ([#235]).
+
+[#235]: https://github.com/dreikanter/notes-cli/pull/235
+
 ## [0.3.4] - 2026-04-24
 
 ### Changed
