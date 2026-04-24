@@ -10,23 +10,24 @@ func TestParseTask(t *testing.T) {
 		name    string
 		line    string
 		wantNil bool
+		done    bool
 		isDaily bool
 		isMoved bool
 	}{
-		{"pending", "[ ] Buy milk", false, false, false},
-		{"pending with bullet", "- [ ] Buy milk", false, false, false},
-		{"pending indented", "  [ ] Buy milk", false, false, false},
-		{"pending indented bullet", "  - [ ] Buy milk", false, false, false},
-		{"completed plus", "[+] Done task", false, false, false},
-		{"completed x", "[x] Done task", false, false, false},
-		{"daily", "[ ] Standup #daily", false, true, false},
-		{"daily completed", "[+] Standup #daily", false, true, false},
-		{"moved", "- [ ] (moved) Buy milk", false, false, true},
-		{"moved with other tag", "- [ ] (moved) (private) Do thing", false, false, true},
-		{"not a task", "Just a regular line", true, false, false},
-		{"empty", "", true, false, false},
-		{"header", "# Todo", true, false, false},
-		{"frontmatter", "---", true, false, false},
+		{"pending", "[ ] Buy milk", false, false, false, false},
+		{"pending with bullet", "- [ ] Buy milk", false, false, false, false},
+		{"pending indented", "  [ ] Buy milk", false, false, false, false},
+		{"pending indented bullet", "  - [ ] Buy milk", false, false, false, false},
+		{"completed plus", "[+] Done task", false, true, false, false},
+		{"completed x", "[x] Done task", false, true, false, false},
+		{"daily", "[ ] Standup #daily", false, false, true, false},
+		{"daily completed", "[+] Standup #daily", false, true, true, false},
+		{"moved", "- [ ] (moved) Buy milk", false, false, false, true},
+		{"moved with other tag", "- [ ] (moved) (private) Do thing", false, false, false, true},
+		{"not a task", "Just a regular line", true, false, false, false},
+		{"empty", "", true, false, false, false},
+		{"header", "# Todo", true, false, false, false},
+		{"frontmatter", "---", true, false, false, false},
 	}
 
 	for _, tt := range tests {
@@ -40,6 +41,9 @@ func TestParseTask(t *testing.T) {
 			}
 			if task == nil {
 				t.Fatalf("expected non-nil for %q", tt.line)
+			}
+			if task.Done != tt.done {
+				t.Errorf("done: got %v, want %v", task.Done, tt.done)
 			}
 			if task.IsDaily != tt.isDaily {
 				t.Errorf("isDaily: got %v, want %v", task.IsDaily, tt.isDaily)
