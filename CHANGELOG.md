@@ -4,7 +4,8 @@
 
 ### Changed
 
-- Replace `Task.State` (`TaskState` enum with `TaskPending` / `TaskDone` / `TaskOther`) with a plain `Task.Done bool` set to `true` when the marker is `+` or `x`. Drops the unused `TaskOther` value and the `markerToState` helper ([#248]).
+- Replace `Task.State` (`TaskState` enum with `TaskPending` / `TaskDone` / `TaskOther`) with a plain `Task.Done bool`. Drops the unused `TaskOther` value and the `markerToState` helper.
+- Tighten `taskRe` to require the canonical `- ` bullet prefix and only accept ` ` or `x` as the marker character; `[+]` and unprefixed `[ ]` lines are no longer recognised as tasks ([#248]).
 
 [#248]: https://github.com/dreikanter/notes-cli/pull/248
 
