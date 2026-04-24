@@ -15,10 +15,10 @@ Version is set at build time via git tags and `-ldflags`. The `Version` var in
 `internal/cli/root.go` defaults to `"dev"` and is overridden by `make install`
 / `make build` using `git describe --tags`.
 
-Patch version auto-increments on each PR merge via GitHub Actions
-(`.github/workflows/tag.yml`), e.g. `v0.2.0` → `v0.2.1`. The major.minor
-pair is carried from the latest tag; bump it by tagging manually (e.g.
-`v0.3.0`) before the next merge.
+On PR merge, GitHub Actions (`.github/workflows/tag.yml`) reads the topmost
+`## [X.Y.Z]` heading from `CHANGELOG.md` and pushes `vX.Y.Z` as a git tag. The
+CHANGELOG is the source of truth for the version — bump major/minor/patch by
+writing the desired heading in the PR.
 
 After merging a PR, reinstall locally:
 
@@ -43,17 +43,17 @@ messages, code comments, issue comments, or anywhere else in the repository.
 
 ## Changelog
 
-Update `CHANGELOG.md` in every PR with an entry for the version that PR will create.
+Update `CHANGELOG.md` in every PR with an entry for the version that PR will
+create. The topmost `## [X.Y.Z]` heading determines the git tag pushed on
+merge.
 
-Each PR merge auto-increments the patch version. To find the next version:
-
-```sh
-git describe --tags   # e.g. v0.2.3 → next PR will be v0.2.4
-```
+To find the next version, check the top of `CHANGELOG.md` and bump the patch
+number (or bump major/minor deliberately). Example: if the top entry is
+`## [0.3.18]`, the next PR's heading is `## [0.3.19]`.
 
 Rules:
 - One entry per PR — do not bundle multiple PRs into one entry
-- Use the exact next patch version as the heading
+- Use a version higher than the current top entry; any untagged version works
 - Reference the PR number (`[#N]`) in the entry and add its link at the bottom
 
 Workflow: the PR number is assigned on creation, so add the CHANGELOG entry as
