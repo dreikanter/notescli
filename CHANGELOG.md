@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.3.17] - 2026-04-24
+
+### Changed
+
+- Split `note/storage.go` and `note/store.go` by responsibility: `store.go` now holds only the `Store` interface + `ErrNotFound`; query filters move to `note/query.go`; `ValidateSlug` + `slugRe` move to `note/slug.go`; `hasAllTags`, `computeMergedTags`, and `normalizeHashtags` merge into `note/tags.go` next to `ExtractHashtags` ([#247]).
+
+[#247]: https://github.com/dreikanter/notes-cli/pull/247
+
 ## [0.3.13] - 2026-04-24
 
 ### Changed

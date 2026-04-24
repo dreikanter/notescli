@@ -2,6 +2,8 @@ package note
 
 import (
 	"bytes"
+	"sort"
+	"strings"
 )
 
 // ExtractHashtags scans body text and returns hashtag tokens (without the
@@ -109,4 +111,70 @@ func isHashtagLeadingByte(c byte) bool {
 		return false
 	}
 	return true
+}
+
+// hasAllTags reports whether every entry in required appears in noteTags,
+// case-insensitively. Used by both MemStore and OSStore for WithTag filtering.
+func hasAllTags(noteTags []string, required []string) bool {
+	set := make(map[string]struct{}, len(noteTags))
+	for _, t := range noteTags {
+		set[strings.ToLower(t)] = struct{}{}
+	}
+	for _, r := range required {
+		if _, ok := set[strings.ToLower(r)]; !ok {
+			return false
+		}
+	}
+	return true
+}
+
+// computeMergedTags builds the sorted, lowercased, deduplicated union of
+// frontmatter tags and body hashtags. bodyHashtags is assumed already
+// lowercased (as produced by normalizeHashtags). Returns nil when the
+// union is empty.
+func computeMergedTags(fmTags, bodyHashtags []string) []string {
+	set := make(map[string]struct{}, len(fmTags)+len(bodyHashtags))
+	for _, t := range fmTags {
+		if t == "" {
+			continue
+		}
+		set[strings.ToLower(t)] = struct{}{}
+	}
+	for _, t := range bodyHashtags {
+		set[t] = struct{}{}
+	}
+	if len(set) == 0 {
+		return nil
+	}
+	out := make([]string, 0, len(set))
+	for t := range set {
+		out = append(out, t)
+	}
+	sort.Strings(out)
+	return out
+}
+
+// normalizeHashtags lowercases and deduplicates a hashtag list from
+// ExtractHashtags into the canonical form merged into Meta.Tags by
+// OSStore.
+func normalizeHashtags(raw []string) []string {
+	if len(raw) == 0 {
+		return nil
+	}
+	set := make(map[string]struct{}, len(raw))
+	for _, t := range raw {
+		if t == "" {
+			continue
+		}
+		set[strings.ToLower(t)] = struct{}{}
+	}
+	if len(set) == 0 {
+		return nil
+	}
+	out := make([]string, 0, len(set))
+	for t := range set {
+		out = append(out, t)
+	}
+	sort.Strings(out)
+	return out
 }

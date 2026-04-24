@@ -1,94 +1,53 @@
 package note
 
-import (
-	"fmt"
-	"regexp"
-	"sort"
-	"strings"
-)
+import "errors"
 
-var slugRe = regexp.MustCompile(`^[A-Za-z0-9_-]+$`)
+// ErrNotFound is the package-wide "entry not found" sentinel. It is returned
+// (wrapped) by Store.Get, Store.Find, and Store.Delete when no entry matches.
+// Callers match with errors.Is:
+//
+//	if errors.Is(err, note.ErrNotFound) { … }
+var ErrNotFound = errors.New("entry not found")
 
-// ValidateSlug returns an error if the slug cannot safely appear in a note
-// filename. Empty slugs are accepted (they just omit the slug segment).
-// All-digit slugs are rejected because they conflict with numeric ID lookup.
-// Anything outside [A-Za-z0-9_-] is rejected to keep filenames portable and to
-// avoid confusing the filename cache suffix.
-func ValidateSlug(slug string) error {
-	if slug == "" {
-		return nil
-	}
-	if IsDigits(slug) {
-		return fmt.Errorf("slug %q is all digits, which conflicts with note ID resolution", slug)
-	}
-	if !slugRe.MatchString(slug) {
-		return fmt.Errorf("slug %q contains invalid characters; only [A-Za-z0-9_-] are allowed", slug)
-	}
-	return nil
-}
+// Store is the backend abstraction the note package exposes. Implementations
+// encapsulate the storage substrate (filesystem, in-memory, future cloud/DB)
+// so CLI commands can target a single interface.
+//
+// Error contract for lookups:
+//   - Get, Find, and Delete return a wrapped ErrNotFound when no entry
+//     matches. Callers check with errors.Is(err, note.ErrNotFound).
+//   - All returns an empty slice with a nil error when no entry matches;
+//     zero results are not considered an error.
+type Store interface {
+	// IDs returns the IDs of every entry newest-first by Meta.CreatedAt.
+	// Backends that can answer from a directory scan must not read file
+	// contents. Returns an empty slice (nil error) when the store is empty.
+	IDs() ([]int, error)
 
-// hasAllTags reports whether every entry in required appears in noteTags,
-// case-insensitively. Used by both MemStore and OSStore for WithTag filtering.
-func hasAllTags(noteTags []string, required []string) bool {
-	set := make(map[string]struct{}, len(noteTags))
-	for _, t := range noteTags {
-		set[strings.ToLower(t)] = struct{}{}
-	}
-	for _, r := range required {
-		if _, ok := set[strings.ToLower(r)]; !ok {
-			return false
-		}
-	}
-	return true
-}
+	// All returns every entry matching opts, newest-first by Meta.CreatedAt.
+	// Returned entries are fully populated, including Meta.Tags merged from
+	// frontmatter tags and body hashtags. Zero matches returns an empty
+	// slice with a nil error.
+	All(opts ...QueryOpt) ([]Entry, error)
 
-// computeMergedTags builds the sorted, lowercased, deduplicated union of
-// frontmatter tags and body hashtags. bodyHashtags is assumed already
-// lowercased (as produced by normalizeHashtags). Returns nil when the
-// union is empty.
-func computeMergedTags(fmTags, bodyHashtags []string) []string {
-	set := make(map[string]struct{}, len(fmTags)+len(bodyHashtags))
-	for _, t := range fmTags {
-		if t == "" {
-			continue
-		}
-		set[strings.ToLower(t)] = struct{}{}
-	}
-	for _, t := range bodyHashtags {
-		set[t] = struct{}{}
-	}
-	if len(set) == 0 {
-		return nil
-	}
-	out := make([]string, 0, len(set))
-	for t := range set {
-		out = append(out, t)
-	}
-	sort.Strings(out)
-	return out
-}
+	// Find returns the newest entry matching opts. Returns ErrNotFound when
+	// no entry matches. Backends may terminate the scan after the first
+	// match.
+	Find(opts ...QueryOpt) (Entry, error)
 
-// normalizeHashtags lowercases and deduplicates a hashtag list from
-// ExtractHashtags into the canonical form merged into Meta.Tags by
-// OSStore.
-func normalizeHashtags(raw []string) []string {
-	if len(raw) == 0 {
-		return nil
-	}
-	set := make(map[string]struct{}, len(raw))
-	for _, t := range raw {
-		if t == "" {
-			continue
-		}
-		set[strings.ToLower(t)] = struct{}{}
-	}
-	if len(set) == 0 {
-		return nil
-	}
-	out := make([]string, 0, len(set))
-	for t := range set {
-		out = append(out, t)
-	}
-	sort.Strings(out)
-	return out
+	// Get returns the entry with the given ID, or ErrNotFound if no entry
+	// has that ID.
+	Get(id int) (Entry, error)
+
+	// Put writes entry. When entry.ID is zero the store assigns a fresh ID
+	// and defaults Meta.CreatedAt to time.Now if zero; otherwise Put performs
+	// a full replace of the existing entry and requires Meta.CreatedAt to be
+	// non-zero (returning an error otherwise). Meta.UpdatedAt is always set
+	// to time.Now on write. Returns the stored entry with all store-assigned
+	// fields populated.
+	Put(entry Entry) (Entry, error)
+
+	// Delete removes the entry with the given ID. Returns ErrNotFound when
+	// no entry has that ID.
+	Delete(id int) error
 }
