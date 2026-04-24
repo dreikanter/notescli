@@ -23,9 +23,9 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"os"
 	"os/exec"
-	"path/filepath"
+	"strconv"
+	"strings"
 	"time"
 
 	"github.com/dreikanter/notes-cli/note"
@@ -47,48 +47,45 @@ Generate concise metadata for the provided note body, returning ONLY the fields 
 - tags: 1-3 lowercase single-word slugs related to the content.`
 
 var annotateCmd = &cobra.Command{
-	Use:   "annotate <id|type|query>",
+	Use:   "annotate <id>",
 	Short: "Fill empty frontmatter (title, description, tags) using Claude Code CLI",
 	Args:  cobra.ExactArgs(1),
 	RunE:  annotateRunE,
 }
 
 func annotateRunE(cmd *cobra.Command, args []string) error {
+	id, err := strconv.Atoi(args[0])
+	if err != nil {
+		return fmt.Errorf("id must be an integer: %s", args[0])
+	}
+
 	model, _ := cmd.Flags().GetString("model")
 	maxChars, _ := cmd.Flags().GetInt("max-chars")
 	timeout, _ := cmd.Flags().GetDuration("timeout")
 
-	root, err := notesRoot()
+	store, err := notesStore()
 	if err != nil {
 		return err
 	}
-	n, err := resolveRef(cmd, root, args[0])
+	entry, err := store.Get(id)
 	if err != nil {
+		if errors.Is(err, note.ErrNotFound) {
+			return fmt.Errorf("note %d not found", id)
+		}
 		return err
 	}
 
-	fullPath := filepath.Join(root, n.RelPath)
-	data, err := os.ReadFile(fullPath)
-	if err != nil {
-		return fmt.Errorf("cannot read note: %w", err)
-	}
-
-	existing, body, err := note.ParseNote(data)
-	if err != nil {
-		return fmt.Errorf("%s: %w", fullPath, err)
-	}
-
-	empty := annotateEmptyFields(existing)
+	empty := annotateEmptyFields(entry.Meta)
 	if len(empty) == 0 {
-		fmt.Fprintln(cmd.OutOrStdout(), fullPath)
+		fmt.Fprintln(cmd.OutOrStdout(), store.AbsPath(entry))
 		return nil
 	}
 
-	if len(bytes.TrimSpace(body)) == 0 {
+	if strings.TrimSpace(entry.Body) == "" {
 		return errors.New("note has no body content to annotate")
 	}
 
-	prompt := string(body)
+	prompt := entry.Body
 	if maxChars > 0 {
 		if runes := []rune(prompt); len(runes) > maxChars {
 			prompt = string(runes[:maxChars])
@@ -101,17 +98,13 @@ func annotateRunE(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	merged := mergeAnnotation(existing, gen)
-	newContent, err := note.FormatNote(merged, body)
+	entry.Meta = mergeAnnotation(entry.Meta, gen)
+	saved, err := store.Put(entry)
 	if err != nil {
 		return err
 	}
 
-	if err := note.WriteAtomic(fullPath, newContent); err != nil {
-		return err
-	}
-
-	fmt.Fprintln(cmd.OutOrStdout(), fullPath)
+	fmt.Fprintln(cmd.OutOrStdout(), store.AbsPath(saved))
 	return nil
 }
 
@@ -178,15 +171,15 @@ func runClaude(ctx context.Context, model, schema, prompt string) ([]byte, error
 
 // annotateEmptyFields returns the empty fields among {title, description, tags}
 // in a deterministic order. "tags" counts as empty when the slice is empty.
-func annotateEmptyFields(f note.Frontmatter) []string {
+func annotateEmptyFields(m note.StoreMeta) []string {
 	var empty []string
-	if f.Title == "" {
+	if m.Title == "" {
 		empty = append(empty, "title")
 	}
-	if f.Description == "" {
+	if m.Description == "" {
 		empty = append(empty, "description")
 	}
-	if len(f.Tags) == 0 {
+	if len(m.Tags) == 0 {
 		empty = append(empty, "tags")
 	}
 	return empty
@@ -261,7 +254,7 @@ func snippet(s string, n int) string {
 
 // mergeAnnotation fills empty fields in existing from gen.
 // Non-empty fields in existing are preserved.
-func mergeAnnotation(existing note.Frontmatter, gen annotateResult) note.Frontmatter {
+func mergeAnnotation(existing note.StoreMeta, gen annotateResult) note.StoreMeta {
 	merged := existing
 	if merged.Title == "" {
 		merged.Title = gen.Title
