@@ -314,6 +314,44 @@ func TestMemStore_ConcurrentReads(t *testing.T) {
 	wg.Wait()
 }
 
+func TestMemStore_AllFilterByPublic(t *testing.T) {
+	s := NewMemStore()
+	mustPut(t, s, Entry{ID: 1, Meta: Meta{Public: true, CreatedAt: day(2026, 1, 1)}})
+	mustPut(t, s, Entry{ID: 2, Meta: Meta{Public: false, CreatedAt: day(2026, 1, 2)}})
+	mustPut(t, s, Entry{ID: 3, Meta: Meta{Public: true, CreatedAt: day(2026, 1, 3)}})
+
+	pub, err := s.All(WithPublic(true))
+	if err != nil {
+		t.Fatalf("All WithPublic(true): %v", err)
+	}
+	if len(pub) != 2 || pub[0].ID != 3 || pub[1].ID != 1 {
+		t.Fatalf("WithPublic(true) = %v, want [3 1]", entryIDs(pub))
+	}
+
+	priv, err := s.All(WithPublic(false))
+	if err != nil {
+		t.Fatalf("All WithPublic(false): %v", err)
+	}
+	if len(priv) != 1 || priv[0].ID != 2 {
+		t.Fatalf("WithPublic(false) = %v, want [2]", entryIDs(priv))
+	}
+}
+
+func TestMemStore_AllPublicComposesWithTag(t *testing.T) {
+	s := NewMemStore()
+	mustPut(t, s, Entry{ID: 1, Meta: Meta{Public: true, Tags: []string{"x"}, CreatedAt: day(2026, 1, 1)}})
+	mustPut(t, s, Entry{ID: 2, Meta: Meta{Public: true, Tags: []string{"y"}, CreatedAt: day(2026, 1, 2)}})
+	mustPut(t, s, Entry{ID: 3, Meta: Meta{Public: false, Tags: []string{"x"}, CreatedAt: day(2026, 1, 3)}})
+
+	got, err := s.All(WithPublic(true), WithTag("x"))
+	if err != nil {
+		t.Fatalf("All: %v", err)
+	}
+	if len(got) != 1 || got[0].ID != 1 {
+		t.Fatalf("WithPublic(true)+WithTag(x) = %v, want [1]", entryIDs(got))
+	}
+}
+
 func mustPut(t *testing.T, s *MemStore, e Entry) Entry {
 	t.Helper()
 	out, err := s.Put(e)
