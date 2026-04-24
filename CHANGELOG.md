@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.3.20] - 2026-04-24
+
+### Added
+
+- `note.WithPublic(v bool)` `QueryOpt` filters entries by `Meta.Public`. Downstream consumers (notes-pub) can now call `store.All(note.WithPublic(true))` instead of reading every entry and skipping non-public ones. Internally, `OSStore.collect` evaluates all post-read filters through the shared `matches()` predicate; the single-purpose `entryMatchesTags` helper is removed ([#253]).
+
+[#253]: https://github.com/dreikanter/notes-cli/pull/253
+
 ## [0.3.19] - 2026-04-24
 
 ### Changed
