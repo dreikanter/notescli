@@ -5,14 +5,14 @@ import (
 	"strings"
 )
 
-// taskRe matches lines like "  - [ ] some task" or "[ ] some task".
-var taskRe = regexp.MustCompile(`^(\s*(?:- )?\[)(.)(\].*)$`)
+// taskRe matches lines like "- [ ] some task" or "  - [x] some task".
+var taskRe = regexp.MustCompile(`^(\s*- \[)( |x)(\].*)$`)
 
 // Task represents a parsed task line from a todo note.
 type Task struct {
 	Line       string // original full line
 	Text       string // trimmed task text, e.g. "Buy milk #daily"
-	Done       bool   // true when the marker is "+" or "x"
+	Done       bool   // true when the marker is "x"
 	IsDaily    bool   // whether line contains #daily
 	IsMoved    bool   // whether line contains (moved)
 	LineNumber int    // 0-based index in the source file lines
@@ -39,7 +39,7 @@ func ParseTask(line string, lineNumber int) *Task {
 	return &Task{
 		Line:       line,
 		Text:       text,
-		Done:       m[2] == "+" || m[2] == "x",
+		Done:       m[2] == "x",
 		IsDaily:    strings.Contains(line, "#daily"),
 		IsMoved:    strings.Contains(line, "(moved)"),
 		LineNumber: lineNumber,

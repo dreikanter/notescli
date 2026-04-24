@@ -14,16 +14,15 @@ func TestParseTask(t *testing.T) {
 		isDaily bool
 		isMoved bool
 	}{
-		{"pending", "[ ] Buy milk", false, false, false, false},
-		{"pending with bullet", "- [ ] Buy milk", false, false, false, false},
-		{"pending indented", "  [ ] Buy milk", false, false, false, false},
-		{"pending indented bullet", "  - [ ] Buy milk", false, false, false, false},
-		{"completed plus", "[+] Done task", false, true, false, false},
-		{"completed x", "[x] Done task", false, true, false, false},
-		{"daily", "[ ] Standup #daily", false, false, true, false},
-		{"daily completed", "[+] Standup #daily", false, true, true, false},
+		{"pending", "- [ ] Buy milk", false, false, false, false},
+		{"pending indented", "  - [ ] Buy milk", false, false, false, false},
+		{"completed", "- [x] Done task", false, true, false, false},
+		{"daily", "- [ ] Standup #daily", false, false, true, false},
+		{"daily completed", "- [x] Standup #daily", false, true, true, false},
 		{"moved", "- [ ] (moved) Buy milk", false, false, false, true},
 		{"moved with other tag", "- [ ] (moved) (private) Do thing", false, false, false, true},
+		{"no bullet", "[ ] Buy milk", true, false, false, false},
+		{"unknown marker", "- [+] Done", true, false, false, false},
 		{"not a task", "Just a regular line", true, false, false, false},
 		{"empty", "", true, false, false, false},
 		{"header", "# Todo", true, false, false, false},
@@ -60,10 +59,10 @@ func TestParseTaskText(t *testing.T) {
 		line string
 		want string
 	}{
-		{"[ ] Buy milk", "Buy milk"},
+		{"- [ ] Buy milk", "Buy milk"},
 		{"- [ ] Buy milk #daily", "Buy milk #daily"},
 		{"  - [ ] (moved) Do thing", "(moved) Do thing"},
-		{"[+] Done", "Done"},
+		{"- [x] Done", "Done"},
 	}
 	for _, tt := range tests {
 		task := ParseTask(tt.line, 0)
@@ -81,8 +80,8 @@ func TestReassembled(t *testing.T) {
 	if task == nil {
 		t.Fatal("expected task")
 	}
-	got := task.Reassembled("+")
-	want := "  - [+] Some task"
+	got := task.Reassembled("x")
+	want := "  - [x] Some task"
 	if got != want {
 		t.Errorf("got %q, want %q", got, want)
 	}
@@ -97,7 +96,6 @@ func TestWithTag(t *testing.T) {
 	}{
 		{"simple", "- [ ] Do the thing", "moved", "- [ ] (moved) Do the thing"},
 		{"with existing tag", "- [ ] (private) Do the thing", "moved", "- [ ] (moved) (private) Do the thing"},
-		{"no bullet", "[ ] Do the thing", "moved", "[ ] (moved) Do the thing"},
 		{"indented", "  - [ ] Do the thing", "moved", "  - [ ] (moved) Do the thing"},
 		{"already tagged", "- [ ] (moved) Do the thing", "moved", "- [ ] (moved) Do the thing"},
 		{"already tagged with other", "- [ ] (moved) (private) Do the thing", "moved", "- [ ] (moved) (private) Do the thing"},
@@ -121,13 +119,13 @@ func TestRolloverTasks(t *testing.T) {
 slug: todo
 ---
 
-[ ] Pending task one
+- [ ] Pending task one
 
-[ ] Pending task two
+- [ ] Pending task two
 
-[+] Completed task
+- [x] Completed task
 
-[ ] Standup #daily`, "\n")
+- [ ] Standup #daily`, "\n")
 
 	result := RolloverTasks(prev)
 
@@ -155,11 +153,11 @@ slug: todo
 }
 
 func TestRolloverTasksMovedFormat(t *testing.T) {
-	prev := strings.Split(`[ ] Buy milk
+	prev := strings.Split(`- [ ] Buy milk
 
-[ ] (private) Secret task
+- [ ] (private) Secret task
 
-[+] Completed task`, "\n")
+- [x] Completed task`, "\n")
 
 	result := RolloverTasks(prev)
 
@@ -170,13 +168,13 @@ func TestRolloverTasksMovedFormat(t *testing.T) {
 	// Verify (moved) is inserted before existing tags
 	for _, line := range result.UpdatedLines {
 		if strings.Contains(line, "Buy milk") && strings.Contains(line, "(moved)") {
-			want := "[ ] (moved) Buy milk"
+			want := "- [ ] (moved) Buy milk"
 			if line != want {
 				t.Errorf("got %q, want %q", line, want)
 			}
 		}
 		if strings.Contains(line, "Secret task") && strings.Contains(line, "(moved)") {
-			want := "[ ] (moved) (private) Secret task"
+			want := "- [ ] (moved) (private) Secret task"
 			if line != want {
 				t.Errorf("got %q, want %q", line, want)
 			}
@@ -185,11 +183,11 @@ func TestRolloverTasksMovedFormat(t *testing.T) {
 }
 
 func TestRolloverTasksSkipsMoved(t *testing.T) {
-	prev := strings.Split(`[ ] (moved) Already moved task
+	prev := strings.Split(`- [ ] (moved) Already moved task
 
-[ ] Fresh task
+- [ ] Fresh task
 
-[x] Done task`, "\n")
+- [x] Done task`, "\n")
 
 	result := RolloverTasks(prev)
 
@@ -202,16 +200,16 @@ func TestRolloverTasksSkipsMoved(t *testing.T) {
 
 	// Already-moved task should not be re-tagged
 	for _, line := range result.UpdatedLines {
-		if strings.Contains(line, "Already moved") && line != "[ ] (moved) Already moved task" {
+		if strings.Contains(line, "Already moved") && line != "- [ ] (moved) Already moved task" {
 			t.Errorf("moved task should be unchanged, got: %s", line)
 		}
 	}
 }
 
 func TestRolloverTasksDailyAlwaysCarried(t *testing.T) {
-	prev := strings.Split(`[+] Standup #daily
+	prev := strings.Split(`- [x] Standup #daily
 
-[+] Completed other task`, "\n")
+- [x] Completed other task`, "\n")
 
 	result := RolloverTasks(prev)
 
@@ -225,7 +223,7 @@ func TestRolloverTasksDailyAlwaysCarried(t *testing.T) {
 
 func TestRolloverTasksNoDuplicates(t *testing.T) {
 	// A daily task that is also pending should appear only once
-	prev := strings.Split(`[ ] Standup #daily`, "\n")
+	prev := strings.Split(`- [ ] Standup #daily`, "\n")
 
 	result := RolloverTasks(prev)
 
@@ -239,7 +237,7 @@ func TestRolloverTasksEmpty(t *testing.T) {
 slug: todo
 ---
 
-[+] Everything done`, "\n")
+- [x] Everything done`, "\n")
 
 	result := RolloverTasks(prev)
 
@@ -249,8 +247,8 @@ slug: todo
 }
 
 func TestFormatTodoContent(t *testing.T) {
-	task1 := ParseTask("[ ] Task one", 0)
-	task2 := ParseTask("[ ] Task two", 1)
+	task1 := ParseTask("- [ ] Task one", 0)
+	task2 := ParseTask("- [ ] Task two", 1)
 	if task1 == nil || task2 == nil {
 		t.Fatal("expected tasks")
 	}
@@ -260,14 +258,14 @@ func TestFormatTodoContent(t *testing.T) {
 	if strings.HasPrefix(content, "---") {
 		t.Errorf("unexpected frontmatter, got:\n%s", content)
 	}
-	if !strings.Contains(content, "[ ] Task one") {
+	if !strings.Contains(content, "- [ ] Task one") {
 		t.Error("expected Task one with reset marker")
 	}
-	if !strings.Contains(content, "[ ] Task two") {
+	if !strings.Contains(content, "- [ ] Task two") {
 		t.Error("expected Task two with reset marker")
 	}
 	// Tasks separated by blank lines
-	if !strings.Contains(content, "[ ] Task one\n\n[ ] Task two") {
+	if !strings.Contains(content, "- [ ] Task one\n\n- [ ] Task two") {
 		t.Errorf("tasks should be separated by blank lines, got:\n%s", content)
 	}
 }
