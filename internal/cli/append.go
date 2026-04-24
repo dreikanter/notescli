@@ -1,10 +1,10 @@
 package cli
 
 import (
+	"errors"
 	"fmt"
 	"io"
-	"os"
-	"path/filepath"
+	"strconv"
 	"strings"
 
 	"github.com/dreikanter/notes-cli/note"
@@ -12,18 +12,18 @@ import (
 )
 
 var appendCmd = &cobra.Command{
-	Use:   "append [<id|type|query>]",
+	Use:   "append <id>",
 	Short: "Append text from stdin to a note",
-	Args:  cobra.MaximumNArgs(1),
+	Args:  cobra.ExactArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
-		root, err := notesRoot()
+		id, err := strconv.Atoi(args[0])
 		if err != nil {
-			return err
+			return fmt.Errorf("id must be an integer: %s", args[0])
 		}
 
 		in := cmd.InOrStdin()
 		if stdinIsTerminal(in) {
-			return fmt.Errorf("no input: pipe text to stdin (e.g. echo 'text' | notes append <target>)")
+			return fmt.Errorf("no input: pipe text to stdin (e.g. echo 'text' | notes append <id>)")
 		}
 
 		data, err := io.ReadAll(in)
@@ -35,44 +35,35 @@ var appendCmd = &cobra.Command{
 			return nil
 		}
 
-		f := readFilterFlags(cmd)
-
-		entry, ok, err := resolveOrFilter(cmd, root, args, f)
+		store, err := notesStore()
 		if err != nil {
 			return err
 		}
-		if !ok {
-			return fmt.Errorf("specify a note by positional argument or filter flags (--type, --slug, --tag, --today)")
-		}
-		targetPath := filepath.Join(root, entry.RelPath)
 
-		// Read existing file
-		existing, err := os.ReadFile(targetPath)
+		entry, err := store.Get(id)
 		if err != nil {
-			return fmt.Errorf("cannot read note: %w", err)
-		}
-
-		// Append: ensure existing ends with \n, then \n + content + \n
-		existingStr := string(existing)
-		if len(existingStr) > 0 && !strings.HasSuffix(existingStr, "\n") {
-			existingStr += "\n"
-		}
-		result := existingStr + "\n" + content + "\n"
-
-		if err := note.WriteAtomic(targetPath, []byte(result)); err != nil {
+			if errors.Is(err, note.ErrNotFound) {
+				return fmt.Errorf("note %d not found", id)
+			}
 			return err
 		}
 
-		fmt.Fprintln(cmd.OutOrStdout(), targetPath)
+		body := entry.Body
+		if body != "" && !strings.HasSuffix(body, "\n") {
+			body += "\n"
+		}
+		entry.Body = body + "\n" + content + "\n"
+
+		saved, err := store.Put(entry)
+		if err != nil {
+			return err
+		}
+
+		fmt.Fprintln(cmd.OutOrStdout(), store.AbsPath(saved))
 		return nil
 	},
 }
 
-func registerAppendFlags() {
-	addFilterFlags(appendCmd)
-}
-
 func init() {
-	registerAppendFlags()
 	rootCmd.AddCommand(appendCmd)
 }
