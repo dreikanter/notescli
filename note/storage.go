@@ -43,9 +43,10 @@ type Store interface {
 	Get(id int) (Entry, error)
 
 	// Put writes entry. When entry.ID is zero the store assigns a fresh ID
-	// and sets Meta.CreatedAt to time.Now if zero; otherwise Put performs a
-	// full replace of the existing entry. Meta.UpdatedAt is always set to
-	// time.Now on write. Returns the stored entry with all store-assigned
+	// and defaults Meta.CreatedAt to time.Now if zero; otherwise Put performs
+	// a full replace of the existing entry and requires Meta.CreatedAt to be
+	// non-zero (returning an error otherwise). Meta.UpdatedAt is always set
+	// to time.Now on write. Returns the stored entry with all store-assigned
 	// fields populated.
 	Put(entry Entry) (Entry, error)
 

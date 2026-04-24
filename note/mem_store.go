@@ -84,19 +84,22 @@ func (s *MemStore) Get(id int) (Entry, error) {
 }
 
 // Put stores entry. When entry.ID is zero a new ID is assigned as
-// max(existing IDs) + 1 (1 for an empty store); otherwise the existing
-// entry is replaced. Meta.CreatedAt is set to time.Now when zero, and
-// Meta.UpdatedAt is always set to time.Now.
+// max(existing IDs) + 1 (1 for an empty store) and Meta.CreatedAt is
+// defaulted to time.Now if zero. Updates (entry.ID != 0) must carry a
+// non-zero Meta.CreatedAt. Meta.UpdatedAt is always set to time.Now.
 func (s *MemStore) Put(entry Entry) (Entry, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
+	now := time.Now()
 	if entry.ID == 0 {
 		entry.ID = s.nextIDLocked()
+		if entry.Meta.CreatedAt.IsZero() {
+			entry.Meta.CreatedAt = now
+		}
 	}
-	now := time.Now()
 	if entry.Meta.CreatedAt.IsZero() {
-		entry.Meta.CreatedAt = now
+		return Entry{}, fmt.Errorf("note %d: CreatedAt is zero", entry.ID)
 	}
 	entry.Meta.UpdatedAt = now
 	s.entries[entry.ID] = entry

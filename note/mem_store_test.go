@@ -209,9 +209,10 @@ func TestMemStore_PutAssignsMaxPlusOne(t *testing.T) {
 
 func TestMemStore_PutExistingIDReplaces(t *testing.T) {
 	s := NewMemStore()
-	mustPut(t, s, Entry{ID: 1, Meta: Meta{Title: "old"}, Body: "old body"})
+	created := day(2026, 1, 1)
+	mustPut(t, s, Entry{ID: 1, Meta: Meta{Title: "old", CreatedAt: created}, Body: "old body"})
 
-	e, err := s.Put(Entry{ID: 1, Meta: Meta{Title: "new"}, Body: "new body"})
+	e, err := s.Put(Entry{ID: 1, Meta: Meta{Title: "new", CreatedAt: created}, Body: "new body"})
 	if err != nil {
 		t.Fatalf("Put: %v", err)
 	}
@@ -221,6 +222,16 @@ func TestMemStore_PutExistingIDReplaces(t *testing.T) {
 	got, _ := s.Get(1)
 	if got.Meta.Title != "new" {
 		t.Fatalf("Get after replace title = %q, want new", got.Meta.Title)
+	}
+}
+
+func TestMemStore_PutUpdateZeroCreatedAtErrors(t *testing.T) {
+	s := NewMemStore()
+	mustPut(t, s, Entry{ID: 1, Meta: Meta{CreatedAt: day(2026, 1, 1)}})
+
+	_, err := s.Put(Entry{ID: 1, Meta: Meta{Title: "x"}})
+	if err == nil {
+		t.Fatal("Put update with zero CreatedAt: expected error, got nil")
 	}
 }
 
