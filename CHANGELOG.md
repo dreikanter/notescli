@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.3.19] - 2026-04-24
+
+### Changed
+
+- `.github/workflows/tag.yml` now tags merged PRs using the topmost `## [X.Y.Z]` heading from `CHANGELOG.md` instead of auto-incrementing the patch off the latest git tag. This resyncs git tags with CHANGELOG versions (which had drifted — tags were stuck at `v0.1.x` while the CHANGELOG had advanced to `0.3.x`). `CLAUDE.md` versioning/changelog sections updated accordingly ([#249]).
+
+[#249]: https://github.com/dreikanter/notes-cli/pull/249
+
 ## [0.3.18] - 2026-04-24
 
 ### Changed
