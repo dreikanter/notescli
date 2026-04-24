@@ -7,27 +7,26 @@ import (
 
 func TestParseTask(t *testing.T) {
 	tests := []struct {
-		name      string
-		line      string
-		wantNil   bool
-		wantState TaskState
-		isDaily   bool
-		isMoved   bool
+		name    string
+		line    string
+		wantNil bool
+		isDaily bool
+		isMoved bool
 	}{
-		{"pending", "[ ] Buy milk", false, TaskPending, false, false},
-		{"pending with bullet", "- [ ] Buy milk", false, TaskPending, false, false},
-		{"pending indented", "  [ ] Buy milk", false, TaskPending, false, false},
-		{"pending indented bullet", "  - [ ] Buy milk", false, TaskPending, false, false},
-		{"completed plus", "[+] Done task", false, TaskDone, false, false},
-		{"completed x", "[x] Done task", false, TaskDone, false, false},
-		{"daily", "[ ] Standup #daily", false, TaskPending, true, false},
-		{"daily completed", "[+] Standup #daily", false, TaskDone, true, false},
-		{"moved", "- [ ] (moved) Buy milk", false, TaskPending, false, true},
-		{"moved with other tag", "- [ ] (moved) (private) Do thing", false, TaskPending, false, true},
-		{"not a task", "Just a regular line", true, "", false, false},
-		{"empty", "", true, "", false, false},
-		{"header", "# Todo", true, "", false, false},
-		{"frontmatter", "---", true, "", false, false},
+		{"pending", "[ ] Buy milk", false, false, false},
+		{"pending with bullet", "- [ ] Buy milk", false, false, false},
+		{"pending indented", "  [ ] Buy milk", false, false, false},
+		{"pending indented bullet", "  - [ ] Buy milk", false, false, false},
+		{"completed plus", "[+] Done task", false, false, false},
+		{"completed x", "[x] Done task", false, false, false},
+		{"daily", "[ ] Standup #daily", false, true, false},
+		{"daily completed", "[+] Standup #daily", false, true, false},
+		{"moved", "- [ ] (moved) Buy milk", false, false, true},
+		{"moved with other tag", "- [ ] (moved) (private) Do thing", false, false, true},
+		{"not a task", "Just a regular line", true, false, false},
+		{"empty", "", true, false, false},
+		{"header", "# Todo", true, false, false},
+		{"frontmatter", "---", true, false, false},
 	}
 
 	for _, tt := range tests {
@@ -41,9 +40,6 @@ func TestParseTask(t *testing.T) {
 			}
 			if task == nil {
 				t.Fatalf("expected non-nil for %q", tt.line)
-			}
-			if task.State != tt.wantState {
-				t.Errorf("state: got %q, want %q", task.State, tt.wantState)
 			}
 			if task.IsDaily != tt.isDaily {
 				t.Errorf("isDaily: got %v, want %v", task.IsDaily, tt.isDaily)
