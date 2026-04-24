@@ -133,13 +133,13 @@ func (s *MemStore) matchLocked(q query) []Entry {
 // nextIDLocked returns max(existing IDs) + 1, or 1 when empty. Caller holds
 // s.mu for write.
 func (s *MemStore) nextIDLocked() int {
-	max := 0
+	highest := 0
 	for id := range s.entries {
-		if id > max {
-			max = id
+		if id > highest {
+			highest = id
 		}
 	}
-	return max + 1
+	return highest + 1
 }
 
 // sortIDsLocked sorts ids newest-first by the entries' CreatedAt, tie-breaking
