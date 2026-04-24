@@ -1,52 +1,47 @@
 package cli
 
 import (
+	"errors"
 	"fmt"
-	"os"
-	"path/filepath"
-	"time"
+	"strconv"
 
 	"github.com/dreikanter/notes-cli/note"
 	"github.com/spf13/cobra"
 )
 
 var rmCmd = &cobra.Command{
-	Use:   "rm <id|type|query>",
-	Short: "Delete a note",
+	Use:   "rm <id>",
+	Short: "Delete a note by numeric ID",
 	Args:  cobra.ExactArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
-		today, _ := cmd.Flags().GetBool("today")
+		id, err := strconv.Atoi(args[0])
+		if err != nil {
+			return fmt.Errorf("id must be an integer: %s", args[0])
+		}
 
-		root, err := notesRoot()
+		store, err := notesStore()
 		if err != nil {
 			return err
 		}
 
-		var date string
-		if today {
-			date = time.Now().Format(note.DateFormat)
-		}
-
-		n, err := resolveRef(cmd, root, args[0], note.WithDate(date))
+		entry, err := store.Get(id)
 		if err != nil {
+			if errors.Is(err, note.ErrNotFound) {
+				return fmt.Errorf("note %d not found", id)
+			}
+			return err
+		}
+		path := store.AbsPath(entry)
+
+		if err := store.Delete(id); err != nil {
 			return err
 		}
 
-		absPath := filepath.Join(root, n.RelPath)
-		if err := os.Remove(absPath); err != nil {
-			return err
-		}
-
-		fmt.Fprintln(cmd.OutOrStdout(), absPath)
+		fmt.Fprintln(cmd.OutOrStdout(), path)
 		return nil
 	},
 }
 
-func registerRmFlags() {
-	rmCmd.Flags().Bool("today", false, "only match notes created today")
-}
-
 func init() {
-	registerRmFlags()
 	rootCmd.AddCommand(rmCmd)
 }
