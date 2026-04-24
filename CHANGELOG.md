@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.3.8] - 2026-04-24
+
+### Changed
+
+- `internal/cli/annotate.go`: `notes annotate` now takes a single `<id>` integer argument. Load/save go through `store.Get` / `store.Put`; the Claude invocation flow (schema, exec, timeout handling, error mapping) is unchanged. `annotateEmptyFields` and `mergeAnnotation` now operate on `note.StoreMeta` instead of `note.Frontmatter` ([#238]).
+
+[#238]: https://github.com/dreikanter/notes-cli/pull/238
+
 ## [0.3.7] - 2026-04-24
 
 ### Changed
