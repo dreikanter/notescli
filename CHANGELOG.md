@@ -2,9 +2,9 @@
 
 ## [0.3.18] - 2026-04-24
 
-### Removed
+### Changed
 
-- `note.TaskState`, the `TaskPending` / `TaskDone` / `TaskOther` constants, `markerToState`, and the `Task.State` field — nothing read `State`; `RolloverTasks` already switches on `Task.marker` and `IsDaily` directly ([#248]).
+- Replace `Task.State` (`TaskState` enum with `TaskPending` / `TaskDone` / `TaskOther`) with a plain `Task.Done bool` set to `true` when the marker is `+` or `x`. Drops the unused `TaskOther` value and the `markerToState` helper ([#248]).
 
 [#248]: https://github.com/dreikanter/notes-cli/pull/248
 
