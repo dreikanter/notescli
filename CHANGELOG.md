@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.3.10] - 2026-04-24
+
+### Changed
+
+- `internal/cli/resolve.go`: `notes resolve` no longer takes a positional argument. Explicit flags replace the priority chain: `--id`, `--type`, `--slug`, `--tag` (at most one). With no flags, it returns the newest note via `store.Find()`. Output is the absolute path via `OSStore.AbsPath`.
+- `internal/cli/filter.go`: `resolveRef`, `resolveOrFilter`, `filterOpts`, `applyFilters`, `loadOptsFor`, and `addFilterFlags` are removed — the only remaining consumer is `stderrLogger`, which stays until `new` / `new-todo` migrate.
+
+### Removed
+
+- `notes edit` command. Open a note in your editor with e.g. `$EDITOR $(notes resolve --type todo)` ([#240]).
+
+[#240]: https://github.com/dreikanter/notes-cli/pull/240
+
 ## [0.3.9] - 2026-04-24
 
 ### Changed
