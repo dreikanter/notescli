@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.3.18] - 2026-04-24
+
+### Removed
+
+- `note.TaskState`, the `TaskPending` / `TaskDone` / `TaskOther` constants, `markerToState`, and the `Task.State` field — nothing read `State`; `RolloverTasks` already switches on `Task.marker` and `IsDaily` directly ([#248]).
+
+[#248]: https://github.com/dreikanter/notes-cli/pull/248
+
 ## [0.3.17] - 2026-04-24
 
 ### Changed
