@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.3.2] - 2026-04-24
+
+### Added
+
+- `note/os_store.go`: `OSStore` — the filesystem-backed `Store` implementation over the existing `YYYY/MM/YYYYMMDD_id_slug.md` layout. Reuses `ParseFilename`, `Filename`, `DirPath`, `WriteAtomic`, `NextID`, `ExtractHashtags`, `ParseNote`, and `FormatNote`. Filename scan sorts by `(date DESC, id DESC)` using the integer ID so `_11_` sorts newer than `_9_`. `Put` handles atomic rename on slug/date changes.
+- `internal/cli/root.go`: `notesStore()` helper constructs an `*note.OSStore` from the resolved `--path` / `$NOTES_PATH` root. Threaded in now; individual commands adopt it in later phases ([#232]).
+
+[#232]: https://github.com/dreikanter/notes-cli/pull/232
+
 ## [0.3.1] - 2026-04-23
 
 ### Added
