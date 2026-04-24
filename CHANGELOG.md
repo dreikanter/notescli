@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.3.7] - 2026-04-24
+
+### Changed
+
+- `internal/cli/append.go`: `notes append` now takes a single `<id>` integer argument. Load goes through `store.Get`, body is modified in-memory, and save goes through `store.Put`. Filter flags (`--type`, `--slug`, `--tag`, `--today`) are removed — users get IDs from `notes ls` or `notes resolve` ([#237]).
+
+[#237]: https://github.com/dreikanter/notes-cli/pull/237
+
 ## [0.3.6] - 2026-04-24
 
 ### Changed

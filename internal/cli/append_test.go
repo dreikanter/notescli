@@ -40,7 +40,6 @@ func runAppend(t *testing.T, root string, stdin string, args ...string) (string,
 	t.Helper()
 
 	appendCmd.ResetFlags()
-	registerAppendFlags()
 
 	buf := new(bytes.Buffer)
 	rootCmd.SetOut(buf)
@@ -70,102 +69,11 @@ func TestAppendByID(t *testing.T) {
 	}
 }
 
-func TestAppendByAbsolutePath(t *testing.T) {
+func TestAppendNonIntegerArgErrors(t *testing.T) {
 	root := copyTestdata(t)
-	target := filepath.Join(root, "2026/01/20260106_8823_999.md")
-	out, err := runAppend(t, root, "path append", target)
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
-
-	if out != target {
-		t.Errorf("got output %q, want %q", out, target)
-	}
-
-	data, _ := os.ReadFile(target)
-	if !strings.Contains(string(data), "path append") {
-		t.Error("appended text not found in file")
-	}
-}
-
-func TestAppendByRelativePath(t *testing.T) {
-	root := copyTestdata(t)
-
-	// chdir into the temp root so a relative path containing "/" works
-	oldWd, err := os.Getwd()
-	if err != nil {
-		t.Fatalf("cannot get working directory: %v", err)
-	}
-	if err := os.Chdir(root); err != nil {
-		t.Fatalf("cannot chdir: %v", err)
-	}
-	t.Cleanup(func() { _ = os.Chdir(oldWd) })
-
-	out, err := runAppend(t, root, "rel append", "2026/01/20260106_8823_999.md")
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
-
-	want := filepath.Join(root, "2026/01/20260106_8823_999.md")
-	if out != want {
-		t.Errorf("got output %q, want %q", out, want)
-	}
-
-	data, _ := os.ReadFile(filepath.Join(root, "2026/01/20260106_8823_999.md"))
-	if !strings.Contains(string(data), "rel append") {
-		t.Error("appended text not found in file")
-	}
-}
-
-func TestAppendByTagFilter(t *testing.T) {
-	root := copyTestdata(t)
-	out, err := runAppend(t, root, "tag append", "--tag", "meeting")
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
-
-	want := filepath.Join(root, "2026/01/20260104_8818_meeting.md")
-	if out != want {
-		t.Errorf("got output %q, want %q", out, want)
-	}
-
-	data, _ := os.ReadFile(want)
-	if !strings.Contains(string(data), "tag append") {
-		t.Error("appended text not found in file")
-	}
-}
-
-func TestAppendBySlugFilter(t *testing.T) {
-	root := copyTestdata(t)
-	out, err := runAppend(t, root, "slug append", "--slug", "meeting")
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
-
-	want := filepath.Join(root, "2026/01/20260104_8818_meeting.md")
-	if out != want {
-		t.Errorf("got output %q, want %q", out, want)
-	}
-}
-
-func TestAppendByTypeFilter(t *testing.T) {
-	root := copyTestdata(t)
-	out, err := runAppend(t, root, "type append", "--type", "todo")
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
-
-	want := filepath.Join(root, "2026/01/20260102_8814.todo.md")
-	if out != want {
-		t.Errorf("got output %q, want %q", out, want)
-	}
-}
-
-func TestAppendPathOutsideRoot(t *testing.T) {
-	root := copyTestdata(t)
-	_, err := runAppend(t, root, "escape attempt", "/tmp/evil.md")
+	_, err := runAppend(t, root, "text", "meeting")
 	if err == nil {
-		t.Fatal("expected error for path outside notes directory, got nil")
+		t.Fatal("expected error for non-integer id, got nil")
 	}
 }
 
@@ -174,6 +82,9 @@ func TestAppendNonExistentNote(t *testing.T) {
 	_, err := runAppend(t, root, "text", "9999")
 	if err == nil {
 		t.Fatal("expected error for non-existent note, got nil")
+	}
+	if !strings.Contains(err.Error(), "not found") {
+		t.Errorf("expected 'not found', got: %v", err)
 	}
 }
 
@@ -234,35 +145,10 @@ func TestAppendMultipleProducesSeparation(t *testing.T) {
 	}
 }
 
-func TestAppendPositionalArgWithFilterErrors(t *testing.T) {
-	root := copyTestdata(t)
-	_, err := runAppend(t, root, "text", "8823", "--type", "todo")
-	if err == nil {
-		t.Fatal("expected error when combining positional arg and filter flags, got nil")
-	}
-}
-
-func TestAppendNoTargetErrors(t *testing.T) {
+func TestAppendNoArgErrors(t *testing.T) {
 	root := copyTestdata(t)
 	_, err := runAppend(t, root, "text")
 	if err == nil {
 		t.Fatal("expected error when no target specified, got nil")
-	}
-}
-
-func TestAppendFilterNoMatchErrors(t *testing.T) {
-	root := copyTestdata(t)
-	_, err := runAppend(t, root, "text", "--slug", "nonexistent")
-	if err == nil {
-		t.Fatal("expected error when no notes match filter, got nil")
-	}
-}
-
-func TestAppendTodayFilter(t *testing.T) {
-	// testdata notes are all in the past; --today should find nothing
-	root := copyTestdata(t)
-	_, err := runAppend(t, root, "text", "--type", "todo", "--today")
-	if err == nil {
-		t.Fatal("expected error when --today matches no notes, got nil")
 	}
 }
