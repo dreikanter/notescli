@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.3.9] - 2026-04-24
+
+### Changed
+
+- `internal/cli/update.go`: `notes update` now takes a single `<id>` integer argument and routes through `store.Get` / `store.Put`. The `--sync-filename` flag is removed — `OSStore.Put` detects filename drift from `Meta.Slug`/`Type`/`CreatedAt` and renames atomically. New `--date YYYYMMDD` flag moves the note to the requested year/month directory. `syncNoteFilename` and its associated rename-via-link logic are deleted ([#239]).
+
+[#239]: https://github.com/dreikanter/notes-cli/pull/239
+
 ## [0.3.8] - 2026-04-24
 
 ### Changed
