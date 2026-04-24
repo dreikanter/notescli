@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"sort"
 
-	"github.com/dreikanter/notes-cli/note"
 	"github.com/spf13/cobra"
 )
 
@@ -13,20 +12,17 @@ var tagsCmd = &cobra.Command{
 	Short: "List all tags from frontmatter and body hashtags",
 	Args:  cobra.NoArgs,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		root, err := notesRoot()
+		store, err := notesStore()
 		if err != nil {
 			return err
 		}
-		idx, err := note.Load(root, note.WithLogger(stderrLogger(cmd)))
+		entries, err := store.All()
 		if err != nil {
 			return err
 		}
 		set := make(map[string]struct{})
-		for _, t := range idx.Tags() {
-			set[t] = struct{}{}
-		}
-		for _, e := range idx.Entries() {
-			for _, t := range e.BodyHashtags() {
+		for _, e := range entries {
+			for _, t := range e.Meta.Tags {
 				set[t] = struct{}{}
 			}
 		}

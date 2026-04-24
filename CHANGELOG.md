@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.3.3] - 2026-04-24
+
+### Changed
+
+- `internal/cli/tags.go`: `notes tags` now calls `store.All()` instead of `note.Load` + index walk. `OSStore.All()` already returns entries with `Meta.Tags` populated as the merged frontmatter/body-hashtag union, so the command drops the two-source merge. Output format is unchanged ([#233]).
+
+[#233]: https://github.com/dreikanter/notes-cli/pull/233
+
 ## [0.3.2] - 2026-04-24
 
 ### Added

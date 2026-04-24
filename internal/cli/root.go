@@ -74,12 +74,7 @@ func notesRoot() (string, error) {
 
 // notesStore returns the Store instance the CLI uses for note-package
 // operations. It resolves the root path the same way notesRoot does — flag
-// first, then $NOTES_PATH, then error — so commands can replace their
-// direct filesystem calls with Store calls without touching path-resolution
-// code.
-//
-// Phase 3 wires this helper in; individual commands adopt it in later
-// phases.
+// first, then $NOTES_PATH, then error.
 func notesStore() (*note.OSStore, error) {
 	root, err := notesRoot()
 	if err != nil {
@@ -87,7 +82,3 @@ func notesStore() (*note.OSStore, error) {
 	}
 	return note.NewOSStore(root), nil
 }
-
-// Keep notesStore in reach of the unused linter until Phase 4 wires the
-// first command through it.
-var _ = notesStore
