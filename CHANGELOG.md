@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.3.12] - 2026-04-24
+
+### Changed
+
+- `internal/cli/new_todo.go`: `notes new-todo` now routes through the `Store`. Existence check uses `store.Find(WithType("todo"), WithExactDate(today))`; previous-todo lookup uses `store.Find(WithType("todo"), WithBeforeDate(today))`. Rollover still reuses `note.RolloverTasks` and `note.FormatTodoContent`.
+- `internal/cli/filter.go` removed — the `stderrLogger` helper has no remaining callers now that every command uses the Store ([#242]).
+
+[#242]: https://github.com/dreikanter/notes-cli/pull/242
+
 ## [0.3.11] - 2026-04-24
 
 ### Changed
