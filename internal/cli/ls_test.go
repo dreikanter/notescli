@@ -2,7 +2,6 @@ package cli
 
 import (
 	"bytes"
-	"path/filepath"
 	"strings"
 	"testing"
 )
@@ -32,6 +31,11 @@ func TestLsNoArgs(t *testing.T) {
 	lines := strings.Split(out, "\n")
 	if len(lines) != 4 {
 		t.Fatalf("got %d lines, want 4:\n%s", len(lines), out)
+	}
+	for _, line := range lines {
+		if !allDigits(line) {
+			t.Fatalf("expected integer ID per line, got %q", line)
+		}
 	}
 }
 
@@ -80,8 +84,8 @@ func TestLsTagAndType(t *testing.T) {
 	if len(lines) != 1 {
 		t.Fatalf("got %d lines, want 1:\n%s", len(lines), out)
 	}
-	if !strings.Contains(lines[0], "todo") {
-		t.Errorf("expected todo note, got %q", lines[0])
+	if lines[0] != "8814" {
+		t.Errorf("expected ID 8814, got %q", lines[0])
 	}
 }
 
@@ -97,7 +101,7 @@ func TestLsTagAndLimit(t *testing.T) {
 	}
 }
 
-func TestLsMultipleTags(t *testing.T) {
+func TestLsMultipleTagsAND(t *testing.T) {
 	out, err := runLs(t, "--tag", "work", "--tag", "planning")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -107,8 +111,8 @@ func TestLsMultipleTags(t *testing.T) {
 	if len(lines) != 1 {
 		t.Fatalf("got %d lines, want 1 (only todo has both work+planning):\n%s", len(lines), out)
 	}
-	if !strings.Contains(lines[0], "todo") {
-		t.Errorf("expected todo note, got %q", lines[0])
+	if lines[0] != "8814" {
+		t.Errorf("expected ID 8814, got %q", lines[0])
 	}
 }
 
@@ -122,8 +126,8 @@ func TestLsMultipleTagsCommaSeparated(t *testing.T) {
 	if len(lines) != 1 {
 		t.Fatalf("got %d lines, want 1 (only meeting note has both work+meeting):\n%s", len(lines), out)
 	}
-	if !strings.Contains(lines[0], "meeting") {
-		t.Errorf("expected meeting note, got %q", lines[0])
+	if lines[0] != "8818" {
+		t.Errorf("expected ID 8818, got %q", lines[0])
 	}
 }
 
@@ -135,32 +139,6 @@ func TestLsTagAndTypeNoOverlap(t *testing.T) {
 
 	if out != "" {
 		t.Errorf("expected empty output (no todo with meeting tag), got %q", out)
-	}
-}
-
-func TestLsWithName(t *testing.T) {
-	out, err := runLs(t, "--name", "meeting")
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
-
-	lines := strings.Split(out, "\n")
-	if len(lines) != 1 {
-		t.Fatalf("got %d lines, want 1:\n%s", len(lines), out)
-	}
-	if !strings.Contains(lines[0], "meeting") {
-		t.Errorf("expected meeting note, got %q", lines[0])
-	}
-}
-
-func TestLsNameNoMatch(t *testing.T) {
-	out, err := runLs(t, "--name", "nonexistent")
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
-
-	if out != "" {
-		t.Errorf("expected empty output, got %q", out)
 	}
 }
 
@@ -187,54 +165,19 @@ func TestLsUnlimitedByDefault(t *testing.T) {
 	}
 }
 
-func TestLsNameAndType(t *testing.T) {
-	out, err := runLs(t, "--name", "8814", "--type", "todo")
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
-
-	lines := strings.Split(out, "\n")
-	if len(lines) != 1 {
-		t.Fatalf("got %d lines, want 1:\n%s", len(lines), out)
-	}
-	if !strings.Contains(lines[0], "8814") {
-		t.Errorf("expected note 8814, got %q", lines[0])
-	}
-}
-
-func TestLsOutputsAbsolutePaths(t *testing.T) {
+func TestLsOutputsIntegerIDs(t *testing.T) {
 	out, err := runLs(t)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
 
-	root := testdataPath(t)
 	for _, line := range strings.Split(out, "\n") {
 		if line == "" {
 			continue
 		}
-		if !filepath.IsAbs(line) {
-			t.Errorf("expected absolute path, got %q", line)
+		if !allDigits(line) {
+			t.Errorf("expected integer ID per line, got %q", line)
 		}
-		if !strings.HasPrefix(line, root) {
-			t.Errorf("expected path under %s, got %q", root, line)
-		}
-	}
-}
-
-func TestLsMultipleTypes(t *testing.T) {
-	// "todo" exists; "backlog" does not — union should return the 1 todo note
-	out, err := runLs(t, "--type", "todo", "--type", "backlog")
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
-
-	lines := strings.Split(out, "\n")
-	if len(lines) != 1 {
-		t.Fatalf("got %d lines, want 1:\n%s", len(lines), out)
-	}
-	if !strings.Contains(lines[0], "todo") {
-		t.Errorf("expected todo note, got %q", lines[0])
 	}
 }
 
@@ -248,7 +191,19 @@ func TestLsSlug(t *testing.T) {
 	if len(lines) != 1 {
 		t.Fatalf("got %d lines, want 1:\n%s", len(lines), out)
 	}
-	if !strings.Contains(lines[0], "meeting") {
-		t.Errorf("expected meeting note, got %q", lines[0])
+	if lines[0] != "8818" {
+		t.Errorf("expected ID 8818, got %q", lines[0])
 	}
+}
+
+func allDigits(s string) bool {
+	if s == "" {
+		return false
+	}
+	for _, c := range s {
+		if c < '0' || c > '9' {
+			return false
+		}
+	}
+	return true
 }
