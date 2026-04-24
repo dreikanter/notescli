@@ -1,5 +1,25 @@
 # Changelog
 
+## [0.3.13] - 2026-04-24
+
+### Changed
+
+- Rename `note.StoreEntry` → `note.Entry` and `note.StoreMeta` → `note.Meta` globally now that the legacy `Entry` / `Frontmatter` types have been removed.
+- `note.Frontmatter` is now an unexported `frontmatter` struct inside the package — the custom `MarshalYAML` / `UnmarshalYAML` stays put.
+- `note.Ref` is now an unexported `ref` struct used by `OSStore` internals.
+- `ErrNotFound` moved to `note/storage.go` and lives as a single `entry not found` sentinel.
+
+### Removed
+
+- `note.Index`, `note.Snapshot`, `note.Load`, all `note.With*` load-option constructors
+- `note.Scan`, `note.ScanOptions`, `note.WithStrict`, `note.WithScanLogger`, `note.WithDate(string)`, `note.ResolveOption`, `note.Resolve`, and the `note.FilterBy*` family
+- `note.ResolveEntryDate`, `note.Ref.Time`, `note.Logger`, `note.NormalizeSlug`, `note.DeriveSlug`
+- `note/watch/` package (dead once `Index.Reload` was gone)
+- `internal/editor/` package (dead once the `edit` command was removed)
+- `notes grep` / `notes rg` commands (deferred feature; removed rather than parked) ([#243])
+
+[#243]: https://github.com/dreikanter/notes-cli/pull/243
+
 ## [0.3.12] - 2026-04-24
 
 ### Changed
