@@ -5,45 +5,22 @@ import (
 	"strings"
 )
 
-// TaskState describes the completion state of a task line.
-type TaskState string
-
-const (
-	// TaskPending is an incomplete task (marker " ").
-	TaskPending TaskState = "pending"
-	// TaskDone is a completed task (marker "+" or "x").
-	TaskDone TaskState = "done"
-	// TaskOther covers any marker character not mapped above.
-	TaskOther TaskState = "other"
-)
-
-// taskRe matches lines like "  - [ ] some task" or "[ ] some task".
-var taskRe = regexp.MustCompile(`^(\s*(?:- )?\[)(.)(\].*)$`)
+// taskRe matches lines like "- [ ] some task" or "  - [x] some task".
+var taskRe = regexp.MustCompile(`^(\s*- \[)( |x)(\].*)$`)
 
 // Task represents a parsed task line from a todo note.
 type Task struct {
-	Line       string    // original full line
-	State      TaskState // completion state derived from the marker
-	Text       string    // trimmed task text, e.g. "Buy milk #daily"
-	IsDaily    bool      // whether line contains #daily
-	IsMoved    bool      // whether line contains (moved)
-	LineNumber int       // 0-based index in the source file lines
+	Line       string // original full line
+	Text       string // trimmed task text, e.g. "Buy milk #daily"
+	Done       bool   // true when the marker is "x"
+	IsDaily    bool   // whether line contains #daily
+	IsMoved    bool   // whether line contains (moved)
+	LineNumber int    // 0-based index in the source file lines
 
 	// regex capture groups kept unexported; use Reassembled / WithTag to rebuild lines.
 	prefix string
 	marker string
 	suffix string
-}
-
-func markerToState(m string) TaskState {
-	switch m {
-	case " ":
-		return TaskPending
-	case "+", "x":
-		return TaskDone
-	default:
-		return TaskOther
-	}
 }
 
 // ParseTask attempts to parse a line as a task. Returns nil if not a task line.
@@ -61,8 +38,8 @@ func ParseTask(line string, lineNumber int) *Task {
 	}
 	return &Task{
 		Line:       line,
-		State:      markerToState(m[2]),
 		Text:       text,
+		Done:       m[2] == "x",
 		IsDaily:    strings.Contains(line, "#daily"),
 		IsMoved:    strings.Contains(line, "(moved)"),
 		LineNumber: lineNumber,
