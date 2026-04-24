@@ -16,9 +16,6 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-// dateLayout is the filename date format — 8 digits, YYYYMMDD.
-const dateLayout = "20060102"
-
 // OSStore is the filesystem-backed Store. It wraps the existing
 // root/YYYY/MM/YYYYMMDD_id_slug.md layout and reuses the package's existing
 // filename, frontmatter, and atomic-write helpers.
@@ -146,12 +143,12 @@ func refMatchesFilename(r fileRef, q query) bool {
 		return false
 	}
 	if q.dateSet {
-		if r.date != q.date.Format(dateLayout) {
+		if r.date != q.date.Format(DateFormat) {
 			return false
 		}
 	}
 	if q.beforeSet {
-		if !(r.date < q.beforeDate.Format(dateLayout)) {
+		if !(r.date < q.beforeDate.Format(DateFormat)) {
 			return false
 		}
 	}
@@ -401,7 +398,7 @@ func (s *OSStore) AbsPath(entry Entry) string {
 
 // pathFor returns the rel/abs path the filename layout produces for entry.
 func (s *OSStore) pathFor(entry Entry) (rel, abs string) {
-	date := entry.Meta.CreatedAt.Format(dateLayout)
+	date := entry.Meta.CreatedAt.Format(DateFormat)
 	name := Filename(date, entry.ID, entry.Meta.Slug, entry.Meta.Type)
 	dir := DirPath(s.root, date)
 	abs = filepath.Join(dir, name)
@@ -416,7 +413,7 @@ func (s *OSStore) pathFor(entry Entry) (rel, abs string) {
 func frontmatterToMeta(fm frontmatter, r fileRef, modTime time.Time, body []byte) Meta {
 	created := fm.Date
 	if created.IsZero() {
-		if t, err := time.Parse(dateLayout, r.date); err == nil {
+		if t, err := time.Parse(DateFormat, r.date); err == nil {
 			created = t
 		}
 	}
