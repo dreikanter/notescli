@@ -100,10 +100,6 @@ func WithTag(t string) QueryOpt {
 
 // WithExactDate matches entries whose Meta.CreatedAt falls on the same
 // calendar day as d (comparison is at day precision, in d's location).
-//
-// The temporary name avoids a collision with the existing ResolveOption
-// WithDate(string) consumed by Index.Resolve. WithExactDate will be renamed
-// to WithDate in Phase 14 once the legacy Resolve path is removed.
 func WithExactDate(d time.Time) QueryOpt {
 	return func(q *query) {
 		q.dateSet = true

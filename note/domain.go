@@ -3,18 +3,14 @@ package note
 import "time"
 
 // Entry is the single domain object that Store implementations work with.
-// It replaces the legacy Entry + ref pair once the migration reaches Phase 14;
-// the temporary Store prefix avoids collision with the existing Entry type
-// during the transition.
 type Entry struct {
 	ID   int
 	Meta Meta
 	Body string
 }
 
-// Meta holds the user-domain metadata for a note. It replaces the public
-// frontmatter type once the migration reaches Phase 14; YAML serialisation
-// details live inside OSStore.
+// Meta holds the user-domain metadata for a note. YAML serialisation details
+// live inside OSStore.
 //
 // CreatedAt maps to the YAML frontmatter "date" field and is both read from
 // and written to disk.
@@ -27,9 +23,8 @@ type Entry struct {
 // OSStore performs the merge on read and consumers never distinguish between
 // the two sources.
 //
-// Extra replaces the legacy map[string]yaml.Node representation with a
-// plain-Go map[string]any. OSStore handles conversion at the serialisation
-// boundary.
+// Extra carries unknown frontmatter keys as map[string]any; OSStore handles
+// conversion to/from yaml.Node at the serialisation boundary.
 type Meta struct {
 	Title       string
 	Slug        string
