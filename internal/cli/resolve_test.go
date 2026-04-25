@@ -5,6 +5,9 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func testdataPath(t *testing.T) string {
@@ -35,91 +38,63 @@ func runResolve(t *testing.T, root string, args ...string) (string, error) {
 func TestResolveNewestNoArgs(t *testing.T) {
 	root := testdataPath(t)
 	out, err := runResolve(t, root)
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
+	require.NoError(t, err)
 	want := filepath.Join(root, "2026/01/20260106_8823_999.md")
-	if out != want {
-		t.Errorf("got %q, want %q", out, want)
-	}
+	assert.Equal(t, want, out)
 }
 
 func TestResolveByID(t *testing.T) {
 	root := testdataPath(t)
 	out, err := runResolve(t, root, "--id", "8823")
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
+	require.NoError(t, err)
 	want := filepath.Join(root, "2026/01/20260106_8823_999.md")
-	if out != want {
-		t.Errorf("got %q, want %q", out, want)
-	}
+	assert.Equal(t, want, out)
 }
 
 func TestResolveByIDNotFound(t *testing.T) {
 	root := testdataPath(t)
 	_, err := runResolve(t, root, "--id", "99999")
-	if err == nil {
-		t.Fatal("expected error for missing ID")
-	}
+	require.Error(t, err)
 }
 
 func TestResolveByIDNonInteger(t *testing.T) {
 	root := testdataPath(t)
 	_, err := runResolve(t, root, "--id", "notnumber")
-	if err == nil {
-		t.Fatal("expected error for non-integer id")
-	}
+	require.Error(t, err)
 }
 
 func TestResolveBySlug(t *testing.T) {
 	root := testdataPath(t)
 	out, err := runResolve(t, root, "--slug", "meeting")
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
+	require.NoError(t, err)
 	want := filepath.Join(root, "2026/01/20260104_8818_meeting.md")
-	if out != want {
-		t.Errorf("got %q, want %q", out, want)
-	}
+	assert.Equal(t, want, out)
 }
 
 func TestResolveByType(t *testing.T) {
 	root := testdataPath(t)
 	out, err := runResolve(t, root, "--type", "todo")
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
+	require.NoError(t, err)
 	want := filepath.Join(root, "2026/01/20260102_8814.todo.md")
-	if out != want {
-		t.Errorf("got %q, want %q", out, want)
-	}
+	assert.Equal(t, want, out)
 }
 
 func TestResolveByTag(t *testing.T) {
 	root := testdataPath(t)
 	out, err := runResolve(t, root, "--tag", "meeting")
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
+	require.NoError(t, err)
 	want := filepath.Join(root, "2026/01/20260104_8818_meeting.md")
-	if out != want {
-		t.Errorf("got %q, want %q", out, want)
-	}
+	assert.Equal(t, want, out)
 }
 
 func TestResolveNoMatchErrors(t *testing.T) {
 	root := testdataPath(t)
 	_, err := runResolve(t, root, "--slug", "nonexistent-slug-xyz")
-	if err == nil {
-		t.Fatal("expected error for no match")
-	}
+	require.Error(t, err)
 }
 
 func TestResolveMultipleFlagsError(t *testing.T) {
 	root := testdataPath(t)
 	_, err := runResolve(t, root, "--id", "1", "--slug", "x")
-	if err == nil {
-		t.Fatal("expected error when combining --id and --slug")
-	}
+	require.Error(t, err)
 }

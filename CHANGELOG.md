@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.3.22] - 2026-04-25
+
+### Changed
+
+- Add Testify as a direct test dependency and replace hand-written test assertions with `assert` / `require` helpers, reducing test boilerplate without removing coverage ([#255]).
+
 ## [0.3.21] - 2026-04-25
 
 ### Changed
@@ -1054,3 +1060,4 @@ No implementations and no behaviour changes — this PR only establishes the con
 [#167]: https://github.com/dreikanter/notesctl/pull/167
 [#168]: https://github.com/dreikanter/notesctl/pull/168
 [#254]: https://github.com/dreikanter/notesctl/pull/254
+[#255]: https://github.com/dreikanter/notesctl/pull/255

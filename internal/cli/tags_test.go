@@ -6,6 +6,9 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func runTags(t *testing.T, root string, args ...string) (string, error) {
@@ -34,9 +37,7 @@ func writeTagsTestNote(t *testing.T, root, rel, content string) {
 func TestTagsEmptyStore(t *testing.T) {
 	root := t.TempDir()
 	out, err := runTags(t, root)
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
+	require.NoError(t, err)
 	if out != "" {
 		t.Fatalf("expected empty output, got %q", out)
 	}
@@ -50,9 +51,7 @@ func TestTagsMergedSourcesSorted(t *testing.T) {
 		"no fm, just #tea and #work.\n")
 
 	out, err := runTags(t, root)
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
+	require.NoError(t, err)
 	got := strings.Split(out, "\n")
 	want := []string{"coffee", "planning", "tea", "work"}
 	if len(got) != len(want) {
@@ -71,9 +70,7 @@ func TestTagsLowercased(t *testing.T) {
 		"---\ntags: [Work, PLANNING]\n---\n\nbody with #Coffee and #WORK.\n")
 
 	out, err := runTags(t, root)
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
+	require.NoError(t, err)
 	got := strings.Split(out, "\n")
 	want := []string{"coffee", "planning", "work"}
 	if len(got) != len(want) {
@@ -92,12 +89,8 @@ func TestTagsIgnoresCodeBlocks(t *testing.T) {
 		"kept #real\n```\n#should-not-appear\n```\nalso #done\n")
 
 	out, err := runTags(t, root)
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
-	if strings.Contains(out, "should-not-appear") {
-		t.Errorf("expected code-block hashtag to be excluded, got:\n%s", out)
-	}
+	require.NoError(t, err)
+	assert.NotContains(t, out, "should-not-appear")
 	if !strings.Contains(out, "real") || !strings.Contains(out, "done") {
 		t.Errorf("expected real and done tags, got:\n%s", out)
 	}

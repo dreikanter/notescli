@@ -6,6 +6,9 @@ import (
 	"sort"
 	"sync"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestReadID(t *testing.T) {
@@ -15,9 +18,7 @@ func TestReadID(t *testing.T) {
 	}
 
 	idf, err := readID(dir)
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
+	require.NoError(t, err)
 	if idf.LastID != 9218 {
 		t.Errorf("got LastID=%d, want 9218", idf.LastID)
 	}
@@ -26,9 +27,7 @@ func TestReadID(t *testing.T) {
 func TestReadIDMissing(t *testing.T) {
 	dir := t.TempDir()
 	_, err := readID(dir)
-	if err == nil {
-		t.Fatal("expected error for missing id.json")
-	}
+	require.Error(t, err)
 }
 
 func TestReadIDInvalid(t *testing.T) {
@@ -38,9 +37,7 @@ func TestReadIDInvalid(t *testing.T) {
 	}
 
 	_, err := readID(dir)
-	if err == nil {
-		t.Fatal("expected error for invalid JSON")
-	}
+	require.Error(t, err)
 }
 
 func TestNextID(t *testing.T) {
@@ -50,12 +47,8 @@ func TestNextID(t *testing.T) {
 	}
 
 	id, err := NextID(dir)
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
-	if id != 9219 {
-		t.Errorf("got id=%d, want 9219", id)
-	}
+	require.NoError(t, err)
+	assert.Equal(t, 9219, id)
 
 	// Verify file was updated
 	idf, err := readID(dir)
@@ -76,12 +69,8 @@ func TestNextIDConsecutive(t *testing.T) {
 	id1, _ := NextID(dir)
 	id2, _ := NextID(dir)
 
-	if id1 != 101 {
-		t.Errorf("first call: got %d, want 101", id1)
-	}
-	if id2 != 102 {
-		t.Errorf("second call: got %d, want 102", id2)
-	}
+	assert.Equal(t, 101, id1)
+	assert.Equal(t, 102, id2)
 }
 
 func TestNextIDConcurrent(t *testing.T) {
@@ -130,9 +119,7 @@ func TestWriteIDAtomic(t *testing.T) {
 	}
 
 	err := writeID(dir, idFile{LastID: 42})
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
+	require.NoError(t, err)
 
 	// No temp files should remain
 	entries, _ := os.ReadDir(dir)

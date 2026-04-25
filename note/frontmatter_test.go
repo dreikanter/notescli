@@ -2,10 +2,11 @@ package note
 
 import (
 	"fmt"
-	"reflect"
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"gopkg.in/yaml.v3"
 )
 
@@ -73,12 +74,8 @@ func TestParseNoteSuccess(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			f, body, err := ParseNote([]byte(tt.input))
-			if err != nil {
-				t.Fatalf("unexpected error: %v", err)
-			}
-			if !reflect.DeepEqual(f, tt.want) {
-				t.Errorf("frontmatter: got %+v, want %+v", f, tt.want)
-			}
+			require.NoError(t, err)
+			assert.Equal(t, tt.want, f)
 			if string(body) != tt.body {
 				t.Errorf("body: got %q, want %q", string(body), tt.body)
 			}
@@ -111,9 +108,7 @@ func TestParseNoteErrors(t *testing.T) {
 	for _, tt := range cases {
 		t.Run(tt.name, func(t *testing.T) {
 			f, _, err := ParseNote([]byte(tt.input))
-			if err == nil {
-				t.Fatalf("expected error, got f=%+v", f)
-			}
+			require.Error(t, err)
 			if !f.IsZero() {
 				t.Errorf("expected zero frontmatter on error, got %+v", f)
 			}
@@ -126,9 +121,7 @@ func TestParseNoteErrors(t *testing.T) {
 func TestParseNoteErrorStillReturnsBody(t *testing.T) {
 	input := []byte("---\npublic: maybe\n---\n\n# Content\n")
 	_, body, err := ParseNote(input)
-	if err == nil {
-		t.Fatal("expected error")
-	}
+	require.Error(t, err)
 	if string(body) != "# Content\n" {
 		t.Errorf("body = %q, want %q", string(body), "# Content\n")
 	}
@@ -137,9 +130,7 @@ func TestParseNoteErrorStillReturnsBody(t *testing.T) {
 func TestParseNoteBodyIsSliceOfInput(t *testing.T) {
 	input := []byte("---\ntitle: T\n---\n\nhello\n")
 	_, body, err := ParseNote(input)
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
+	require.NoError(t, err)
 	if len(body) == 0 {
 		t.Fatal("body is empty")
 	}
@@ -158,9 +149,7 @@ func TestFormatNoteSnapshotAllFields(t *testing.T) {
 	}
 	want := "---\ntitle: T\nslug: s\ntags:\n    - a\ndescription: D\npublic: true\n---\n\nbody\n"
 	got := string(mustFormatNote(t, f, []byte("body\n")))
-	if got != want {
-		t.Errorf("got:\n%q\nwant:\n%q", got, want)
-	}
+	assert.Equal(t, want, got)
 }
 
 func TestFormatNoteEmptyFrontmatter(t *testing.T) {
@@ -187,9 +176,7 @@ func TestRoundtrip(t *testing.T) {
 			if err != nil {
 				t.Fatalf("parse failed: %v", err)
 			}
-			if !reflect.DeepEqual(gotF, fm) {
-				t.Errorf("frontmatter: got %+v, want %+v", gotF, fm)
-			}
+			assert.Equal(t, fm, gotF)
 			if string(gotBody) != "body\n" {
 				t.Errorf("body: got %q, want %q", string(gotBody), "body\n")
 			}
@@ -237,9 +224,7 @@ func TestStripFrontmatter(t *testing.T) {
 func TestParseNoteCRLFInteriorPreserved(t *testing.T) {
 	input := []byte("---\r\ntitle: T\r\ntags:\r\n  - a\r\n  - b\r\n---\r\n\r\nbody line\r\nsecond\r\n")
 	f, body, err := ParseNote(input)
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
+	require.NoError(t, err)
 	if f.Title != "T" {
 		t.Errorf("Title = %q", f.Title)
 	}
@@ -300,9 +285,7 @@ func TestFormatNoteExtraPreservedInAlphaOrder(t *testing.T) {
 	out := string(mustFormatNote(t, fm, body))
 	// Reserved "title" first; Extra keys alpha-sorted: alpha, featured, zebra.
 	want := "---\ntitle: T\nalpha: 1\nfeatured: true\nzebra: striped\n---\n\nbody\n"
-	if out != want {
-		t.Errorf("FormatNote =\n%q\nwant:\n%q", out, want)
-	}
+	assert.Equal(t, want, out)
 }
 
 func TestFormatNoteEmptyFrontmatterWithExtraOnly(t *testing.T) {
@@ -311,9 +294,7 @@ func TestFormatNoteEmptyFrontmatterWithExtraOnly(t *testing.T) {
 	}}
 	want := "---\nfeatured: true\n---\n\nbody\n"
 	got := string(mustFormatNote(t, fm, []byte("body\n")))
-	if got != want {
-		t.Errorf("got %q, want %q", got, want)
-	}
+	assert.Equal(t, want, got)
 }
 
 func TestIsZeroIncludesExtra(t *testing.T) {
@@ -339,9 +320,7 @@ func TestTypeRoundTrips(t *testing.T) {
 	}
 	out := string(mustFormatNote(t, fm, body))
 	want := "---\ntitle: T\ntype: meeting\n---\n\nbody\n"
-	if out != want {
-		t.Errorf("out = %q, want %q", out, want)
-	}
+	assert.Equal(t, want, out)
 }
 
 func TestTypeFieldOrder(t *testing.T) {
@@ -351,9 +330,7 @@ func TestTypeFieldOrder(t *testing.T) {
 	}
 	got := string(mustFormatNote(t, fm, []byte("body\n")))
 	want := "---\ntitle: T\nslug: s\ntype: meeting\ntags:\n    - a\ndescription: D\npublic: true\n---\n\nbody\n"
-	if got != want {
-		t.Errorf("FormatNote =\n%q\nwant:\n%q", got, want)
-	}
+	assert.Equal(t, want, got)
 }
 
 func TestDateRoundTripDateOnly(t *testing.T) {
@@ -371,9 +348,7 @@ func TestDateRoundTripDateOnly(t *testing.T) {
 	}
 	out := string(mustFormatNote(t, fm, body))
 	wantOut := "---\ntitle: T\ndate: 2026-04-22\n---\n\nbody\n"
-	if out != wantOut {
-		t.Errorf("FormatNote =\n%q\nwant:\n%q", out, wantOut)
-	}
+	assert.Equal(t, wantOut, out)
 }
 
 func TestDateRoundTripRFC3339(t *testing.T) {
@@ -388,9 +363,7 @@ func TestDateRoundTripRFC3339(t *testing.T) {
 	}
 	out := string(mustFormatNote(t, fm, body))
 	wantOut := "---\ntitle: T\ndate: 2026-04-22T15:30:00Z\n---\n\nbody\n"
-	if out != wantOut {
-		t.Errorf("FormatNote =\n%q\nwant:\n%q", out, wantOut)
-	}
+	assert.Equal(t, wantOut, out)
 }
 
 func TestDateFieldOrder(t *testing.T) {
@@ -401,9 +374,7 @@ func TestDateFieldOrder(t *testing.T) {
 	}
 	got := string(mustFormatNote(t, fm, []byte("body\n")))
 	want := "---\ntitle: T\nslug: s\ntype: meeting\ndate: 2026-04-22\ntags:\n    - a\ndescription: D\npublic: true\n---\n\nbody\n"
-	if got != want {
-		t.Errorf("FormatNote =\n%q\nwant:\n%q", got, want)
-	}
+	assert.Equal(t, want, got)
 }
 
 // Migration check: a note whose `date:` previously landed in Extra (because
@@ -429,9 +400,7 @@ func TestDateMigratesFromExtra(t *testing.T) {
 func TestDateInvalidRejected(t *testing.T) {
 	in := []byte("---\ntitle: T\ndate: not-a-date\n---\n\nbody\n")
 	_, _, err := ParseNote(in)
-	if err == nil {
-		t.Fatal("expected error for malformed date")
-	}
+	require.Error(t, err)
 }
 
 func TestAliasesRoundTrip(t *testing.T) {
@@ -448,9 +417,7 @@ func TestAliasesRoundTrip(t *testing.T) {
 	}
 	out := string(mustFormatNote(t, fm, body))
 	want := "---\ntitle: T\naliases:\n    - old-slug\n    - even-older\n---\n\nbody\n"
-	if out != want {
-		t.Errorf("FormatNote =\n%q\nwant:\n%q", out, want)
-	}
+	assert.Equal(t, want, out)
 }
 
 func TestAliasesFieldOrder(t *testing.T) {
@@ -463,9 +430,7 @@ func TestAliasesFieldOrder(t *testing.T) {
 	}
 	got := string(mustFormatNote(t, fm, []byte("body\n")))
 	want := "---\ntitle: T\nslug: s\ntype: meeting\ndate: 2026-04-22\ntags:\n    - a\naliases:\n    - old\ndescription: D\npublic: true\n---\n\nbody\n"
-	if got != want {
-		t.Errorf("FormatNote =\n%q\nwant:\n%q", got, want)
-	}
+	assert.Equal(t, want, got)
 }
 
 // Migration check: a note whose `aliases:` previously landed in Extra now
@@ -478,9 +443,7 @@ func TestAliasesMigratesFromExtra(t *testing.T) {
 		t.Fatalf("ParseNote: %v", err)
 	}
 	want := []string{"prior-slug", "legacy-id"}
-	if !reflect.DeepEqual(fm.Aliases, want) {
-		t.Errorf("Aliases = %v, want %v", fm.Aliases, want)
-	}
+	assert.Equal(t, want, fm.Aliases)
 	if _, ok := fm.Extra["aliases"]; ok {
 		t.Error("aliases key should not be in Extra after migration")
 	}
@@ -492,9 +455,7 @@ func TestAliasesMigratesFromExtra(t *testing.T) {
 func TestAliasesInvalidRejected(t *testing.T) {
 	in := []byte("---\ntitle: T\naliases: not-a-list\n---\n\nbody\n")
 	_, _, err := ParseNote(in)
-	if err == nil {
-		t.Fatal("expected error for non-list aliases")
-	}
+	require.Error(t, err)
 }
 
 func TestRoundtripWithAliases(t *testing.T) {
@@ -511,9 +472,7 @@ func TestRoundtripWithAliases(t *testing.T) {
 			if err != nil {
 				t.Fatalf("parse failed: %v", err)
 			}
-			if !reflect.DeepEqual(gotF.Aliases, fm.Aliases) {
-				t.Errorf("Aliases: got %v, want %v", gotF.Aliases, fm.Aliases)
-			}
+			assert.Equal(t, fm.Aliases, gotF.Aliases)
 			if string(gotBody) != "body\n" {
 				t.Errorf("body: got %q, want %q", string(gotBody), "body\n")
 			}

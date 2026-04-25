@@ -1,8 +1,9 @@
 package note
 
 import (
-	"reflect"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestExtractHashtagsBasic(t *testing.T) {
@@ -22,9 +23,7 @@ func TestExtractHashtagsBasic(t *testing.T) {
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
 			got := ExtractHashtags([]byte(c.in))
-			if !reflect.DeepEqual(got, c.want) {
-				t.Fatalf("got %v, want %v", got, c.want)
-			}
+			assert.Equal(t, c.want, got)
 		})
 	}
 }
@@ -50,9 +49,7 @@ func TestExtractHashtagsNegative(t *testing.T) {
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
 			got := ExtractHashtags([]byte(c.in))
-			if len(got) != 0 {
-				t.Fatalf("expected no tags, got %v", got)
-			}
+			assert.Empty(t, got)
 		})
 	}
 }
@@ -61,44 +58,34 @@ func TestExtractHashtagsInlineCode(t *testing.T) {
 	in := "real #out and `inline #in` and #back"
 	want := []string{"out", "back"}
 	got := ExtractHashtags([]byte(in))
-	if !reflect.DeepEqual(got, want) {
-		t.Fatalf("got %v, want %v", got, want)
-	}
+	assert.Equal(t, want, got)
 }
 
 func TestExtractHashtagsFencedBlock(t *testing.T) {
 	in := "before #a\n```\n#hidden\n#also-hidden\n```\nafter #b\n"
 	want := []string{"a", "b"}
 	got := ExtractHashtags([]byte(in))
-	if !reflect.DeepEqual(got, want) {
-		t.Fatalf("got %v, want %v", got, want)
-	}
+	assert.Equal(t, want, got)
 }
 
 func TestExtractHashtagsFencedBlockWithInfoString(t *testing.T) {
 	in := "top #ok\n```go\n// #comment\n```\nend #done\n"
 	want := []string{"ok", "done"}
 	got := ExtractHashtags([]byte(in))
-	if !reflect.DeepEqual(got, want) {
-		t.Fatalf("got %v, want %v", got, want)
-	}
+	assert.Equal(t, want, got)
 }
 
 func TestExtractHashtagsCRLF(t *testing.T) {
 	in := "before #a\r\n```\r\n#hidden\r\n```\r\nafter #b\r\n"
 	want := []string{"a", "b"}
 	got := ExtractHashtags([]byte(in))
-	if !reflect.DeepEqual(got, want) {
-		t.Fatalf("got %v, want %v", got, want)
-	}
+	assert.Equal(t, want, got)
 }
 
 func TestExtractHashtagsBareHash(t *testing.T) {
 	cases := []string{"#", "text # and #", "line #\nnext #"}
 	for _, in := range cases {
 		got := ExtractHashtags([]byte(in))
-		if len(got) != 0 {
-			t.Errorf("input %q: expected no tags, got %v", in, got)
-		}
+		assert.Empty(t, got)
 	}
 }

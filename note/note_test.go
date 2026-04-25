@@ -2,6 +2,8 @@ package note
 
 import (
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestParseFilename(t *testing.T) {
@@ -236,7 +238,5 @@ func TestFilename(t *testing.T) {
 func TestDirPath(t *testing.T) {
 	got := DirPath("/archive", "20260312")
 	want := "/archive/2026/03"
-	if got != want {
-		t.Errorf("got %q, want %q", got, want)
-	}
+	assert.Equal(t, want, got)
 }

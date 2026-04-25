@@ -6,6 +6,9 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func runRm(t *testing.T, root string, args ...string) (string, error) {
@@ -27,13 +30,9 @@ func TestRmByID(t *testing.T) {
 	target := filepath.Join(root, "2026/01/20260106_8823_999.md")
 
 	out, err := runRm(t, root, "8823")
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
+	require.NoError(t, err)
 
-	if out != target {
-		t.Errorf("got %q, want %q", out, target)
-	}
+	assert.Equal(t, target, out)
 
 	if _, err := os.Stat(target); !os.IsNotExist(err) {
 		t.Error("file should have been deleted")
@@ -43,18 +42,12 @@ func TestRmByID(t *testing.T) {
 func TestRmNonExistentErrors(t *testing.T) {
 	root := copyTestdata(t)
 	_, err := runRm(t, root, "9999")
-	if err == nil {
-		t.Fatal("expected error for non-existent id, got nil")
-	}
-	if !strings.Contains(err.Error(), "not found") {
-		t.Errorf("error message should mention 'not found', got: %v", err)
-	}
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "not found")
 }
 
 func TestRmNonIntegerArgErrors(t *testing.T) {
 	root := copyTestdata(t)
 	_, err := runRm(t, root, "meeting")
-	if err == nil {
-		t.Fatal("expected error for non-integer id, got nil")
-	}
+	require.Error(t, err)
 }

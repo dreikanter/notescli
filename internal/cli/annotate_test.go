@@ -10,6 +10,8 @@ import (
 	"testing"
 
 	"github.com/dreikanter/notesctl/note"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func runAnnotate(t *testing.T, root string, args ...string) (string, error) {
@@ -142,9 +144,7 @@ const annotateSampleEnvelope = `{
 
 func TestParseAnnotationHappyPath(t *testing.T) {
 	res, err := parseAnnotation([]byte(annotateSampleEnvelope))
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
+	require.NoError(t, err)
 	if res.Title != "Weekly sync" {
 		t.Errorf("title = %q, want %q", res.Title, "Weekly sync")
 	}
@@ -158,31 +158,21 @@ func TestParseAnnotationHappyPath(t *testing.T) {
 
 func TestParseAnnotationInvalidEnvelope(t *testing.T) {
 	_, err := parseAnnotation([]byte("not json"))
-	if err == nil {
-		t.Fatal("expected error for invalid envelope")
-	}
+	require.Error(t, err)
 }
 
 func TestParseAnnotationMissingStructuredOutput(t *testing.T) {
 	bad := `{"type":"result","subtype":"success","is_error":false,"result":"Metadata generated."}`
 	_, err := parseAnnotation([]byte(bad))
-	if err == nil {
-		t.Fatal("expected error when structured_output is absent")
-	}
-	if !strings.Contains(err.Error(), "structured_output") {
-		t.Errorf("error should name structured_output: %v", err)
-	}
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "structured_output")
 }
 
 func TestParseAnnotationErrorFlag(t *testing.T) {
 	bad := `{"type":"result","subtype":"error","is_error":true,"result":"something broke"}`
 	_, err := parseAnnotation([]byte(bad))
-	if err == nil {
-		t.Fatal("expected error when is_error=true")
-	}
-	if !strings.Contains(err.Error(), "something broke") {
-		t.Errorf("error message should include server-side message: %v", err)
-	}
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "something broke")
 }
 
 func TestMergeAnnotationFillsEmpty(t *testing.T) {
@@ -276,14 +266,10 @@ func TestAnnotateFillsEmptyFields(t *testing.T) {
 	withClaudeBinary(t, writeFakeClaude(t, annotateSampleEnvelope))
 
 	out, err := runAnnotate(t, root, ref)
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
+	require.NoError(t, err)
 
 	want := filepath.Join(root, "2026/04/20260418_9000.md")
-	if out != want {
-		t.Errorf("stdout path = %q, want %q", out, want)
-	}
+	assert.Equal(t, want, out)
 
 	data, err := os.ReadFile(want)
 	if err != nil {
@@ -295,13 +281,9 @@ func TestAnnotateFillsEmptyFields(t *testing.T) {
 		"description: Notes from the weekly team sync.",
 		"tags:\n    - meeting\n    - weekly\n",
 	} {
-		if !strings.Contains(content, s) {
-			t.Errorf("expected %q in file, got:\n%s", s, content)
-		}
+		assert.Contains(t, content, s)
 	}
-	if !strings.Contains(content, "# Weekly sync\n\nDiscussed Q2 roadmap") {
-		t.Errorf("body missing or modified, got:\n%s", content)
-	}
+	assert.Contains(t, content, "# Weekly sync\n\nDiscussed Q2 roadmap")
 }
 
 // noteWithFrontmatter writes a note with the given frontmatter + body and returns (root, ref).
@@ -337,14 +319,10 @@ func TestAnnotateNoOpWhenAllFieldsFilled(t *testing.T) {
 	withClaudeBinary(t, fakeClaudeSentinel(t))
 
 	out, err := runAnnotate(t, root, ref)
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
+	require.NoError(t, err)
 
 	want := filepath.Join(root, "2026/04/20260418_9001.md")
-	if out != want {
-		t.Errorf("stdout = %q, want %q", out, want)
-	}
+	assert.Equal(t, want, out)
 
 	data, _ := os.ReadFile(want)
 	if string(data) != fm+"body content" {
@@ -358,12 +336,8 @@ func TestAnnotateNoBodyErrors(t *testing.T) {
 	withClaudeBinary(t, fakeClaudeSentinel(t))
 
 	_, err := runAnnotate(t, root, ref)
-	if err == nil {
-		t.Fatal("expected error for empty body")
-	}
-	if !strings.Contains(err.Error(), "no body content") {
-		t.Errorf("unexpected error: %v", err)
-	}
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "no body content")
 }
 
 func TestAnnotateClaudeNotFound(t *testing.T) {
@@ -371,12 +345,8 @@ func TestAnnotateClaudeNotFound(t *testing.T) {
 	withClaudeBinary(t, filepath.Join(t.TempDir(), "does-not-exist"))
 
 	_, err := runAnnotate(t, root, ref)
-	if err == nil {
-		t.Fatal("expected error when claude binary missing")
-	}
-	if !strings.Contains(err.Error(), "not found") {
-		t.Errorf("unexpected error: %v", err)
-	}
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "not found")
 }
 
 func TestAnnotateTimeout(t *testing.T) {
@@ -393,9 +363,7 @@ func TestAnnotateTimeout(t *testing.T) {
 	if err == nil {
 		t.Fatal("expected timeout error")
 	}
-	if !strings.Contains(err.Error(), "timed out") {
-		t.Errorf("expected timeout message, got: %v", err)
-	}
+	assert.Contains(t, err.Error(), "timed out")
 }
 
 // --timeout 0 disables the deadline, so a fake claude that sleeps briefly
@@ -427,12 +395,8 @@ func TestAnnotateClaudeNonZeroExit(t *testing.T) {
 	withClaudeBinary(t, script)
 
 	_, err := runAnnotate(t, root, ref)
-	if err == nil {
-		t.Fatal("expected error on non-zero exit")
-	}
-	if !strings.Contains(err.Error(), "bad things happened") {
-		t.Errorf("stderr not surfaced: %v", err)
-	}
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "bad things happened")
 
 	// File must be untouched.
 	data, _ := os.ReadFile(filepath.Join(root, "2026/04/20260418_9000.md"))
@@ -456,16 +420,10 @@ func TestAnnotateClaudeEmptyStderrIncludesStdout(t *testing.T) {
 	withClaudeBinary(t, script)
 
 	_, err := runAnnotate(t, root, ref)
-	if err == nil {
-		t.Fatal("expected error on non-zero exit")
-	}
+	require.Error(t, err)
 	msg := err.Error()
-	if !strings.Contains(msg, "exit 3") {
-		t.Errorf("expected exit code in error, got: %v", err)
-	}
-	if !strings.Contains(msg, "partial output on stdout") {
-		t.Errorf("expected stdout snippet in error, got: %v", err)
-	}
+	assert.Contains(t, msg, "exit 3")
+	assert.Contains(t, msg, "partial output on stdout")
 }
 
 func TestAnnotateMalformedJSON(t *testing.T) {
@@ -473,12 +431,8 @@ func TestAnnotateMalformedJSON(t *testing.T) {
 	withClaudeBinary(t, writeFakeClaude(t, `not valid json`))
 
 	_, err := runAnnotate(t, root, ref)
-	if err == nil {
-		t.Fatal("expected error for malformed JSON")
-	}
-	if !strings.Contains(err.Error(), "claude response") {
-		t.Errorf("unexpected error: %v", err)
-	}
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "claude response")
 
 	data, _ := os.ReadFile(filepath.Join(root, "2026/04/20260418_9000.md"))
 	if string(data) != "body text here" {
@@ -512,9 +466,7 @@ func TestAnnotateModelFlagPropagates(t *testing.T) {
 	withClaudeBinary(t, writeFakeClaudeRecording(t, annotateSampleEnvelope, argsPath))
 
 	_, err := runAnnotate(t, root, ref, "--model", "claude-sonnet-4-6")
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
+	require.NoError(t, err)
 
 	data, err := os.ReadFile(argsPath)
 	if err != nil {
@@ -581,9 +533,7 @@ func TestAnnotatePreservesBody(t *testing.T) {
 		t.Fatalf("could not find frontmatter terminator in:\n%s", string(data))
 	}
 	got := string(data)[idx+len("\n---\n\n"):]
-	if got != body {
-		t.Errorf("body modified.\ngot:\n%q\nwant:\n%q", got, body)
-	}
+	assert.Equal(t, body, got)
 }
 
 func TestAnnotateMaxCharsTruncates(t *testing.T) {
@@ -593,9 +543,7 @@ func TestAnnotateMaxCharsTruncates(t *testing.T) {
 	withClaudeBinary(t, writeFakeClaudeRecording(t, annotateSampleEnvelope, argsPath))
 
 	_, err := runAnnotate(t, root, ref, "--max-chars", "100")
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
+	require.NoError(t, err)
 
 	data, err := os.ReadFile(argsPath)
 	if err != nil {
@@ -616,9 +564,7 @@ func TestAnnotateMaxCharsZeroLeavesBodyUntouched(t *testing.T) {
 	withClaudeBinary(t, writeFakeClaudeRecording(t, annotateSampleEnvelope, argsPath))
 
 	_, err := runAnnotate(t, root, ref)
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
+	require.NoError(t, err)
 
 	data, err := os.ReadFile(argsPath)
 	if err != nil {

@@ -10,6 +10,8 @@ import (
 	"time"
 
 	"github.com/dreikanter/notesctl/note"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func runNewTodo(t *testing.T, root string, args ...string) (string, error) {
@@ -38,17 +40,11 @@ func emptyNotesRoot(t *testing.T) string {
 func TestNewTodoCreatesFromPrevious(t *testing.T) {
 	root := copyTestdata(t)
 	out, err := runNewTodo(t, root)
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
+	require.NoError(t, err)
 
 	today := time.Now().Format(note.DateFormat)
-	if !strings.Contains(filepath.Base(out), today) {
-		t.Errorf("expected today's date %s in filename, got %q", today, filepath.Base(out))
-	}
-	if !strings.Contains(filepath.Base(out), ".todo.") {
-		t.Errorf("expected .todo. in filename, got %q", filepath.Base(out))
-	}
+	assert.Contains(t, filepath.Base(out), today)
+	assert.Contains(t, filepath.Base(out), ".todo.")
 	if _, err := os.Stat(out); err != nil {
 		t.Errorf("created file does not exist: %v", err)
 	}
@@ -67,9 +63,7 @@ func TestNewTodoReturnsExistingToday(t *testing.T) {
 		t.Fatalf("second call unexpected error: %v", err)
 	}
 
-	if first != second {
-		t.Errorf("expected same path on second call, got %q then %q", first, second)
-	}
+	assert.Equal(t, second, first)
 }
 
 func TestNewTodoNoPreviousCreatesEmpty(t *testing.T) {
@@ -89,24 +83,18 @@ func TestNewTodoNoPreviousCreatesEmpty(t *testing.T) {
 		t.Fatalf("cannot read created file: %v", err)
 	}
 	content := string(data)
-	if strings.Contains(content, "[ ]") {
-		t.Errorf("expected no tasks in empty todo, got:\n%s", content)
-	}
+	assert.NotContains(t, content, "[ ]")
 }
 
 func TestNewTodoWritesTypeFrontmatter(t *testing.T) {
 	root := copyTestdata(t)
 	out, err := runNewTodo(t, root)
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
+	require.NoError(t, err)
 	data, err := os.ReadFile(out)
 	if err != nil {
 		t.Fatalf("read: %v", err)
 	}
-	if !strings.Contains(string(data), "type: todo") {
-		t.Errorf("expected type: todo in frontmatter, got:\n%s", string(data))
-	}
+	assert.Contains(t, string(data), "type: todo")
 }
 
 func TestNewTodoRollsOverIncompleteTasks(t *testing.T) {
@@ -130,18 +118,12 @@ func TestNewTodoRollsOverIncompleteTasks(t *testing.T) {
 	}
 
 	out, err := runNewTodo(t, root)
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
+	require.NoError(t, err)
 
 	newData, _ := os.ReadFile(out)
 	newContent := string(newData)
-	if !strings.Contains(newContent, "pending task") {
-		t.Errorf("expected pending task carried over, got:\n%s", newContent)
-	}
-	if strings.Contains(newContent, "finished task") {
-		t.Errorf("completed task should not be carried over, got:\n%s", newContent)
-	}
+	assert.Contains(t, newContent, "pending task")
+	assert.NotContains(t, newContent, "finished task")
 
 	prevData, _ := os.ReadFile(prevPath)
 	if !strings.Contains(string(prevData), "(moved)") {

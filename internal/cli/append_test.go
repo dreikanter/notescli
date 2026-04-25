@@ -6,6 +6,9 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 // copyTestdata copies testdata into a temporary directory so tests
@@ -54,14 +57,10 @@ func runAppend(t *testing.T, root string, stdin string, args ...string) (string,
 func TestAppendByID(t *testing.T) {
 	root := copyTestdata(t)
 	out, err := runAppend(t, root, "appended text", "8823")
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
+	require.NoError(t, err)
 
 	want := filepath.Join(root, "2026/01/20260106_8823_999.md")
-	if out != want {
-		t.Errorf("got output %q, want %q", out, want)
-	}
+	assert.Equal(t, want, out)
 
 	data, _ := os.ReadFile(want)
 	if !strings.Contains(string(data), "appended text") {
@@ -72,20 +71,14 @@ func TestAppendByID(t *testing.T) {
 func TestAppendNonIntegerArgErrors(t *testing.T) {
 	root := copyTestdata(t)
 	_, err := runAppend(t, root, "text", "meeting")
-	if err == nil {
-		t.Fatal("expected error for non-integer id, got nil")
-	}
+	require.Error(t, err)
 }
 
 func TestAppendNonExistentNote(t *testing.T) {
 	root := copyTestdata(t)
 	_, err := runAppend(t, root, "text", "9999")
-	if err == nil {
-		t.Fatal("expected error for non-existent note, got nil")
-	}
-	if !strings.Contains(err.Error(), "not found") {
-		t.Errorf("expected 'not found', got: %v", err)
-	}
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "not found")
 }
 
 func TestAppendEmptyStdin(t *testing.T) {
@@ -94,9 +87,7 @@ func TestAppendEmptyStdin(t *testing.T) {
 	before, _ := os.ReadFile(target)
 
 	_, err := runAppend(t, root, "", "8823")
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
+	require.NoError(t, err)
 
 	after, _ := os.ReadFile(target)
 	if string(before) != string(after) {
@@ -110,9 +101,7 @@ func TestAppendWhitespaceOnlyStdin(t *testing.T) {
 	before, _ := os.ReadFile(target)
 
 	_, err := runAppend(t, root, "   \n\n  \t  ", "8823")
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
+	require.NoError(t, err)
 
 	after, _ := os.ReadFile(target)
 	if string(before) != string(after) {
@@ -140,15 +129,11 @@ func TestAppendMultipleProducesSeparation(t *testing.T) {
 	idx1 := strings.Index(content, "first fragment")
 	idx2 := strings.Index(content, "second fragment")
 	between := content[idx1+len("first fragment") : idx2]
-	if !strings.Contains(between, "\n\n") {
-		t.Errorf("fragments not separated by blank line, got between: %q", between)
-	}
+	assert.Contains(t, between, "\n\n")
 }
 
 func TestAppendNoArgErrors(t *testing.T) {
 	root := copyTestdata(t)
 	_, err := runAppend(t, root, "text")
-	if err == nil {
-		t.Fatal("expected error when no target specified, got nil")
-	}
+	require.Error(t, err)
 }

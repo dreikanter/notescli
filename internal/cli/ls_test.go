@@ -4,6 +4,8 @@ import (
 	"bytes"
 	"strings"
 	"testing"
+
+	"github.com/stretchr/testify/require"
 )
 
 func runLs(t *testing.T, args ...string) (string, error) {
@@ -24,9 +26,7 @@ func runLs(t *testing.T, args ...string) (string, error) {
 
 func TestLsNoArgs(t *testing.T) {
 	out, err := runLs(t)
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
+	require.NoError(t, err)
 
 	lines := strings.Split(out, "\n")
 	if len(lines) != 4 {
@@ -41,9 +41,7 @@ func TestLsNoArgs(t *testing.T) {
 
 func TestLsWithTag(t *testing.T) {
 	out, err := runLs(t, "--tag", "work")
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
+	require.NoError(t, err)
 
 	lines := strings.Split(out, "\n")
 	if len(lines) != 3 {
@@ -53,9 +51,7 @@ func TestLsWithTag(t *testing.T) {
 
 func TestLsWithTagMixedCase(t *testing.T) {
 	out, err := runLs(t, "--tag", "WORK")
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
+	require.NoError(t, err)
 
 	lines := strings.Split(out, "\n")
 	if len(lines) != 3 {
@@ -65,9 +61,7 @@ func TestLsWithTagMixedCase(t *testing.T) {
 
 func TestLsTagNoMatch(t *testing.T) {
 	out, err := runLs(t, "--tag", "nonexistent")
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
+	require.NoError(t, err)
 
 	if out != "" {
 		t.Errorf("expected empty output, got %q", out)
@@ -76,9 +70,7 @@ func TestLsTagNoMatch(t *testing.T) {
 
 func TestLsTagAndType(t *testing.T) {
 	out, err := runLs(t, "--tag", "work", "--type", "todo")
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
+	require.NoError(t, err)
 
 	lines := strings.Split(out, "\n")
 	if len(lines) != 1 {
@@ -91,9 +83,7 @@ func TestLsTagAndType(t *testing.T) {
 
 func TestLsTagAndLimit(t *testing.T) {
 	out, err := runLs(t, "--tag", "work", "--limit", "1")
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
+	require.NoError(t, err)
 
 	lines := strings.Split(out, "\n")
 	if len(lines) != 1 {
@@ -103,9 +93,7 @@ func TestLsTagAndLimit(t *testing.T) {
 
 func TestLsMultipleTagsAND(t *testing.T) {
 	out, err := runLs(t, "--tag", "work", "--tag", "planning")
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
+	require.NoError(t, err)
 
 	lines := strings.Split(out, "\n")
 	if len(lines) != 1 {
@@ -118,9 +106,7 @@ func TestLsMultipleTagsAND(t *testing.T) {
 
 func TestLsMultipleTagsCommaSeparated(t *testing.T) {
 	out, err := runLs(t, "--tag", "work,meeting")
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
+	require.NoError(t, err)
 
 	lines := strings.Split(out, "\n")
 	if len(lines) != 1 {
@@ -133,9 +119,7 @@ func TestLsMultipleTagsCommaSeparated(t *testing.T) {
 
 func TestLsTagAndTypeNoOverlap(t *testing.T) {
 	out, err := runLs(t, "--tag", "meeting", "--type", "todo")
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
+	require.NoError(t, err)
 
 	if out != "" {
 		t.Errorf("expected empty output (no todo with meeting tag), got %q", out)
@@ -145,9 +129,7 @@ func TestLsTagAndTypeNoOverlap(t *testing.T) {
 func TestLsToday(t *testing.T) {
 	// testdata notes are all in the past; --today should return nothing
 	out, err := runLs(t, "--today")
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
+	require.NoError(t, err)
 	if out != "" {
 		t.Errorf("expected empty output for --today on past testdata, got %q", out)
 	}
@@ -155,9 +137,7 @@ func TestLsToday(t *testing.T) {
 
 func TestLsUnlimitedByDefault(t *testing.T) {
 	out, err := runLs(t)
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
+	require.NoError(t, err)
 
 	lines := strings.Split(out, "\n")
 	if len(lines) != 4 {
@@ -167,9 +147,7 @@ func TestLsUnlimitedByDefault(t *testing.T) {
 
 func TestLsOutputsIntegerIDs(t *testing.T) {
 	out, err := runLs(t)
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
+	require.NoError(t, err)
 
 	for _, line := range strings.Split(out, "\n") {
 		if line == "" {
@@ -183,9 +161,7 @@ func TestLsOutputsIntegerIDs(t *testing.T) {
 
 func TestLsSlug(t *testing.T) {
 	out, err := runLs(t, "--slug", "meeting")
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
+	require.NoError(t, err)
 
 	lines := strings.Split(out, "\n")
 	if len(lines) != 1 {

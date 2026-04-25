@@ -3,6 +3,9 @@ package note
 import (
 	"strings"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestParseTask(t *testing.T) {
@@ -33,23 +36,13 @@ func TestParseTask(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			task := ParseTask(tt.line, 0)
 			if tt.wantNil {
-				if task != nil {
-					t.Errorf("expected nil for %q, got %+v", tt.line, task)
-				}
+				assert.Nil(t, task)
 				return
 			}
-			if task == nil {
-				t.Fatalf("expected non-nil for %q", tt.line)
-			}
-			if task.Done != tt.done {
-				t.Errorf("done: got %v, want %v", task.Done, tt.done)
-			}
-			if task.IsDaily != tt.isDaily {
-				t.Errorf("isDaily: got %v, want %v", task.IsDaily, tt.isDaily)
-			}
-			if task.IsMoved != tt.isMoved {
-				t.Errorf("isMoved: got %v, want %v", task.IsMoved, tt.isMoved)
-			}
+			require.NotNil(t, task)
+			assert.Equal(t, tt.done, task.Done)
+			assert.Equal(t, tt.isDaily, task.IsDaily)
+			assert.Equal(t, tt.isMoved, task.IsMoved)
 		})
 	}
 }
@@ -82,9 +75,7 @@ func TestReassembled(t *testing.T) {
 	}
 	got := task.Reassembled("x")
 	want := "  - [x] Some task"
-	if got != want {
-		t.Errorf("got %q, want %q", got, want)
-	}
+	assert.Equal(t, want, got)
 }
 
 func TestWithTag(t *testing.T) {
@@ -169,15 +160,11 @@ func TestRolloverTasksMovedFormat(t *testing.T) {
 	for _, line := range result.UpdatedLines {
 		if strings.Contains(line, "Buy milk") && strings.Contains(line, "(moved)") {
 			want := "- [ ] (moved) Buy milk"
-			if line != want {
-				t.Errorf("got %q, want %q", line, want)
-			}
+			assert.Equal(t, want, line)
 		}
 		if strings.Contains(line, "Secret task") && strings.Contains(line, "(moved)") {
 			want := "- [ ] (moved) (private) Secret task"
-			if line != want {
-				t.Errorf("got %q, want %q", line, want)
-			}
+			assert.Equal(t, want, line)
 		}
 	}
 }
@@ -194,9 +181,7 @@ func TestRolloverTasksSkipsMoved(t *testing.T) {
 	if len(result.CarriedTasks) != 1 {
 		t.Fatalf("carried %d tasks, want 1", len(result.CarriedTasks))
 	}
-	if !strings.Contains(result.CarriedTasks[0].Text, "Fresh task") {
-		t.Errorf("expected Fresh task, got: %s", result.CarriedTasks[0].Text)
-	}
+	assert.Contains(t, result.CarriedTasks[0].Text, "Fresh task")
 
 	// Already-moved task should not be re-tagged
 	for _, line := range result.UpdatedLines {
@@ -265,9 +250,7 @@ func TestFormatTodoContent(t *testing.T) {
 		t.Error("expected Task two with reset marker")
 	}
 	// Tasks separated by blank lines
-	if !strings.Contains(content, "- [ ] Task one\n\n- [ ] Task two") {
-		t.Errorf("tasks should be separated by blank lines, got:\n%s", content)
-	}
+	assert.Contains(t, content, "- [ ] Task one\n\n- [ ] Task two")
 }
 
 func TestFormatTodoContentEmpty(t *testing.T) {

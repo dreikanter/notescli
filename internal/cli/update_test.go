@@ -6,6 +6,9 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func runUpdate(t *testing.T, root string, args ...string) (string, error) {
@@ -26,15 +29,11 @@ func runUpdate(t *testing.T, root string, args ...string) (string, error) {
 func TestUpdateTagsByID(t *testing.T) {
 	root := copyTestdata(t)
 	out, err := runUpdate(t, root, "8823", "--tag", "new1", "--tag", "new2")
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
+	require.NoError(t, err)
 
 	data, _ := os.ReadFile(out)
 	content := string(data)
-	if !strings.Contains(content, "tags:\n    - new1\n    - new2\n") {
-		t.Errorf("expected updated tags in frontmatter, got:\n%s", content)
-	}
+	assert.Contains(t, content, "tags:\n    - new1\n    - new2\n")
 	if strings.Contains(content, "- work") {
 		t.Error("old tags should be gone")
 	}
@@ -43,14 +42,10 @@ func TestUpdateTagsByID(t *testing.T) {
 func TestUpdateNoTags(t *testing.T) {
 	root := copyTestdata(t)
 	out, err := runUpdate(t, root, "8823", "--no-tags")
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
+	require.NoError(t, err)
 
 	data, _ := os.ReadFile(out)
-	if strings.Contains(string(data), "tags:") {
-		t.Errorf("expected no tags line in frontmatter, got:\n%s", string(data))
-	}
+	assert.NotContains(t, string(data), "tags:")
 }
 
 // TestUpdateSlugRenamesFile: --slug updates frontmatter AND renames the file.
@@ -59,13 +54,9 @@ func TestUpdateSlugRenamesFile(t *testing.T) {
 	origPath := filepath.Join(root, "2026/01/20260106_8823_999.md")
 
 	out, err := runUpdate(t, root, "8823", "--slug", "renamed")
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
+	require.NoError(t, err)
 	want := filepath.Join(root, "2026/01/20260106_8823_renamed.md")
-	if out != want {
-		t.Errorf("got path %q, want %q", out, want)
-	}
+	assert.Equal(t, want, out)
 	if _, err := os.Stat(want); err != nil {
 		t.Errorf("new file does not exist: %v", err)
 	}
@@ -74,22 +65,16 @@ func TestUpdateSlugRenamesFile(t *testing.T) {
 	}
 
 	data, _ := os.ReadFile(want)
-	if !strings.Contains(string(data), "slug: renamed") {
-		t.Errorf("expected slug in frontmatter, got:\n%s", string(data))
-	}
+	assert.Contains(t, string(data), "slug: renamed")
 }
 
 func TestUpdateNoSlugRenamesFile(t *testing.T) {
 	root := copyTestdata(t)
 
 	out, err := runUpdate(t, root, "8818", "--no-slug")
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
+	require.NoError(t, err)
 	want := filepath.Join(root, "2026/01/20260104_8818.md")
-	if out != want {
-		t.Errorf("got path %q, want %q", out, want)
-	}
+	assert.Equal(t, want, out)
 	if _, err := os.Stat(filepath.Join(root, "2026/01/20260104_8818_meeting.md")); !os.IsNotExist(err) {
 		t.Errorf("old slugged file should be gone, err=%v", err)
 	}
@@ -100,33 +85,23 @@ func TestUpdateTypeRenamesFile(t *testing.T) {
 	root := copyTestdata(t)
 
 	out, err := runUpdate(t, root, "8823", "--type", "todo")
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
+	require.NoError(t, err)
 	want := filepath.Join(root, "2026/01/20260106_8823_999.todo.md")
-	if out != want {
-		t.Errorf("got path %q, want %q", out, want)
-	}
+	assert.Equal(t, want, out)
 	if _, err := os.Stat(want); err != nil {
 		t.Errorf("new file missing: %v", err)
 	}
 	data, _ := os.ReadFile(want)
-	if !strings.Contains(string(data), "type: todo") {
-		t.Errorf("expected type in frontmatter, got:\n%s", string(data))
-	}
+	assert.Contains(t, string(data), "type: todo")
 }
 
 func TestUpdateNoTypeRenamesFile(t *testing.T) {
 	root := copyTestdata(t)
 
 	out, err := runUpdate(t, root, "8814", "--no-type")
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
+	require.NoError(t, err)
 	want := filepath.Join(root, "2026/01/20260102_8814.md")
-	if out != want {
-		t.Errorf("got path %q, want %q", out, want)
-	}
+	assert.Equal(t, want, out)
 	if _, err := os.Stat(filepath.Join(root, "2026/01/20260102_8814.todo.md")); !os.IsNotExist(err) {
 		t.Errorf("old typed file should be gone, err=%v", err)
 	}
@@ -136,13 +111,9 @@ func TestUpdateDateMovesFile(t *testing.T) {
 	root := copyTestdata(t)
 
 	out, err := runUpdate(t, root, "8823", "--date", "20260301")
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
+	require.NoError(t, err)
 	want := filepath.Join(root, "2026/03/20260301_8823_999.md")
-	if out != want {
-		t.Errorf("got path %q, want %q", out, want)
-	}
+	assert.Equal(t, want, out)
 	if _, err := os.Stat(want); err != nil {
 		t.Errorf("new file missing: %v", err)
 	}
@@ -154,21 +125,15 @@ func TestUpdateDateMovesFile(t *testing.T) {
 func TestUpdateDateInvalidFormat(t *testing.T) {
 	root := copyTestdata(t)
 	_, err := runUpdate(t, root, "8823", "--date", "2026-03-01")
-	if err == nil {
-		t.Fatal("expected error for invalid date format")
-	}
+	require.Error(t, err)
 }
 
 func TestUpdateTitle(t *testing.T) {
 	root := copyTestdata(t)
 	out, err := runUpdate(t, root, "8823", "--title", "My Title")
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
+	require.NoError(t, err)
 	data, _ := os.ReadFile(out)
-	if !strings.Contains(string(data), "title: My Title") {
-		t.Errorf("expected title in frontmatter, got:\n%s", string(data))
-	}
+	assert.Contains(t, string(data), "title: My Title")
 }
 
 func TestUpdateClearTitle(t *testing.T) {
@@ -181,96 +146,68 @@ func TestUpdateClearTitle(t *testing.T) {
 		t.Fatalf("clear: %v", err)
 	}
 	data, _ := os.ReadFile(out)
-	if strings.Contains(string(data), "title:") {
-		t.Errorf("title should be cleared, got:\n%s", string(data))
-	}
+	assert.NotContains(t, string(data), "title:")
 }
 
 func TestUpdateDescription(t *testing.T) {
 	root := copyTestdata(t)
 	out, err := runUpdate(t, root, "8823", "--description", "Some desc")
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
+	require.NoError(t, err)
 	data, _ := os.ReadFile(out)
-	if !strings.Contains(string(data), "description: Some desc") {
-		t.Errorf("expected description in frontmatter, got:\n%s", string(data))
-	}
+	assert.Contains(t, string(data), "description: Some desc")
 }
 
 func TestUpdateNoFlagsErrors(t *testing.T) {
 	root := copyTestdata(t)
 	_, err := runUpdate(t, root, "8823")
-	if err == nil {
-		t.Fatal("expected error when no update flags given")
-	}
+	require.Error(t, err)
 }
 
 func TestUpdateNonExistentNoteErrors(t *testing.T) {
 	root := copyTestdata(t)
 	_, err := runUpdate(t, root, "9999", "--tag", "x")
-	if err == nil {
-		t.Fatal("expected error for non-existent id")
-	}
-	if !strings.Contains(err.Error(), "not found") {
-		t.Errorf("expected 'not found' in error, got: %v", err)
-	}
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "not found")
 }
 
 func TestUpdateNonIntegerArgErrors(t *testing.T) {
 	root := copyTestdata(t)
 	_, err := runUpdate(t, root, "meeting", "--tag", "x")
-	if err == nil {
-		t.Fatal("expected error for non-integer id")
-	}
+	require.Error(t, err)
 }
 
 func TestUpdateSlugAndNoSlugConflict(t *testing.T) {
 	root := copyTestdata(t)
 	_, err := runUpdate(t, root, "8818", "--slug", "other", "--no-slug")
-	if err == nil {
-		t.Fatal("expected error when both --slug and --no-slug are set")
-	}
+	require.Error(t, err)
 }
 
 func TestUpdateTagAndNoTagsConflict(t *testing.T) {
 	root := copyTestdata(t)
 	_, err := runUpdate(t, root, "8823", "--tag", "foo", "--no-tags")
-	if err == nil {
-		t.Fatal("expected error when both --tag and --no-tags are set")
-	}
+	require.Error(t, err)
 }
 
 func TestUpdateTypeAndNoTypeConflict(t *testing.T) {
 	root := copyTestdata(t)
 	_, err := runUpdate(t, root, "8814", "--type", "backlog", "--no-type")
-	if err == nil {
-		t.Fatal("expected error when both --type and --no-type are set")
-	}
+	require.Error(t, err)
 }
 
 func TestUpdateBodyPreserved(t *testing.T) {
 	root := copyTestdata(t)
 	out, err := runUpdate(t, root, "8823", "--tag", "updated")
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
+	require.NoError(t, err)
 	data, _ := os.ReadFile(out)
-	if !strings.Contains(string(data), "# Plain note") {
-		t.Errorf("body content missing, got:\n%s", string(data))
-	}
+	assert.Contains(t, string(data), "# Plain note")
 }
 
 func TestUpdatePublicSetsPublicField(t *testing.T) {
 	root := copyTestdata(t)
 	out, err := runUpdate(t, root, "8823", "--public")
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
+	require.NoError(t, err)
 	data, _ := os.ReadFile(out)
-	if !strings.Contains(string(data), "public: true") {
-		t.Errorf("expected public: true, got:\n%s", string(data))
-	}
+	assert.Contains(t, string(data), "public: true")
 }
 
 func TestUpdatePrivateRemovesPublicField(t *testing.T) {
@@ -279,27 +216,19 @@ func TestUpdatePrivateRemovesPublicField(t *testing.T) {
 		t.Fatalf("pre-set: %v", err)
 	}
 	out, err := runUpdate(t, root, "8823", "--private")
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
+	require.NoError(t, err)
 	data, _ := os.ReadFile(out)
-	if strings.Contains(string(data), "public:") {
-		t.Errorf("expected no public field, got:\n%s", string(data))
-	}
+	assert.NotContains(t, string(data), "public:")
 }
 
 func TestUpdatePublicAndPrivateConflict(t *testing.T) {
 	root := copyTestdata(t)
 	_, err := runUpdate(t, root, "8823", "--public", "--private")
-	if err == nil {
-		t.Fatal("expected error when both --public and --private are set")
-	}
+	require.Error(t, err)
 }
 
 func TestUpdateAllDigitSlugErrors(t *testing.T) {
 	root := copyTestdata(t)
 	_, err := runUpdate(t, root, "8823", "--slug", "123")
-	if err == nil {
-		t.Fatal("expected error for all-digit slug")
-	}
+	require.Error(t, err)
 }

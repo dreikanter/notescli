@@ -1,6 +1,10 @@
 package note
 
-import "testing"
+import (
+	"testing"
+
+	"github.com/stretchr/testify/assert"
+)
 
 func TestMatches_WithPublic(t *testing.T) {
 	pub := Entry{ID: 1, Meta: Meta{Public: true}}
@@ -20,9 +24,7 @@ func TestMatches_WithPublic(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			q := buildQuery([]QueryOpt{tc.opt})
-			if got := matches(tc.entry, q); got != tc.want {
-				t.Fatalf("matches = %v, want %v", got, tc.want)
-			}
+			assert.Equal(t, tc.want, matches(tc.entry, q))
 		})
 	}
 }
@@ -33,9 +35,7 @@ func TestMatches_WithPublicNotSetMatchesAny(t *testing.T) {
 		{Meta: Meta{Public: true}},
 		{Meta: Meta{Public: false}},
 	} {
-		if !matches(e, q) {
-			t.Fatalf("matches with no opts should accept %+v", e)
-		}
+		assert.True(t, matches(e, q))
 	}
 }
 
@@ -50,9 +50,7 @@ func TestMatches_WithPublicAndTagAreAND(t *testing.T) {
 		{Entry{Meta: Meta{Public: true, Tags: []string{"y"}}}, false},
 		{Entry{Meta: Meta{Public: false, Tags: []string{"x"}}}, false},
 	}
-	for i, c := range cases {
-		if got := matches(c.entry, q); got != c.want {
-			t.Fatalf("case %d: matches = %v, want %v", i, got, c.want)
-		}
+	for _, c := range cases {
+		assert.Equal(t, c.want, matches(c.entry, q))
 	}
 }

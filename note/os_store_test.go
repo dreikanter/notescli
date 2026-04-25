@@ -7,6 +7,9 @@ import (
 	"path/filepath"
 	"testing"
 	"time"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 // newOSTestStore returns an OSStore rooted at a fresh t.TempDir with an
@@ -28,12 +31,8 @@ func TestOSStore_SatisfiesInterface(t *testing.T) {
 func TestOSStore_IDsEmpty(t *testing.T) {
 	s := newOSTestStore(t)
 	ids, err := s.IDs()
-	if err != nil {
-		t.Fatalf("IDs: %v", err)
-	}
-	if len(ids) != 0 {
-		t.Fatalf("IDs on empty store = %v, want empty", ids)
-	}
+	require.NoError(t, err)
+	assert.Empty(t, ids)
 }
 
 func TestOSStore_IDsOrderIntegerIDNotLexicographic(t *testing.T) {
@@ -44,15 +43,11 @@ func TestOSStore_IDsOrderIntegerIDNotLexicographic(t *testing.T) {
 	// sort 9 before 10/11; the integer-ID sort must put 11 first.
 	for i := 0; i < 11; i++ {
 		_, err := s.Put(Entry{Meta: Meta{Title: "", CreatedAt: today}, Body: "x"})
-		if err != nil {
-			t.Fatalf("Put: %v", err)
-		}
+		require.NoError(t, err)
 	}
 
 	ids, err := s.IDs()
-	if err != nil {
-		t.Fatalf("IDs: %v", err)
-	}
+	require.NoError(t, err)
 	if len(ids) != 11 {
 		t.Fatalf("IDs len = %d, want 11", len(ids))
 	}
@@ -69,9 +64,7 @@ func TestOSStore_PutNewCreatesFile(t *testing.T) {
 		Meta: Meta{Title: "hello", Slug: "hi", CreatedAt: created},
 		Body: "body text\n",
 	})
-	if err != nil {
-		t.Fatalf("Put: %v", err)
-	}
+	require.NoError(t, err)
 	if entry.ID != 1 {
 		t.Fatalf("assigned ID = %d, want 1", entry.ID)
 	}
@@ -90,19 +83,15 @@ func TestOSStore_PutSlugChangeRenames(t *testing.T) {
 	created := time.Date(2026, 1, 15, 9, 0, 0, 0, time.UTC)
 
 	entry, err := s.Put(Entry{Meta: Meta{Slug: "old", CreatedAt: created}, Body: "b"})
-	if err != nil {
-		t.Fatalf("Put new: %v", err)
-	}
+	require.NoError(t, err)
 	oldPath := filepath.Join(s.Root(), "2026", "01", "20260115_1_old.md")
 
 	entry.Meta.Slug = "new"
-	if _, err := s.Put(entry); err != nil {
-		t.Fatalf("Put rename: %v", err)
-	}
+	_, err = s.Put(entry)
+	require.NoError(t, err)
 	newPath := filepath.Join(s.Root(), "2026", "01", "20260115_1_new.md")
-	if _, err := os.Stat(newPath); err != nil {
-		t.Fatalf("new file missing: %v", err)
-	}
+	_, err = os.Stat(newPath)
+	require.NoError(t, err)
 	if _, err := os.Stat(oldPath); !os.IsNotExist(err) {
 		t.Fatalf("old file should be gone, got err=%v", err)
 	}
@@ -113,19 +102,15 @@ func TestOSStore_PutDateChangeMovesToNewSubdir(t *testing.T) {
 	created := time.Date(2026, 1, 15, 9, 0, 0, 0, time.UTC)
 
 	entry, err := s.Put(Entry{Meta: Meta{Slug: "x", CreatedAt: created}, Body: "b"})
-	if err != nil {
-		t.Fatalf("Put: %v", err)
-	}
+	require.NoError(t, err)
 	oldPath := filepath.Join(s.Root(), "2026", "01", "20260115_1_x.md")
 
 	entry.Meta.CreatedAt = time.Date(2026, 3, 20, 9, 0, 0, 0, time.UTC)
-	if _, err := s.Put(entry); err != nil {
-		t.Fatalf("Put move: %v", err)
-	}
+	_, err = s.Put(entry)
+	require.NoError(t, err)
 	newPath := filepath.Join(s.Root(), "2026", "03", "20260320_1_x.md")
-	if _, err := os.Stat(newPath); err != nil {
-		t.Fatalf("new path missing: %v", err)
-	}
+	_, err = os.Stat(newPath)
+	require.NoError(t, err)
 	if _, err := os.Stat(oldPath); !os.IsNotExist(err) {
 		t.Fatalf("old path should be gone, got err=%v", err)
 	}
@@ -136,14 +121,10 @@ func TestOSStore_Get(t *testing.T) {
 	created := time.Date(2026, 1, 15, 0, 0, 0, 0, time.UTC)
 
 	_, err := s.Put(Entry{Meta: Meta{Title: "t", CreatedAt: created}, Body: "body"})
-	if err != nil {
-		t.Fatalf("Put: %v", err)
-	}
+	require.NoError(t, err)
 
 	got, err := s.Get(1)
-	if err != nil {
-		t.Fatalf("Get hit: %v", err)
-	}
+	require.NoError(t, err)
 	if got.Meta.Title != "t" || got.Body != "body" {
 		t.Fatalf("Get = %+v, want title=t body=body", got)
 	}
@@ -158,30 +139,23 @@ func TestOSStore_AllFilterByTagIncludesBodyHashtags(t *testing.T) {
 	created := time.Date(2026, 1, 15, 0, 0, 0, 0, time.UTC)
 
 	// entry 1: frontmatter tag alpha
-	if _, err := s.Put(Entry{Meta: Meta{Tags: []string{"alpha"}, CreatedAt: created}, Body: "x"}); err != nil {
-		t.Fatalf("Put: %v", err)
-	}
+	_, err := s.Put(Entry{Meta: Meta{Tags: []string{"alpha"}, CreatedAt: created}, Body: "x"})
+	require.NoError(t, err)
 	// entry 2: body-hashtag beta
-	if _, err := s.Put(Entry{Meta: Meta{CreatedAt: created}, Body: "#beta is a body hashtag"}); err != nil {
-		t.Fatalf("Put: %v", err)
-	}
+	_, err = s.Put(Entry{Meta: Meta{CreatedAt: created}, Body: "#beta is a body hashtag"})
+	require.NoError(t, err)
 	// entry 3: neither tag
-	if _, err := s.Put(Entry{Meta: Meta{CreatedAt: created}, Body: "nothing"}); err != nil {
-		t.Fatalf("Put: %v", err)
-	}
+	_, err = s.Put(Entry{Meta: Meta{CreatedAt: created}, Body: "nothing"})
+	require.NoError(t, err)
 
 	gotAlpha, err := s.All(WithTag("alpha"))
-	if err != nil {
-		t.Fatalf("All alpha: %v", err)
-	}
+	require.NoError(t, err)
 	if len(gotAlpha) != 1 || gotAlpha[0].ID != 1 {
 		t.Fatalf("All alpha = %v, want [1]", entryIDs(gotAlpha))
 	}
 
 	gotBeta, err := s.All(WithTag("beta"))
-	if err != nil {
-		t.Fatalf("All beta: %v", err)
-	}
+	require.NoError(t, err)
 	if len(gotBeta) != 1 || gotBeta[0].ID != 2 {
 		t.Fatalf("All beta = %v, want [2]", entryIDs(gotBeta))
 	}
@@ -192,15 +166,12 @@ func TestOSStore_FindStopsAtFirstMatch(t *testing.T) {
 	// Three todo entries across different days; newest first.
 	for i := 1; i <= 3; i++ {
 		day := time.Date(2026, 1, i, 0, 0, 0, 0, time.UTC)
-		if _, err := s.Put(Entry{Meta: Meta{Type: "todo", CreatedAt: day}, Body: ""}); err != nil {
-			t.Fatalf("Put: %v", err)
-		}
+		_, err := s.Put(Entry{Meta: Meta{Type: "todo", CreatedAt: day}, Body: ""})
+		require.NoError(t, err)
 	}
 
 	got, err := s.Find(WithType("todo"))
-	if err != nil {
-		t.Fatalf("Find: %v", err)
-	}
+	require.NoError(t, err)
 	if got.ID != 3 {
 		t.Fatalf("Find newest todo ID = %d, want 3", got.ID)
 	}
@@ -209,9 +180,7 @@ func TestOSStore_FindStopsAtFirstMatch(t *testing.T) {
 func TestOSStore_FindNoMatch(t *testing.T) {
 	s := newOSTestStore(t)
 	_, err := s.Find(WithType("todo"))
-	if !errors.Is(err, ErrNotFound) {
-		t.Fatalf("Find miss err = %v, want ErrNotFound", err)
-	}
+	assert.ErrorIs(t, err, ErrNotFound)
 }
 
 func TestOSStore_Delete(t *testing.T) {
@@ -219,9 +188,7 @@ func TestOSStore_Delete(t *testing.T) {
 	created := time.Date(2026, 1, 15, 0, 0, 0, 0, time.UTC)
 
 	entry, err := s.Put(Entry{Meta: Meta{Slug: "x", CreatedAt: created}, Body: "b"})
-	if err != nil {
-		t.Fatalf("Put: %v", err)
-	}
+	require.NoError(t, err)
 
 	if err := s.Delete(entry.ID); err != nil {
 		t.Fatalf("Delete hit: %v", err)
@@ -246,9 +213,7 @@ func TestOSStore_AbsPathNoIO(t *testing.T) {
 		},
 	}
 	want := filepath.Join(root, "2026", "02", "20260201_42_demo.md")
-	if got := s.AbsPath(entry); got != want {
-		t.Fatalf("AbsPath = %s, want %s", got, want)
-	}
+	assert.Equal(t, want, s.AbsPath(entry))
 	// no file should have been created as a side effect
 	if _, err := os.Stat(want); !os.IsNotExist(err) {
 		t.Fatalf("AbsPath created a file: err=%v", err)
@@ -271,14 +236,10 @@ func TestOSStore_RoundTripPreservesFrontmatterAndTags(t *testing.T) {
 		},
 		Body: "body with #gamma\n",
 	})
-	if err != nil {
-		t.Fatalf("Put: %v", err)
-	}
+	require.NoError(t, err)
 
 	got, err := s.Get(entry.ID)
-	if err != nil {
-		t.Fatalf("Get: %v", err)
-	}
+	require.NoError(t, err)
 
 	if got.Meta.Title != "Test" || got.Meta.Slug != "test" || got.Meta.Type != "note" {
 		t.Fatalf("round-trip meta = %+v", got.Meta)
@@ -291,9 +252,7 @@ func TestOSStore_RoundTripPreservesFrontmatterAndTags(t *testing.T) {
 	for _, tag := range got.Meta.Tags {
 		delete(want, tag)
 	}
-	if len(want) != 0 {
-		t.Fatalf("round-trip Tags missing: %v (got %v)", want, got.Meta.Tags)
-	}
+	assert.Empty(t, want)
 }
 
 func TestOSStore_AllFilterByPublic(t *testing.T) {
@@ -301,22 +260,14 @@ func TestOSStore_AllFilterByPublic(t *testing.T) {
 
 	base := time.Date(2026, 1, 1, 12, 0, 0, 0, time.UTC)
 	_, err := s.Put(Entry{Meta: Meta{Title: "pub", Public: true, CreatedAt: base}, Body: "p\n"})
-	if err != nil {
-		t.Fatalf("Put pub: %v", err)
-	}
+	require.NoError(t, err)
 	_, err = s.Put(Entry{Meta: Meta{Title: "priv-explicit", Public: false, CreatedAt: base.Add(24 * time.Hour)}, Body: "x\n"})
-	if err != nil {
-		t.Fatalf("Put priv-explicit: %v", err)
-	}
+	require.NoError(t, err)
 	_, err = s.Put(Entry{Meta: Meta{Title: "pub2", Public: true, CreatedAt: base.Add(48 * time.Hour)}, Body: "y\n"})
-	if err != nil {
-		t.Fatalf("Put pub2: %v", err)
-	}
+	require.NoError(t, err)
 
 	pub, err := s.All(WithPublic(true))
-	if err != nil {
-		t.Fatalf("All WithPublic(true): %v", err)
-	}
+	require.NoError(t, err)
 	if len(pub) != 2 {
 		t.Fatalf("WithPublic(true) len = %d, want 2 (got IDs %v)", len(pub), entryIDs(pub))
 	}
@@ -327,9 +278,7 @@ func TestOSStore_AllFilterByPublic(t *testing.T) {
 	}
 
 	priv, err := s.All(WithPublic(false))
-	if err != nil {
-		t.Fatalf("All WithPublic(false): %v", err)
-	}
+	require.NoError(t, err)
 	if len(priv) != 1 {
 		t.Fatalf("WithPublic(false) len = %d, want 1 (got IDs %v)", len(priv), entryIDs(priv))
 	}

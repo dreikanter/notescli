@@ -5,17 +5,16 @@ import (
 	"sync"
 	"testing"
 	"time"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestMemStore_IDsEmpty(t *testing.T) {
 	s := NewMemStore()
 	ids, err := s.IDs()
-	if err != nil {
-		t.Fatalf("IDs: %v", err)
-	}
-	if len(ids) != 0 {
-		t.Fatalf("IDs on empty store = %v, want empty", ids)
-	}
+	require.NoError(t, err)
+	assert.Empty(t, ids)
 }
 
 func TestMemStore_IDsOrderNewestFirstThenIDDesc(t *testing.T) {
@@ -28,9 +27,7 @@ func TestMemStore_IDsOrderNewestFirstThenIDDesc(t *testing.T) {
 	mustPut(t, s, Entry{ID: 3, Meta: Meta{CreatedAt: day2}})
 
 	ids, err := s.IDs()
-	if err != nil {
-		t.Fatalf("IDs: %v", err)
-	}
+	require.NoError(t, err)
 	want := []int{3, 2, 1}
 	if !sliceEqual(ids, want) {
 		t.Fatalf("IDs = %v, want %v", ids, want)
@@ -43,9 +40,7 @@ func TestMemStore_AllNoOpts(t *testing.T) {
 		mustPut(t, s, Entry{ID: i, Meta: Meta{CreatedAt: time.Date(2026, 1, i, 0, 0, 0, 0, time.UTC)}})
 	}
 	entries, err := s.All()
-	if err != nil {
-		t.Fatalf("All: %v", err)
-	}
+	require.NoError(t, err)
 	if len(entries) != 3 {
 		t.Fatalf("All len = %d, want 3", len(entries))
 	}
@@ -61,9 +56,7 @@ func TestMemStore_AllFilterByType(t *testing.T) {
 	mustPut(t, s, Entry{ID: 3, Meta: Meta{Type: "todo", CreatedAt: day(2026, 1, 3)}})
 
 	got, err := s.All(WithType("todo"))
-	if err != nil {
-		t.Fatalf("All: %v", err)
-	}
+	require.NoError(t, err)
 	if len(got) != 2 || got[0].ID != 3 || got[1].ID != 1 {
 		t.Fatalf("All WithType(todo) = %v, want [3 1]", entryIDs(got))
 	}
@@ -76,9 +69,7 @@ func TestMemStore_AllMultipleTagsAreAND(t *testing.T) {
 	mustPut(t, s, Entry{ID: 3, Meta: Meta{Tags: []string{"a", "b", "c"}, CreatedAt: day(2026, 1, 3)}})
 
 	got, err := s.All(WithTag("a"), WithTag("b"))
-	if err != nil {
-		t.Fatalf("All: %v", err)
-	}
+	require.NoError(t, err)
 	if len(got) != 2 || got[0].ID != 3 || got[1].ID != 2 {
 		t.Fatalf("All WithTag(a)+WithTag(b) = %v, want [3 2]", entryIDs(got))
 	}
@@ -88,9 +79,7 @@ func TestMemStore_TagMatchCaseInsensitive(t *testing.T) {
 	s := NewMemStore()
 	mustPut(t, s, Entry{ID: 1, Meta: Meta{Tags: []string{"Alpha"}, CreatedAt: day(2026, 1, 1)}})
 	got, err := s.All(WithTag("alpha"))
-	if err != nil {
-		t.Fatalf("All: %v", err)
-	}
+	require.NoError(t, err)
 	if len(got) != 1 {
 		t.Fatalf("All WithTag(alpha) len = %d, want 1", len(got))
 	}
@@ -101,15 +90,9 @@ func TestMemStore_AllNoMatchEmptySliceNotError(t *testing.T) {
 	mustPut(t, s, Entry{ID: 1, Meta: Meta{Type: "note", CreatedAt: day(2026, 1, 1)}})
 
 	got, err := s.All(WithType("todo"))
-	if err != nil {
-		t.Fatalf("All unexpected err: %v", err)
-	}
-	if len(got) != 0 {
-		t.Fatalf("All no-match len = %d, want 0", len(got))
-	}
-	if errors.Is(err, ErrNotFound) {
-		t.Fatalf("All no-match should not wrap ErrNotFound")
-	}
+	require.NoError(t, err)
+	assert.Empty(t, got)
+	assert.NotErrorIs(t, err, ErrNotFound)
 }
 
 func TestMemStore_AllFilterByExactDate(t *testing.T) {
@@ -119,9 +102,7 @@ func TestMemStore_AllFilterByExactDate(t *testing.T) {
 	mustPut(t, s, Entry{ID: 3, Meta: Meta{CreatedAt: day(2026, 1, 2)}})
 
 	got, err := s.All(WithExactDate(day(2026, 1, 1)))
-	if err != nil {
-		t.Fatalf("All: %v", err)
-	}
+	require.NoError(t, err)
 	if len(got) != 2 {
 		t.Fatalf("All WithExactDate len = %d, want 2", len(got))
 	}
@@ -134,9 +115,7 @@ func TestMemStore_AllFilterByBeforeDate(t *testing.T) {
 	mustPut(t, s, Entry{ID: 3, Meta: Meta{CreatedAt: day(2026, 1, 3)}})
 
 	got, err := s.All(WithBeforeDate(day(2026, 1, 3)))
-	if err != nil {
-		t.Fatalf("All: %v", err)
-	}
+	require.NoError(t, err)
 	if len(got) != 2 || got[0].ID != 2 || got[1].ID != 1 {
 		t.Fatalf("All WithBeforeDate = %v, want [2 1]", entryIDs(got))
 	}
@@ -148,9 +127,7 @@ func TestMemStore_FindReturnsNewest(t *testing.T) {
 	mustPut(t, s, Entry{ID: 2, Meta: Meta{Type: "todo", CreatedAt: day(2026, 1, 2)}})
 
 	got, err := s.Find(WithType("todo"))
-	if err != nil {
-		t.Fatalf("Find: %v", err)
-	}
+	require.NoError(t, err)
 	if got.ID != 2 {
 		t.Fatalf("Find ID = %d, want 2", got.ID)
 	}
@@ -159,9 +136,7 @@ func TestMemStore_FindReturnsNewest(t *testing.T) {
 func TestMemStore_FindNoMatchErrNotFound(t *testing.T) {
 	s := NewMemStore()
 	_, err := s.Find(WithType("todo"))
-	if !errors.Is(err, ErrNotFound) {
-		t.Fatalf("Find no-match err = %v, want ErrNotFound", err)
-	}
+	assert.ErrorIs(t, err, ErrNotFound)
 }
 
 func TestMemStore_Get(t *testing.T) {
@@ -169,25 +144,19 @@ func TestMemStore_Get(t *testing.T) {
 	mustPut(t, s, Entry{ID: 1, Meta: Meta{Title: "one", CreatedAt: day(2026, 1, 1)}})
 
 	got, err := s.Get(1)
-	if err != nil {
-		t.Fatalf("Get hit: %v", err)
-	}
+	require.NoError(t, err)
 	if got.Meta.Title != "one" {
 		t.Fatalf("Get title = %q, want one", got.Meta.Title)
 	}
 
 	_, err = s.Get(99)
-	if !errors.Is(err, ErrNotFound) {
-		t.Fatalf("Get miss err = %v, want ErrNotFound", err)
-	}
+	assert.ErrorIs(t, err, ErrNotFound)
 }
 
 func TestMemStore_PutAssignsIDStartingAt1(t *testing.T) {
 	s := NewMemStore()
 	e, err := s.Put(Entry{Body: "hello"})
-	if err != nil {
-		t.Fatalf("Put: %v", err)
-	}
+	require.NoError(t, err)
 	if e.ID != 1 {
 		t.Fatalf("first Put ID = %d, want 1", e.ID)
 	}
@@ -199,9 +168,7 @@ func TestMemStore_PutAssignsMaxPlusOne(t *testing.T) {
 	mustPut(t, s, Entry{ID: 3, Meta: Meta{CreatedAt: day(2026, 1, 1)}})
 
 	e, err := s.Put(Entry{Body: "new"})
-	if err != nil {
-		t.Fatalf("Put: %v", err)
-	}
+	require.NoError(t, err)
 	if e.ID != 6 {
 		t.Fatalf("Put new ID = %d, want 6", e.ID)
 	}
@@ -213,9 +180,7 @@ func TestMemStore_PutExistingIDReplaces(t *testing.T) {
 	mustPut(t, s, Entry{ID: 1, Meta: Meta{Title: "old", CreatedAt: created}, Body: "old body"})
 
 	e, err := s.Put(Entry{ID: 1, Meta: Meta{Title: "new", CreatedAt: created}, Body: "new body"})
-	if err != nil {
-		t.Fatalf("Put: %v", err)
-	}
+	require.NoError(t, err)
 	if e.Meta.Title != "new" || e.Body != "new body" {
 		t.Fatalf("Put replace = %+v, want title=new body=new body", e)
 	}
@@ -239,9 +204,7 @@ func TestMemStore_PutZeroCreatedAtSetsToNow(t *testing.T) {
 	s := NewMemStore()
 	before := time.Now()
 	e, err := s.Put(Entry{Body: "hi"})
-	if err != nil {
-		t.Fatalf("Put: %v", err)
-	}
+	require.NoError(t, err)
 	after := time.Now()
 
 	if e.Meta.CreatedAt.Before(before) || e.Meta.CreatedAt.After(after) {
@@ -253,9 +216,7 @@ func TestMemStore_PutAlwaysSetsUpdatedAt(t *testing.T) {
 	s := NewMemStore()
 	originalCreated := day(2026, 1, 1)
 	e, err := s.Put(Entry{ID: 1, Meta: Meta{CreatedAt: originalCreated}})
-	if err != nil {
-		t.Fatalf("Put: %v", err)
-	}
+	require.NoError(t, err)
 	if !e.Meta.CreatedAt.Equal(originalCreated) {
 		t.Fatalf("Put changed provided CreatedAt: got %v", e.Meta.CreatedAt)
 	}
@@ -265,9 +226,7 @@ func TestMemStore_PutAlwaysSetsUpdatedAt(t *testing.T) {
 
 	time.Sleep(time.Millisecond)
 	e2, err := s.Put(Entry{ID: 1, Meta: Meta{CreatedAt: originalCreated}})
-	if err != nil {
-		t.Fatalf("Put: %v", err)
-	}
+	require.NoError(t, err)
 	if !e2.Meta.UpdatedAt.After(e.Meta.UpdatedAt) {
 		t.Fatalf("UpdatedAt did not advance: first=%v second=%v", e.Meta.UpdatedAt, e2.Meta.UpdatedAt)
 	}
@@ -321,17 +280,13 @@ func TestMemStore_AllFilterByPublic(t *testing.T) {
 	mustPut(t, s, Entry{ID: 3, Meta: Meta{Public: true, CreatedAt: day(2026, 1, 3)}})
 
 	pub, err := s.All(WithPublic(true))
-	if err != nil {
-		t.Fatalf("All WithPublic(true): %v", err)
-	}
+	require.NoError(t, err)
 	if len(pub) != 2 || pub[0].ID != 3 || pub[1].ID != 1 {
 		t.Fatalf("WithPublic(true) = %v, want [3 1]", entryIDs(pub))
 	}
 
 	priv, err := s.All(WithPublic(false))
-	if err != nil {
-		t.Fatalf("All WithPublic(false): %v", err)
-	}
+	require.NoError(t, err)
 	if len(priv) != 1 || priv[0].ID != 2 {
 		t.Fatalf("WithPublic(false) = %v, want [2]", entryIDs(priv))
 	}
@@ -344,9 +299,7 @@ func TestMemStore_AllPublicComposesWithTag(t *testing.T) {
 	mustPut(t, s, Entry{ID: 3, Meta: Meta{Public: false, Tags: []string{"x"}, CreatedAt: day(2026, 1, 3)}})
 
 	got, err := s.All(WithPublic(true), WithTag("x"))
-	if err != nil {
-		t.Fatalf("All: %v", err)
-	}
+	require.NoError(t, err)
 	if len(got) != 1 || got[0].ID != 1 {
 		t.Fatalf("WithPublic(true)+WithTag(x) = %v, want [1]", entryIDs(got))
 	}
@@ -355,9 +308,7 @@ func TestMemStore_AllPublicComposesWithTag(t *testing.T) {
 func mustPut(t *testing.T, s *MemStore, e Entry) Entry {
 	t.Helper()
 	out, err := s.Put(e)
-	if err != nil {
-		t.Fatalf("Put: %v", err)
-	}
+	require.NoError(t, err)
 	return out
 }
 
