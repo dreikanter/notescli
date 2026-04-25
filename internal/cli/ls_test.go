@@ -5,6 +5,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
@@ -28,148 +29,52 @@ func TestLsNoArgs(t *testing.T) {
 	out, err := runLs(t)
 	require.NoError(t, err)
 
-	lines := strings.Split(out, "\n")
-	if len(lines) != 4 {
-		t.Fatalf("got %d lines, want 4:\n%s", len(lines), out)
-	}
+	lines := outputLines(out)
+	assert.Len(t, lines, 4)
 	for _, line := range lines {
-		if !allDigits(line) {
-			t.Fatalf("expected integer ID per line, got %q", line)
-		}
+		assert.True(t, allDigits(line), "expected integer ID per line, got %q", line)
 	}
 }
 
-func TestLsWithTag(t *testing.T) {
-	out, err := runLs(t, "--tag", "work")
-	require.NoError(t, err)
+func TestLsFilters(t *testing.T) {
+	tests := []struct {
+		name      string
+		args      []string
+		wantCount int
+		wantIDs   []string
+	}{
+		{name: "tag", args: []string{"--tag", "work"}, wantCount: 3},
+		{name: "tag mixed case", args: []string{"--tag", "WORK"}, wantCount: 3},
+		{name: "tag no match", args: []string{"--tag", "nonexistent"}},
+		{name: "tag and type", args: []string{"--tag", "work", "--type", "todo"}, wantIDs: []string{"8814"}},
+		{name: "tag and limit", args: []string{"--tag", "work", "--limit", "1"}, wantCount: 1},
+		{name: "multiple tags are AND", args: []string{"--tag", "work", "--tag", "planning"}, wantIDs: []string{"8814"}},
+		{name: "comma-separated tags are AND", args: []string{"--tag", "work,meeting"}, wantIDs: []string{"8818"}},
+		{name: "tag and type no overlap", args: []string{"--tag", "meeting", "--type", "todo"}},
+		{name: "today excludes past testdata", args: []string{"--today"}},
+		{name: "slug", args: []string{"--slug", "meeting"}, wantIDs: []string{"8818"}},
+	}
 
-	lines := strings.Split(out, "\n")
-	if len(lines) != 3 {
-		t.Fatalf("got %d lines, want 3:\n%s", len(lines), out)
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			out, err := runLs(t, tt.args...)
+			require.NoError(t, err)
+
+			lines := outputLines(out)
+			if tt.wantIDs != nil {
+				assert.Equal(t, tt.wantIDs, lines)
+				return
+			}
+			assert.Len(t, lines, tt.wantCount)
+		})
 	}
 }
 
-func TestLsWithTagMixedCase(t *testing.T) {
-	out, err := runLs(t, "--tag", "WORK")
-	require.NoError(t, err)
-
-	lines := strings.Split(out, "\n")
-	if len(lines) != 3 {
-		t.Fatalf("got %d lines, want 3:\n%s", len(lines), out)
+func outputLines(out string) []string {
+	if out == "" {
+		return nil
 	}
-}
-
-func TestLsTagNoMatch(t *testing.T) {
-	out, err := runLs(t, "--tag", "nonexistent")
-	require.NoError(t, err)
-
-	if out != "" {
-		t.Errorf("expected empty output, got %q", out)
-	}
-}
-
-func TestLsTagAndType(t *testing.T) {
-	out, err := runLs(t, "--tag", "work", "--type", "todo")
-	require.NoError(t, err)
-
-	lines := strings.Split(out, "\n")
-	if len(lines) != 1 {
-		t.Fatalf("got %d lines, want 1:\n%s", len(lines), out)
-	}
-	if lines[0] != "8814" {
-		t.Errorf("expected ID 8814, got %q", lines[0])
-	}
-}
-
-func TestLsTagAndLimit(t *testing.T) {
-	out, err := runLs(t, "--tag", "work", "--limit", "1")
-	require.NoError(t, err)
-
-	lines := strings.Split(out, "\n")
-	if len(lines) != 1 {
-		t.Fatalf("got %d lines, want 1:\n%s", len(lines), out)
-	}
-}
-
-func TestLsMultipleTagsAND(t *testing.T) {
-	out, err := runLs(t, "--tag", "work", "--tag", "planning")
-	require.NoError(t, err)
-
-	lines := strings.Split(out, "\n")
-	if len(lines) != 1 {
-		t.Fatalf("got %d lines, want 1 (only todo has both work+planning):\n%s", len(lines), out)
-	}
-	if lines[0] != "8814" {
-		t.Errorf("expected ID 8814, got %q", lines[0])
-	}
-}
-
-func TestLsMultipleTagsCommaSeparated(t *testing.T) {
-	out, err := runLs(t, "--tag", "work,meeting")
-	require.NoError(t, err)
-
-	lines := strings.Split(out, "\n")
-	if len(lines) != 1 {
-		t.Fatalf("got %d lines, want 1 (only meeting note has both work+meeting):\n%s", len(lines), out)
-	}
-	if lines[0] != "8818" {
-		t.Errorf("expected ID 8818, got %q", lines[0])
-	}
-}
-
-func TestLsTagAndTypeNoOverlap(t *testing.T) {
-	out, err := runLs(t, "--tag", "meeting", "--type", "todo")
-	require.NoError(t, err)
-
-	if out != "" {
-		t.Errorf("expected empty output (no todo with meeting tag), got %q", out)
-	}
-}
-
-func TestLsToday(t *testing.T) {
-	// testdata notes are all in the past; --today should return nothing
-	out, err := runLs(t, "--today")
-	require.NoError(t, err)
-	if out != "" {
-		t.Errorf("expected empty output for --today on past testdata, got %q", out)
-	}
-}
-
-func TestLsUnlimitedByDefault(t *testing.T) {
-	out, err := runLs(t)
-	require.NoError(t, err)
-
-	lines := strings.Split(out, "\n")
-	if len(lines) != 4 {
-		t.Fatalf("expected all 4 testdata notes without limit, got %d:\n%s", len(lines), out)
-	}
-}
-
-func TestLsOutputsIntegerIDs(t *testing.T) {
-	out, err := runLs(t)
-	require.NoError(t, err)
-
-	for _, line := range strings.Split(out, "\n") {
-		if line == "" {
-			continue
-		}
-		if !allDigits(line) {
-			t.Errorf("expected integer ID per line, got %q", line)
-		}
-	}
-}
-
-func TestLsSlug(t *testing.T) {
-	out, err := runLs(t, "--slug", "meeting")
-	require.NoError(t, err)
-
-	lines := strings.Split(out, "\n")
-	if len(lines) != 1 {
-		t.Fatalf("got %d lines, want 1:\n%s", len(lines), out)
-	}
-	if lines[0] != "8818" {
-		t.Errorf("expected ID 8818, got %q", lines[0])
-	}
+	return strings.Split(out, "\n")
 }
 
 func allDigits(s string) bool {

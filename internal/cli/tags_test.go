@@ -26,21 +26,15 @@ func runTags(t *testing.T, root string, args ...string) (string, error) {
 func writeTagsTestNote(t *testing.T, root, rel, content string) {
 	t.Helper()
 	full := filepath.Join(root, rel)
-	if err := os.MkdirAll(filepath.Dir(full), 0o755); err != nil {
-		t.Fatal(err)
-	}
-	if err := os.WriteFile(full, []byte(content), 0o644); err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, os.MkdirAll(filepath.Dir(full), 0o755))
+	require.NoError(t, os.WriteFile(full, []byte(content), 0o644))
 }
 
 func TestTagsEmptyStore(t *testing.T) {
 	root := t.TempDir()
 	out, err := runTags(t, root)
 	require.NoError(t, err)
-	if out != "" {
-		t.Fatalf("expected empty output, got %q", out)
-	}
+	assert.Empty(t, out)
 }
 
 func TestTagsMergedSourcesSorted(t *testing.T) {
@@ -52,16 +46,7 @@ func TestTagsMergedSourcesSorted(t *testing.T) {
 
 	out, err := runTags(t, root)
 	require.NoError(t, err)
-	got := strings.Split(out, "\n")
-	want := []string{"coffee", "planning", "tea", "work"}
-	if len(got) != len(want) {
-		t.Fatalf("got %d lines, want %d:\n%s", len(got), len(want), out)
-	}
-	for i := range want {
-		if got[i] != want[i] {
-			t.Errorf("line %d: got %q, want %q", i, got[i], want[i])
-		}
-	}
+	assert.Equal(t, []string{"coffee", "planning", "tea", "work"}, strings.Split(out, "\n"))
 }
 
 func TestTagsLowercased(t *testing.T) {
@@ -71,16 +56,7 @@ func TestTagsLowercased(t *testing.T) {
 
 	out, err := runTags(t, root)
 	require.NoError(t, err)
-	got := strings.Split(out, "\n")
-	want := []string{"coffee", "planning", "work"}
-	if len(got) != len(want) {
-		t.Fatalf("got %d lines, want %d:\n%s", len(got), len(want), out)
-	}
-	for i := range want {
-		if got[i] != want[i] {
-			t.Errorf("line %d: got %q, want %q", i, got[i], want[i])
-		}
-	}
+	assert.Equal(t, []string{"coffee", "planning", "work"}, strings.Split(out, "\n"))
 }
 
 func TestTagsIgnoresCodeBlocks(t *testing.T) {
@@ -91,7 +67,6 @@ func TestTagsIgnoresCodeBlocks(t *testing.T) {
 	out, err := runTags(t, root)
 	require.NoError(t, err)
 	assert.NotContains(t, out, "should-not-appear")
-	if !strings.Contains(out, "real") || !strings.Contains(out, "done") {
-		t.Errorf("expected real and done tags, got:\n%s", out)
-	}
+	assert.Contains(t, out, "real")
+	assert.Contains(t, out, "done")
 }
