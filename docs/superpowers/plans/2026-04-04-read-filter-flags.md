@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Add `--type`, `--slug`, `--tag`, and `--today` filter flags to `notes read`, mutually exclusive with the positional argument, so users can read notes by filter criteria in a single command.
+**Goal:** Add `--type`, `--slug`, `--tag`, and `--today` filter flags to `notesctl read`, mutually exclusive with the positional argument, so users can read notes by filter criteria in a single command.
 
 **Architecture:** The positional-ref path is unchanged (`note.ResolveRef`). A new filter path calls `note.Scan`, applies `FilterByDate`/`FilterByTypes`/`FilterBySlugs`/`FilterByTags` in sequence, then reads `notes[0]`. Validation guards prevent combining both paths. No new shared helpers — `read.go` is small enough to be self-contained.
 
@@ -44,7 +44,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/dreikanter/notes-cli/note"
+	"github.com/dreikanter/notesctl/note"
 	"github.com/spf13/cobra"
 )
 
@@ -122,7 +122,7 @@ func registerReadFlags() {
 	readCmd.Flags().String("type", "", "filter by note type")
 	readCmd.Flags().String("slug", "", "filter by slug")
 	readCmd.Flags().StringSlice("tag", nil, "filter by tag (repeatable, all must match)")
-	readCmd.Flags().Bool("today", false, "only match notes created today")
+	readCmd.Flags().Bool("today", false, "only match notesctl created today")
 	readCmd.Flags().BoolP("no-frontmatter", "F", false, "exclude YAML frontmatter from output")
 }
 
@@ -229,11 +229,11 @@ func TestReadBySlugFilter(t *testing.T) {
 }
 
 func TestReadByTodayFilter(t *testing.T) {
-	// No notes in testdata match today's date, so this should error.
+	// No notesctl in testdata match today's date, so this should error.
 	today := time.Now().Format("20060102")
 	_, err := runRead(t, "--today")
 	if err == nil {
-		t.Fatalf("expected error for --today with no matching notes (today=%s), got nil", today)
+		t.Fatalf("expected error for --today with no matching notesctl (today=%s), got nil", today)
 	}
 }
 
@@ -296,7 +296,7 @@ make test
 
 Expected output includes lines like:
 ```
-ok  	github.com/dreikanter/notes-cli/internal/cli
+ok  	github.com/dreikanter/notesctl/internal/cli
 ```
 No `FAIL` lines.
 
@@ -325,7 +325,7 @@ Insert after the first `# Changelog` line, before the existing `## [0.1.40]` ent
 
 - Add `--type`, `--slug`, `--tag`, and `--today` filter flags to `read`; mutually exclusive with the positional ref argument ([#62])
 
-[#62]: https://github.com/dreikanter/notes-cli/pull/62
+[#62]: https://github.com/dreikanter/notesctl/pull/62
 ```
 
 - [ ] **Step 2: Commit**
@@ -364,6 +364,6 @@ gh pr create \
 ```
 
 Fill in the PR template body with:
-- **What**: Add `--type`, `--slug`, `--tag`, `--today` filter flags to `notes read`
+- **What**: Add `--type`, `--slug`, `--tag`, `--today` filter flags to `notesctl read`
 - **Why**: Fixes #62 — reading by tag previously required two commands
 - **How**: Same pattern as `append` — positional arg becomes optional, filters are mutually exclusive with it, most recent matching note is read

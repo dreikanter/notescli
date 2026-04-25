@@ -1,11 +1,11 @@
 # read filter flags design
 
 **Date:** 2026-04-04  
-**Issue:** [#62](https://github.com/dreikanter/notes-cli/issues/62)
+**Issue:** [#62](https://github.com/dreikanter/notesctl/issues/62)
 
 ## Problem
 
-`notes read` accepts only a single positional ref (ID, path, basename, slug, or type). There is no way to filter by tag in one command — you must chain `notes latest --tag work` into `notes read`. The `--today` restriction available on `ls`, `append`, and `resolve` is also absent.
+`notesctl read` accepts only a single positional ref (ID, path, basename, slug, or type). There is no way to filter by tag in one command — you must chain `notesctl latest --tag work` into `notesctl read`. The `--today` restriction available on `ls`, `append`, and `resolve` is also absent.
 
 ## Decision
 
@@ -14,19 +14,19 @@ Add optional filter flags (`--type`, `--slug`, `--tag`, `--today`) to `read`, mu
 ## Command signature
 
 ```
-notes read [<id|path|basename|slug|type>] [--type T] [--slug S] [--tag TAG]... [--today] [--no-frontmatter]
+notesctl read [<id|path|basename|slug|type>] [--type T] [--slug S] [--tag TAG]... [--today] [--no-frontmatter]
 ```
 
 ## Behavior
 
 | Scenario | Result |
 |---|---|
-| `notes read 101` | Unchanged — resolves by ref via `ResolveRef` |
-| `notes read --tag work` | Reads most recent note tagged `work` |
-| `notes read --type todo --today` | Reads most recent `todo` note from today |
-| `notes read --slug meeting` | Reads most recent note with slug `meeting` |
-| `notes read 101 --tag work` | Error: cannot combine positional arg with filter flags |
-| `notes read` (no args, no flags) | Error: specify a note by positional argument or filter flags |
+| `notesctl read 101` | Unchanged — resolves by ref via `ResolveRef` |
+| `notesctl read --tag work` | Reads most recent note tagged `work` |
+| `notesctl read --type todo --today` | Reads most recent `todo` note from today |
+| `notesctl read --slug meeting` | Reads most recent note with slug `meeting` |
+| `notesctl read 101 --tag work` | Error: cannot combine positional arg with filter flags |
+| `notesctl read` (no args, no flags) | Error: specify a note by positional argument or filter flags |
 | Filters match nothing | Error: no notes found matching the given criteria |
 
 `--no-frontmatter` works in both modes.
@@ -53,7 +53,7 @@ New test cases:
 - `TestReadByTagFilter` — reads most recent note with matching tag
 - `TestReadByTypeFilter` — reads most recent note with matching type
 - `TestReadBySlugFilter` — reads most recent note with matching slug
-- `TestReadByTodayFilter` — returns error (no today notes in testdata)
+- `TestReadByTodayFilter` — returns error (no today notesctl in testdata)
 - `TestReadPositionalArgWithFilterErrors` — errors when both provided
 - `TestReadNoTargetErrors` — errors when nothing provided
 - `TestReadNoMatchErrors` — errors when filters match nothing

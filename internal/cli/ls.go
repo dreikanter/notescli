@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/dreikanter/notes-cli/note"
+	"github.com/dreikanter/notesctl/note"
 	"github.com/spf13/cobra"
 )
 
@@ -76,7 +76,7 @@ func registerLsFlags() {
 	lsCmd.Flags().String("type", "", "filter by note type")
 	lsCmd.Flags().String("slug", "", "filter by exact slug")
 	lsCmd.Flags().StringSlice("tag", nil, "filter by tag (repeatable, all must match)")
-	lsCmd.Flags().Bool("today", false, "only list notes created today")
+	lsCmd.Flags().Bool("today", false, "only list notesctl created today")
 }
 
 func init() {

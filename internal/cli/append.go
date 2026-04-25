@@ -7,7 +7,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/dreikanter/notes-cli/note"
+	"github.com/dreikanter/notesctl/note"
 	"github.com/spf13/cobra"
 )
 
@@ -23,7 +23,7 @@ var appendCmd = &cobra.Command{
 
 		in := cmd.InOrStdin()
 		if stdinIsTerminal(in) {
-			return fmt.Errorf("no input: pipe text to stdin (e.g. echo 'text' | notes append <id>)")
+			return fmt.Errorf("no input: pipe text to stdin (e.g. echo 'text' | notesctl append <id>)")
 		}
 
 		data, err := io.ReadAll(in)

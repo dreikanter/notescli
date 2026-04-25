@@ -29,7 +29,7 @@ and compose it with any existing filter.
 
 ## Non-goals
 
-- No CLI surface (`notes ls --public` / `--private`) — deferred to a
+- No CLI surface (`notesctl ls --public` / `--private`) — deferred to a
   later PR once the primitive exists.
 - No change to `Frontmatter` serialisation or the filename layout.
 - No I/O optimisation (e.g., partial frontmatter reads). Frontmatter is
@@ -153,6 +153,6 @@ for _, e := range entries {
 }
 ```
 
-No change to `notes-cli` is required to unblock that migration beyond
+No change to `notesctl` is required to unblock that migration beyond
 releasing this PR with a new patch version and a downstream
-`go get notes-cli@vX.Y.Z` bump.
+`go get notesctl@vX.Y.Z` bump.

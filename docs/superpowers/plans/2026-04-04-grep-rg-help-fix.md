@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Intercept `--help` in `notes grep` and `notes rg` so Cobra's own help is shown instead of the subprocess help, and improve Long descriptions to document injected defaults.
+**Goal:** Intercept `--help` in `notesctl grep` and `notesctl rg` so Cobra's own help is shown instead of the subprocess help, and improve Long descriptions to document injected defaults.
 
 **Architecture:** Both commands use `DisableFlagParsing: true` so all args pass through to the subprocess unmodified. We add a pre-subprocess scan inside `RunE` that returns `cmd.Help()` when `"--help"` is present. No structural changes — two small edits and two new tests.
 
@@ -34,7 +34,7 @@ var grepCmd = &cobra.Command{
 	Short: "Search note contents using grep",
 	Long: `Search note contents using grep. Only .md files are searched; .git directories are excluded.
 
-The following flags are injected automatically: -r (recursive), -i (case-insensitive), --include=*.md, --exclude-dir=.git. The notes path is appended as the last argument.`,
+The following flags are injected automatically: -r (recursive), -i (case-insensitive), --include=*.md, --exclude-dir=.git. The notesctl path is appended as the last argument.`,
 	DisableFlagParsing: true,
 	SilenceErrors:      true,
 	RunE: func(cmd *cobra.Command, args []string) error {
@@ -88,7 +88,7 @@ var rgCmd = &cobra.Command{
 	Short: "Search note contents using ripgrep",
 	Long: `Search note contents using ripgrep (rg). Only .md files are searched.
 
-The following flags are injected automatically: --glob *.md, --sortr path, --heading, --no-line-number, --ignore-case. The notes path is appended as the last argument.`,
+The following flags are injected automatically: --glob *.md, --sortr path, --heading, --no-line-number, --ignore-case. The notesctl path is appended as the last argument.`,
 	DisableFlagParsing: true,
 	SilenceErrors:      true,
 	RunE: func(cmd *cobra.Command, args []string) error {
@@ -285,7 +285,7 @@ Add at the top of `CHANGELOG.md` (after `# Changelog`):
 - Fix `grep` and `rg` commands passing `--help` to the subprocess instead of showing notes-specific help ([#63])
 - Improve `Long` descriptions for `grep` and `rg` to document injected default flags
 
-[#63]: https://github.com/dreikanter/notes-cli/pull/63
+[#63]: https://github.com/dreikanter/notesctl/pull/63
 ```
 
 - [ ] **Step 4: Commit**
@@ -311,7 +311,7 @@ git push -u origin issue-63
 gh pr create --title "Fix --help passthrough in grep/rg commands" --body "$(cat <<'EOF'
 ## Summary
 
-- Intercept `--help` in `notes grep` and `notes rg` before passing args to the subprocess — shows Cobra help instead of the underlying tool's help
+- Intercept `--help` in `notesctl grep` and `notesctl rg` before passing args to the subprocess — shows Cobra help instead of the underlying tool's help
 - Improve `Long` descriptions to document injected default flags for both commands
 
 ## References

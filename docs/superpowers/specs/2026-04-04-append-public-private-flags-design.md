@@ -5,7 +5,7 @@
 
 ## Problem
 
-The `new` command exposes `--public` and `--private` flags that write a `public:` field into note frontmatter. The `append` command can create notes (via `--create` or `--today`) but lacks these flags, making it impossible to set visibility when creating through `append`.
+The `new` command exposes `--public` and `--private` flags that write a `public:` field into note frontmatter. The `append` command can create notesctl (via `--create` or `--today`) but lacks these flags, making it impossible to set visibility when creating through `append`.
 
 ## Design
 

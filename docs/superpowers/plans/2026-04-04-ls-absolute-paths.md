@@ -24,7 +24,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/dreikanter/notes-cli/note"
+	"github.com/dreikanter/notesctl/note"
 	"github.com/spf13/cobra"
 )
 ```
@@ -37,7 +37,7 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/dreikanter/notes-cli/note"
+	"github.com/dreikanter/notesctl/note"
 	"github.com/spf13/cobra"
 )
 ```
@@ -60,7 +60,7 @@ fmt.Fprintln(cmd.OutOrStdout(), filepath.Join(root, n.RelPath))
 
 - [ ] **Step 3: Run existing tests to see which ones break**
 
-Run: `cd /Users/alex/src/notescli-issue-55 && go test ./internal/cli/ -run TestLs -v`
+Run: `cd /Users/alex/src/notesctl-issue-55 && go test ./internal/cli/ -run TestLs -v`
 
 Expected: Tests that check `strings.Contains` on filenames like `"todo"`, `"meeting"`, `"8814"` should still pass because the absolute path still contains those substrings. Tests that only check line counts should still pass. Observe which (if any) fail.
 
@@ -117,19 +117,19 @@ import (
 
 - [ ] **Step 3: Run all ls tests**
 
-Run: `cd /Users/alex/src/notescli-issue-55 && go test ./internal/cli/ -run TestLs -v`
+Run: `cd /Users/alex/src/notesctl-issue-55 && go test ./internal/cli/ -run TestLs -v`
 
 Expected: All tests pass, including the new `TestLsOutputsAbsolutePaths`.
 
 - [ ] **Step 4: Run full test suite**
 
-Run: `cd /Users/alex/src/notescli-issue-55 && make test`
+Run: `cd /Users/alex/src/notesctl-issue-55 && make test`
 
 Expected: All tests pass.
 
 - [ ] **Step 5: Run linter**
 
-Run: `cd /Users/alex/src/notescli-issue-55 && make lint`
+Run: `cd /Users/alex/src/notesctl-issue-55 && make lint`
 
 Expected: No lint errors.
 
@@ -154,9 +154,9 @@ At the top of `CHANGELOG.md`, after the `# Changelog` heading and before the `##
 
 ### Fixed
 
-- Output absolute paths from `ls` to enable Unix pipelines like `notes ls | xargs notes read` ([#55])
+- Output absolute paths from `ls` to enable Unix pipelines like `notesctl ls | xargs notesctl read` ([#55])
 
-[#55]: https://github.com/dreikanter/notes-cli/pull/55
+[#55]: https://github.com/dreikanter/notesctl/pull/55
 ```
 
 Note: The `[#55]` link reference goes at the end of the new entry block, before the blank line separating it from the `## [0.1.40]` entry. Follow the same pattern as existing entries (each entry has its own link reference immediately after it).

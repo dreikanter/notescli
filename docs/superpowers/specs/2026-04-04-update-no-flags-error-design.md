@@ -1,11 +1,11 @@
 # Error on `update` with no flags
 
-**Issue:** [#69](https://github.com/dreikanter/notes-cli/issues/69)
+**Issue:** [#69](https://github.com/dreikanter/notesctl/issues/69)
 **Date:** 2026-04-04
 
 ## Problem
 
-`notes update <id>` with no flags silently reads the file, re-serializes it unchanged, writes it back, and prints the path as if the update succeeded. This is confusing for users and masks bugs in scripts where a flag variable may be empty.
+`notesctl update <id>` with no flags silently reads the file, re-serializes it unchanged, writes it back, and prints the path as if the update succeeded. This is confusing for users and masks bugs in scripts where a flag variable may be empty.
 
 ## Solution
 

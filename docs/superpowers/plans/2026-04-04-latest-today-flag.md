@@ -38,7 +38,7 @@ func runLatest(t *testing.T, args ...string) (string, error) {
 	latestCmd.Flags().StringSlice("type", nil, "filter by note type (repeatable)")
 	latestCmd.Flags().StringSlice("slug", nil, "filter by slug (repeatable)")
 	latestCmd.Flags().StringSlice("tag", nil, "filter by tag (repeatable, all must match)")
-	latestCmd.Flags().Bool("today", false, "only match notes created today")
+	latestCmd.Flags().Bool("today", false, "only match notesctl created today")
 
 	buf := new(bytes.Buffer)
 	rootCmd.SetOut(buf)
@@ -54,7 +54,7 @@ func TestLatestTodayNoMatch(t *testing.T) {
 	// --today should find nothing.
 	_, err := runLatest(t, "--today")
 	if err == nil {
-		t.Fatal("expected error when no notes match today, got nil")
+		t.Fatal("expected error when no notesctl match today, got nil")
 	}
 }
 ```
@@ -62,7 +62,7 @@ func TestLatestTodayNoMatch(t *testing.T) {
 - [ ] **Step 2: Run test to verify it fails**
 
 ```bash
-cd /Users/alex/src/notescli-issue-60
+cd /Users/alex/src/notesctl-issue-60
 go test ./internal/cli/ -run TestLatestTodayNoMatch -v
 ```
 
@@ -80,7 +80,7 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/dreikanter/notes-cli/note"
+	"github.com/dreikanter/notesctl/note"
 	"github.com/spf13/cobra"
 )
 
@@ -100,7 +100,7 @@ var latestCmd = &cobra.Command{
 	},
 }
 
-// scanAndFilter scans notes and applies --today, --type, --slug, --tag filter flags,
+// scanAndFilter scans notesctl and applies --today, --type, --slug, --tag filter flags,
 // returning the most recent match.
 func scanAndFilter(cmd *cobra.Command, root string) (*note.Note, error) {
 	notes, err := note.Scan(root)
@@ -146,7 +146,7 @@ func scanAndFilter(cmd *cobra.Command, root string) (*note.Note, error) {
 }
 
 func init() {
-	latestCmd.Flags().Bool("today", false, "only match notes created today")
+	latestCmd.Flags().Bool("today", false, "only match notesctl created today")
 	latestCmd.Flags().StringSlice("type", nil, "filter by note type (repeatable)")
 	latestCmd.Flags().StringSlice("slug", nil, "filter by slug (repeatable)")
 	latestCmd.Flags().StringSlice("tag", nil, "filter by tag (repeatable, all must match)")
@@ -199,7 +199,7 @@ Insert immediately after `# Changelog` (before `## [0.1.40]`):
 And at the bottom of the file, add:
 
 ```markdown
-[#NN]: https://github.com/dreikanter/notes-cli/pull/NN
+[#NN]: https://github.com/dreikanter/notesctl/pull/NN
 ```
 
 (Replace `NN` with the actual PR number once known.)

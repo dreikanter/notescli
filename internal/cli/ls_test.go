@@ -143,7 +143,7 @@ func TestLsTagAndTypeNoOverlap(t *testing.T) {
 }
 
 func TestLsToday(t *testing.T) {
-	// testdata notes are all in the past; --today should return nothing
+	// testdata notesctl are all in the past; --today should return nothing
 	out, err := runLs(t, "--today")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)

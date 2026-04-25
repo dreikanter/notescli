@@ -25,28 +25,28 @@ for _, arg := range args {
 
 ### 2. Improve `Long` descriptions
 
-Add a sentence documenting the injected defaults so users running `notes grep --help` see the full picture.
+Add a sentence documenting the injected defaults so users running `notesctl grep --help` see the full picture.
 
 **grep:**
 ```
 Search note contents using grep. Only .md files are searched; .git directories are excluded.
 The following flags are injected automatically: -r (recursive), -i (case-insensitive),
---include=*.md, --exclude-dir=.git. The notes path is appended as the last argument.
+--include=*.md, --exclude-dir=.git. The notesctl path is appended as the last argument.
 ```
 
 **rg:**
 ```
 Search note contents using ripgrep (rg). Only .md files are searched.
 The following flags are injected automatically: --glob *.md, --sortr path,
---heading, --no-line-number, --ignore-case. The notes path is appended as the last argument.
+--heading, --no-line-number, --ignore-case. The notesctl path is appended as the last argument.
 ```
 
 ### 3. Tests
 
 Add one test per command:
 
-- `TestGrepHelp` — runs `notes grep --help`, asserts output contains `"grep"` and no error is returned.
-- `TestRgHelp` — runs `notes rg --help`, asserts output contains `"rg"` and no error is returned.
+- `TestGrepHelp` — runs `notesctl grep --help`, asserts output contains `"grep"` and no error is returned.
+- `TestRgHelp` — runs `notesctl rg --help`, asserts output contains `"rg"` and no error is returned.
 
 Tests capture stdout via `os.Pipe()` consistent with the existing test helpers.
 

@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Add `notes tags` command that prints the sorted, deduplicated union of frontmatter `tags:` and body hashtags from every note in the store.
+**Goal:** Add `notesctl tags` command that prints the sorted, deduplicated union of frontmatter `tags:` and body hashtags from every note in the store.
 
 **Architecture:** Two-layer split. `note/tags.go` owns extraction: `extractHashtags(body []byte) []string` is a hand-rolled byte scanner that handles heading/code-block/inline-code/word-boundary rules; `ExtractTags(root string) ([]string, error)` fans note reads out over a `runtime.NumCPU()` worker pool, merges per-worker sets, sorts, and returns. `internal/cli/tags.go` is a thin cobra wrapper that calls `ExtractTags` and prints one tag per line.
 
@@ -406,7 +406,7 @@ func ExtractTags(root string) ([]string, error) {
 		}()
 	}
 
-	for _, n := range notes {
+	for _, n := range notesctl {
 		jobs <- n
 	}
 	close(jobs)
@@ -567,7 +567,7 @@ package cli
 import (
 	"fmt"
 
-	"github.com/dreikanter/notes-cli/note"
+	"github.com/dreikanter/notesctl/note"
 	"github.com/spf13/cobra"
 )
 
@@ -639,17 +639,17 @@ At the top of `CHANGELOG.md` (just under the `# Changelog` heading), insert a ne
 Also add the footer link alongside the other entries at the bottom:
 
 ```markdown
-[#{{PR}}]: https://github.com/dreikanter/notes-cli/pull/{{PR}}
+[#{{PR}}]: https://github.com/dreikanter/notesctl/pull/{{PR}}
 ```
 
 - [ ] **Step 3: Add a README usage example**
 
-In `README.md`, find the `# Search note contents` block in the Usage section (`notes grep`, `notes rg`). Immediately after it, append:
+In `README.md`, find the `# Search note contents` block in the Usage section (`notesctl grep`, `notesctl rg`). Immediately after it, append:
 
 ```markdown
 
 # List all tags (frontmatter + body hashtags)
-notes tags
+notesctl tags
 ```
 
 - [ ] **Step 4: Commit**
@@ -675,7 +675,7 @@ Expected: all tests PASS.
 
 - [ ] **Step 3: Smoke-test against the real store**
 
-Run: `make build && ./notes tags --path ./testdata`
+Run: `make build && ./notesctl tags --path ./testdata`
 Expected: sorted list including at least `meeting`, `planning`, `work` (from testdata frontmatter).
 
 - [ ] **Step 4: Confirm performance on a synthetic large store**
@@ -694,10 +694,10 @@ for y in 2024 2025 2026; do
     done
   done
 done
-time ./notes tags --path "$root" | wc -l
+time ./notesctl tags --path "$root" | wc -l
 ```
 
-Expected: finishes in well under a second on a modern machine (3600 notes total), with a plausible tag count printed. This is a manual sanity check — no assertion beyond "feels fast."
+Expected: finishes in well under a second on a modern machine (3600 notesctl total), with a plausible tag count printed. This is a manual sanity check — no assertion beyond "feels fast."
 
 ---
 

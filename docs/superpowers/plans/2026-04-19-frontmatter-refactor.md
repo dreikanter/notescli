@@ -300,7 +300,7 @@ func FormatNote(f Frontmatter, body []byte) []byte {
 // StripFrontmatter returns data with any leading frontmatter block removed.
 // If no valid frontmatter block is present, data is returned unchanged.
 // This is a convenience for callers that want the body without parsing
-// (e.g. `notes read --no-frontmatter`).
+// (e.g. `notesctl read --no-frontmatter`).
 func StripFrontmatter(data []byte) []byte {
 	bodyStart, _, ok := frontmatterEnd(data)
 	if !ok {
@@ -885,11 +885,11 @@ Expected: all pass.
 Replace the `FilterByTags` function with:
 
 ```go
-// FilterByTags returns notes that contain all of the given tags in their frontmatter.
+// FilterByTags returns notesctl that contain all of the given tags in their frontmatter.
 // Per-note frontmatter parse errors are logged via log.Printf and the note is skipped.
 func FilterByTags(notes []Note, root string, tags []string) ([]Note, error) {
 	var results []Note
-	for _, n := range notes {
+	for _, n := range notesctl {
 		path := filepath.Join(root, n.RelPath)
 		data, err := os.ReadFile(path)
 		if err != nil {
@@ -961,7 +961,7 @@ func ExtractTags(root string) ([]string, error) {
 
 	g.Go(func() error {
 		defer close(jobs)
-		for _, n := range notes {
+		for _, n := range notesctl {
 			select {
 			case <-ctx.Done():
 				return ctx.Err()
@@ -1067,7 +1067,7 @@ Insert above the `## [0.1.71]` heading:
 Then add the reference at the bottom of the file:
 
 ```markdown
-[#112]: https://github.com/dreikanter/notes-cli/pull/112
+[#112]: https://github.com/dreikanter/notesctl/pull/112
 ```
 
 - [ ] **Step 2: Commit all changes**

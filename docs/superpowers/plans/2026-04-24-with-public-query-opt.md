@@ -154,7 +154,7 @@ Expected: `PASS` for all three tests.
 
 Run: `go test ./note/...`
 
-Expected: `ok  github.com/dreikanter/notes-cli/note`.
+Expected: `ok  github.com/dreikanter/notesctl/note`.
 
 - [ ] **Step 6: Commit**
 
@@ -422,7 +422,7 @@ In `CHANGELOG.md`, insert directly below the `# Changelog` heading (and above th
 
 - `note.WithPublic(v bool)` `QueryOpt` filters entries by `Meta.Public`. Downstream consumers (notes-pub) can now call `store.All(note.WithPublic(true))` instead of reading every entry and skipping non-public ones. Internally, `OSStore.collect` evaluates all post-read filters through the shared `matches()` predicate; the single-purpose `entryMatchesTags` helper is removed ([#NNN]).
 
-[#NNN]: https://github.com/dreikanter/notes-cli/pull/NNN
+[#NNN]: https://github.com/dreikanter/notesctl/pull/NNN
 ```
 
 Replace `NNN` in **both** the `[#NNN]` reference and the link target with the real PR number assigned when the PR was opened. Update the date if the entry lands on a different day. If the top entry is already on the bumped date, re-use it; otherwise use today's date in `YYYY-MM-DD` form.

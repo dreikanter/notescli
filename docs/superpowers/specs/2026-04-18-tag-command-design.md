@@ -10,7 +10,7 @@ inline hashtags (`#foo`) in note bodies, but neither is discoverable from the
 CLI. A `tags` command should list the union of both, so it can be piped into
 `fzf`, `grep`, or used as input to other commands.
 
-Performance matters: on a store with 10k+ notes the command must finish quickly
+Performance matters: on a store with 10k+ notesctl the command must finish quickly
 enough to feel instant when piped.
 
 ## Design
@@ -20,7 +20,7 @@ enough to feel instant when piped.
 New top-level command, no args, no flags:
 
 ```
-notes tags
+notesctl tags
 ```
 
 Prints unique tags, one per line, sorted alphabetically (byte order). Exits 0
@@ -69,7 +69,7 @@ faster and makes the code-block / inline-code state tracking natural.
 
 ### Extraction pipeline
 
-1. `note.Scan(root)` enumerates notes (existing function; directory walk
+1. `note.Scan(root)` enumerates notesctl (existing function; directory walk
    only, no file reads).
 2. A bounded worker pool — `runtime.NumCPU()` goroutines — reads files and
    extracts tags in parallel. The workload is I/O-bound per file but CPU-

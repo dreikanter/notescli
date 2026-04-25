@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Return an error when `notes update <id>` is called with no update flags, instead of silently rewriting the file unchanged.
+**Goal:** Return an error when `notesctl update <id>` is called with no update flags, instead of silently rewriting the file unchanged.
 
 **Architecture:** Add an early guard in the update command's `RunE` function that checks whether any update flag was explicitly set via `cmd.Flags().Changed()`. If none were set, return an error before any file I/O. Update the existing test to expect an error.
 
