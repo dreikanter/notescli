@@ -240,7 +240,8 @@ func TestOSStore_AllFilterByPublic(t *testing.T) {
 
 	priv, err := s.All(WithPublic(false))
 	require.NoError(t, err)
-	assertEntryIDs(t, []int{2}, priv)
+	require.Len(t, priv, 1)
+	assert.Equal(t, 2, priv[0].ID)
 	assert.False(t, priv[0].Meta.Public)
 }
 
