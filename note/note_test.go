@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestParseFilename(t *testing.T) {
@@ -140,26 +141,14 @@ func TestParseFilename(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			got, err := ParseFilename(tt.input)
 			if tt.wantErr {
-				if err == nil {
-					t.Errorf("ParseFilename(%q) expected error, got nil", tt.input)
-				}
+				require.Error(t, err)
 				return
 			}
-			if err != nil {
-				t.Fatalf("ParseFilename(%q) unexpected error: %v", tt.input, err)
-			}
-			if got.Date != tt.wantDate {
-				t.Errorf("Date = %q, want %q", got.Date, tt.wantDate)
-			}
-			if got.ID != tt.wantID {
-				t.Errorf("ID = %q, want %q", got.ID, tt.wantID)
-			}
-			if got.Slug != tt.wantSlug {
-				t.Errorf("Slug = %q, want %q", got.Slug, tt.wantSlug)
-			}
-			if got.Type != tt.wantType {
-				t.Errorf("Type = %q, want %q", got.Type, tt.wantType)
-			}
+			require.NoError(t, err)
+			assert.Equal(t, tt.wantDate, got.Date)
+			assert.Equal(t, tt.wantID, got.ID)
+			assert.Equal(t, tt.wantSlug, got.Slug)
+			assert.Equal(t, tt.wantType, got.Type)
 		})
 	}
 }
@@ -183,29 +172,17 @@ func TestIsDigits(t *testing.T) {
 	}
 	for _, c := range cases {
 		t.Run(c.in, func(t *testing.T) {
-			if got := IsDigits(c.in); got != c.want {
-				t.Errorf("IsDigits(%q) = %v, want %v", c.in, got, c.want)
-			}
+			assert.Equal(t, c.want, IsDigits(c.in))
 		})
 	}
 }
 
 func TestHasSpecialBehavior(t *testing.T) {
-	if !HasSpecialBehavior("todo") {
-		t.Error("expected todo to have special behavior")
-	}
-	if !HasSpecialBehavior("backlog") {
-		t.Error("expected backlog to have special behavior")
-	}
-	if !HasSpecialBehavior("weekly") {
-		t.Error("expected weekly to have special behavior")
-	}
-	if HasSpecialBehavior("random") {
-		t.Error("expected random to have no special behavior")
-	}
-	if HasSpecialBehavior("") {
-		t.Error("expected empty string to have no special behavior")
-	}
+	assert.True(t, HasSpecialBehavior("todo"))
+	assert.True(t, HasSpecialBehavior("backlog"))
+	assert.True(t, HasSpecialBehavior("weekly"))
+	assert.False(t, HasSpecialBehavior("random"))
+	assert.False(t, HasSpecialBehavior(""))
 }
 
 func TestFilename(t *testing.T) {
@@ -228,10 +205,7 @@ func TestFilename(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		got := Filename(tt.date, tt.id, tt.slug, tt.noteType)
-		if got != tt.want {
-			t.Errorf("Filename(%q, %d, %q, %q) = %q, want %q", tt.date, tt.id, tt.slug, tt.noteType, got, tt.want)
-		}
+		assert.Equal(t, tt.want, Filename(tt.date, tt.id, tt.slug, tt.noteType))
 	}
 }
 
