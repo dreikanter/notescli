@@ -1067,7 +1067,7 @@ Insert above the `## [0.1.71]` heading:
 Then add the reference at the bottom of the file:
 
 ```markdown
-[#112]: https://github.com/dreikanter/notes-cli/pull/112
+[#112]: https://github.com/dreikanter/notesctl/pull/112
 ```
 
 - [ ] **Step 2: Commit all changes**

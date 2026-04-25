@@ -10,7 +10,7 @@
 
 **Spec:** `docs/superpowers/specs/2026-04-18-annotate-command-design.md`
 
-**Issue:** [#105](https://github.com/dreikanter/notes-cli/issues/105)
+**Issue:** [#105](https://github.com/dreikanter/notesctl/issues/105)
 
 ---
 
@@ -196,7 +196,7 @@ import (
 	// ...existing imports...
 	"encoding/json"
 
-	"github.com/dreikanter/notes-cli/note"
+	"github.com/dreikanter/notesctl/note"
 )
 
 func TestAnnotateEmptyFieldsAllEmpty(t *testing.T) {
@@ -301,7 +301,7 @@ import (
 	// add:
 	"encoding/json"
 
-	"github.com/dreikanter/notes-cli/note"
+	"github.com/dreikanter/notesctl/note"
 )
 
 // annotateEmptyFields returns the empty fields among {title, description, tags}
@@ -698,7 +698,7 @@ import (
 	"os/exec"
 	"path/filepath"
 
-	"github.com/dreikanter/notes-cli/note"
+	"github.com/dreikanter/notesctl/note"
 	"github.com/spf13/cobra"
 )
 ```
@@ -1194,7 +1194,7 @@ Prepend a new section at the top of `CHANGELOG.md`, immediately after the `# Cha
 Add the PR-number link footer entry at the bottom of `CHANGELOG.md` (sorted with the other `[#…]: …` entries):
 
 ```markdown
-[#N]: https://github.com/dreikanter/notes-cli/pull/N
+[#N]: https://github.com/dreikanter/notesctl/pull/N
 ```
 
 Replace `N` with the actual PR number. Replace `0.1.69` if `git describe --tags` gives a different next patch version. Replace the date if today's date is different.

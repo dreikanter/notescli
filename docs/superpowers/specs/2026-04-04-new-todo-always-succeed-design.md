@@ -1,6 +1,6 @@
 # new-todo: Remove rollover requirement, always create today's todo
 
-**Issue:** [#58](https://github.com/dreikanter/notes-cli/issues/58)
+**Issue:** [#58](https://github.com/dreikanter/notesctl/issues/58)
 **Date:** 2026-04-04
 
 ## Problem

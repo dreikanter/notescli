@@ -44,7 +44,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/dreikanter/notes-cli/note"
+	"github.com/dreikanter/notesctl/note"
 	"github.com/spf13/cobra"
 )
 
@@ -296,7 +296,7 @@ make test
 
 Expected output includes lines like:
 ```
-ok  	github.com/dreikanter/notes-cli/internal/cli
+ok  	github.com/dreikanter/notesctl/internal/cli
 ```
 No `FAIL` lines.
 
@@ -325,7 +325,7 @@ Insert after the first `# Changelog` line, before the existing `## [0.1.40]` ent
 
 - Add `--type`, `--slug`, `--tag`, and `--today` filter flags to `read`; mutually exclusive with the positional ref argument ([#62])
 
-[#62]: https://github.com/dreikanter/notes-cli/pull/62
+[#62]: https://github.com/dreikanter/notesctl/pull/62
 ```
 
 - [ ] **Step 2: Commit**

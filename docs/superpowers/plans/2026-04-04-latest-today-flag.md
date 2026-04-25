@@ -62,7 +62,7 @@ func TestLatestTodayNoMatch(t *testing.T) {
 - [ ] **Step 2: Run test to verify it fails**
 
 ```bash
-cd /Users/alex/src/notescli-issue-60
+cd /Users/alex/src/notesctl-issue-60
 go test ./internal/cli/ -run TestLatestTodayNoMatch -v
 ```
 
@@ -80,7 +80,7 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/dreikanter/notes-cli/note"
+	"github.com/dreikanter/notesctl/note"
 	"github.com/spf13/cobra"
 )
 
@@ -199,7 +199,7 @@ Insert immediately after `# Changelog` (before `## [0.1.40]`):
 And at the bottom of the file, add:
 
 ```markdown
-[#NN]: https://github.com/dreikanter/notes-cli/pull/NN
+[#NN]: https://github.com/dreikanter/notesctl/pull/NN
 ```
 
 (Replace `NN` with the actual PR number once known.)

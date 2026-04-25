@@ -46,7 +46,7 @@ func TestNewTodoNoPreviousCreatesEmpty(t *testing.T) {
 
 - [ ] **Step 2: Run the test to verify it fails**
 
-Run: `cd /Users/alex/src/notescli-issue-58 && go test ./internal/cli/ -run TestNewTodoNoPreviousCreatesEmpty -v`
+Run: `cd "$REPO_ROOT" && go test ./internal/cli/ -run TestNewTodoNoPreviousCreatesEmpty -v`
 
 Expected: FAIL — the current code returns an error `"no previous todo found"`.
 
@@ -148,13 +148,13 @@ The full `RunE` function after the change:
 
 - [ ] **Step 4: Run the new test to verify it passes**
 
-Run: `cd /Users/alex/src/notescli-issue-58 && go test ./internal/cli/ -run TestNewTodoNoPreviousCreatesEmpty -v`
+Run: `cd "$REPO_ROOT" && go test ./internal/cli/ -run TestNewTodoNoPreviousCreatesEmpty -v`
 
 Expected: PASS
 
 - [ ] **Step 5: Run all existing tests to verify no regressions**
 
-Run: `cd /Users/alex/src/notescli-issue-58 && go test ./internal/cli/ -run TestNewTodo -v`
+Run: `cd "$REPO_ROOT" && go test ./internal/cli/ -run TestNewTodo -v`
 
 Expected: All `TestNewTodo*` tests PASS.
 
@@ -203,7 +203,7 @@ func TestNewTodoForceOnlyTodayExists(t *testing.T) {
 
 - [ ] **Step 2: Run the test**
 
-Run: `cd /Users/alex/src/notescli-issue-58 && go test ./internal/cli/ -run TestNewTodoForceOnlyTodayExists -v`
+Run: `cd "$REPO_ROOT" && go test ./internal/cli/ -run TestNewTodoForceOnlyTodayExists -v`
 
 Expected: PASS (the fix from Task 1 already handles this).
 
@@ -254,7 +254,7 @@ notes new-todo
 
 - [ ] **Step 3: Run lint**
 
-Run: `cd /Users/alex/src/notescli-issue-58 && make lint`
+Run: `cd "$REPO_ROOT" && make lint`
 
 Expected: PASS
 
@@ -283,7 +283,7 @@ Add at the top of `CHANGELOG.md`, after the `# Changelog` heading and before the
 
 - `new-todo` no longer fails when no previous todo exists; creates an empty todo instead. `--force` works correctly when today's todo is the only one ([#58])
 
-[#58]: https://github.com/dreikanter/notes-cli/pull/58
+[#58]: https://github.com/dreikanter/notesctl/pull/58
 ```
 
 - [ ] **Step 2: Commit**

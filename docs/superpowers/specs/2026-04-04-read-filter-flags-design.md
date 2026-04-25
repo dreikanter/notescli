@@ -1,7 +1,7 @@
 # read filter flags design
 
 **Date:** 2026-04-04  
-**Issue:** [#62](https://github.com/dreikanter/notes-cli/issues/62)
+**Issue:** [#62](https://github.com/dreikanter/notesctl/issues/62)
 
 ## Problem
 

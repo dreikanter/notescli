@@ -1,10 +1,10 @@
-# notescli Frontmatter Extension Design
+# notesctl Frontmatter Extension Design
 
 Date: 2026-03-29
 
 ## Context
 
-`notescli/note` is the canonical source of note-format knowledge, shared with `notespub` as a Go module dependency. `notespub` needs fields not currently in `FrontmatterFields` (`public`, `slug`), and any future consumer would need to duplicate format knowledge or parse filenames itself.
+`notesctl/note` is the canonical source of note-format knowledge, shared with `notespub` as a Go module dependency. `notespub` needs fields not currently in `FrontmatterFields` (`public`, `slug`), and any future consumer would need to duplicate format knowledge or parse filenames itself.
 
 ## Goal
 

@@ -1,12 +1,18 @@
 # Changelog
 
+## [0.3.21] - 2026-04-25
+
+### Changed
+
+- Complete the notesctl rename: update the Go module path, Go install path, import paths, documentation, and configuration environment variable (`NOTESCTL_PATH`) without compatibility shims for the old naming. The CLI command and binary remain `notes` ([#254]).
+
 ## [0.3.20] - 2026-04-24
 
 ### Added
 
 - `note.WithPublic(v bool)` `QueryOpt` filters entries by `Meta.Public`. Downstream consumers (notes-pub) can now call `store.All(note.WithPublic(true))` instead of reading every entry and skipping non-public ones. Internally, `OSStore.collect` evaluates all post-read filters through the shared `matches()` predicate; the single-purpose `entryMatchesTags` helper is removed ([#253]).
 
-[#253]: https://github.com/dreikanter/notes-cli/pull/253
+[#253]: https://github.com/dreikanter/notesctl/pull/253
 
 ## [0.3.19] - 2026-04-24
 
@@ -14,7 +20,7 @@
 
 - `.github/workflows/tag.yml` now tags merged PRs using the topmost `## [X.Y.Z]` heading from `CHANGELOG.md` instead of auto-incrementing the patch off the latest git tag. This resyncs git tags with CHANGELOG versions (which had drifted — tags were stuck at `v0.1.x` while the CHANGELOG had advanced to `0.3.x`). `CLAUDE.md` versioning/changelog sections updated accordingly ([#249]).
 
-[#249]: https://github.com/dreikanter/notes-cli/pull/249
+[#249]: https://github.com/dreikanter/notesctl/pull/249
 
 ## [0.3.18] - 2026-04-24
 
@@ -23,7 +29,7 @@
 - Replace `Task.State` (`TaskState` enum with `TaskPending` / `TaskDone` / `TaskOther`) with a plain `Task.Done bool`. Drops the unused `TaskOther` value and the `markerToState` helper.
 - Tighten `taskRe` to require the canonical `- ` bullet prefix and only accept ` ` or `x` as the marker character; `[+]` and unprefixed `[ ]` lines are no longer recognised as tasks ([#248]).
 
-[#248]: https://github.com/dreikanter/notes-cli/pull/248
+[#248]: https://github.com/dreikanter/notesctl/pull/248
 
 ## [0.3.17] - 2026-04-24
 
@@ -31,7 +37,7 @@
 
 - Split `note/storage.go` and `note/store.go` by responsibility: `store.go` now holds only the `Store` interface + `ErrNotFound`; query filters move to `note/query.go`; `ValidateSlug` + `slugRe` move to `note/slug.go`; `hasAllTags`, `computeMergedTags`, and `normalizeHashtags` merge into `note/tags.go` next to `ExtractHashtags` ([#247]).
 
-[#247]: https://github.com/dreikanter/notes-cli/pull/247
+[#247]: https://github.com/dreikanter/notesctl/pull/247
 
 ## [0.3.13] - 2026-04-24
 
@@ -51,7 +57,7 @@
 - `internal/editor/` package (dead once the `edit` command was removed)
 - `notes grep` / `notes rg` commands (deferred feature; removed rather than parked) ([#243])
 
-[#243]: https://github.com/dreikanter/notes-cli/pull/243
+[#243]: https://github.com/dreikanter/notesctl/pull/243
 
 ## [0.3.12] - 2026-04-24
 
@@ -60,7 +66,7 @@
 - `internal/cli/new_todo.go`: `notes new-todo` now routes through the `Store`. Existence check uses `store.Find(WithType("todo"), WithExactDate(today))`; previous-todo lookup uses `store.Find(WithType("todo"), WithBeforeDate(today))`. Rollover still reuses `note.RolloverTasks` and `note.FormatTodoContent`.
 - `internal/cli/filter.go` removed — the `stderrLogger` helper has no remaining callers now that every command uses the Store ([#242]).
 
-[#242]: https://github.com/dreikanter/notes-cli/pull/242
+[#242]: https://github.com/dreikanter/notesctl/pull/242
 
 ## [0.3.11] - 2026-04-24
 
@@ -68,7 +74,7 @@
 
 - `internal/cli/new.go`: `notes new` now builds a `StoreEntry` and routes through `store.Put`. `--upsert` uses `store.Find(WithType, WithExactDate(today), WithSlug)` + conditional `store.Put`. `internal/cli/create.go` is deleted — ID generation, directory creation, and atomic write are owned by `OSStore.Put` ([#241]).
 
-[#241]: https://github.com/dreikanter/notes-cli/pull/241
+[#241]: https://github.com/dreikanter/notesctl/pull/241
 
 ## [0.3.10] - 2026-04-24
 
@@ -81,7 +87,7 @@
 
 - `notes edit` command. Open a note in your editor with e.g. `$EDITOR $(notes resolve --type todo)` ([#240]).
 
-[#240]: https://github.com/dreikanter/notes-cli/pull/240
+[#240]: https://github.com/dreikanter/notesctl/pull/240
 
 ## [0.3.9] - 2026-04-24
 
@@ -89,7 +95,7 @@
 
 - `internal/cli/update.go`: `notes update` now takes a single `<id>` integer argument and routes through `store.Get` / `store.Put`. The `--sync-filename` flag is removed — `OSStore.Put` detects filename drift from `Meta.Slug`/`Type`/`CreatedAt` and renames atomically. New `--date YYYYMMDD` flag moves the note to the requested year/month directory. `syncNoteFilename` and its associated rename-via-link logic are deleted ([#239]).
 
-[#239]: https://github.com/dreikanter/notes-cli/pull/239
+[#239]: https://github.com/dreikanter/notesctl/pull/239
 
 ## [0.3.8] - 2026-04-24
 
@@ -97,7 +103,7 @@
 
 - `internal/cli/annotate.go`: `notes annotate` now takes a single `<id>` integer argument. Load/save go through `store.Get` / `store.Put`; the Claude invocation flow (schema, exec, timeout handling, error mapping) is unchanged. `annotateEmptyFields` and `mergeAnnotation` now operate on `note.StoreMeta` instead of `note.Frontmatter` ([#238]).
 
-[#238]: https://github.com/dreikanter/notes-cli/pull/238
+[#238]: https://github.com/dreikanter/notesctl/pull/238
 
 ## [0.3.7] - 2026-04-24
 
@@ -105,7 +111,7 @@
 
 - `internal/cli/append.go`: `notes append` now takes a single `<id>` integer argument. Load goes through `store.Get`, body is modified in-memory, and save goes through `store.Put`. Filter flags (`--type`, `--slug`, `--tag`, `--today`) are removed — users get IDs from `notes ls` or `notes resolve` ([#237]).
 
-[#237]: https://github.com/dreikanter/notes-cli/pull/237
+[#237]: https://github.com/dreikanter/notesctl/pull/237
 
 ## [0.3.6] - 2026-04-24
 
@@ -116,7 +122,7 @@
 - Flag mapping: `--type` → `WithType` (now single-valued), `--slug` → `WithSlug`, `--tag` → `WithTag` (repeatable, AND), `--today` → `WithExactDate(time.Now())`.
 - Removed the `--name` filename-fragment flag; it will return as a tag/title-fragment query option in a future phase ([#236]).
 
-[#236]: https://github.com/dreikanter/notes-cli/pull/236
+[#236]: https://github.com/dreikanter/notesctl/pull/236
 
 ## [0.3.5] - 2026-04-24
 
@@ -124,7 +130,7 @@
 
 - `internal/cli/rm.go`: `notes rm` now takes a single `<id>` integer argument and deletes via `store.Delete(id)`. The `--today` flag is removed — users get today's ID from `notes ls --today` or `notes resolve`. Non-existent IDs surface `note.ErrNotFound` as a clear "not found" message ([#235]).
 
-[#235]: https://github.com/dreikanter/notes-cli/pull/235
+[#235]: https://github.com/dreikanter/notesctl/pull/235
 
 ## [0.3.4] - 2026-04-24
 
@@ -132,7 +138,7 @@
 
 - `internal/cli/read.go`: `notes read` now takes a single `<id>` integer argument and resolves it via `store.Get(id)`. The filter flags (`--type`, `--slug`, `--tag`, `--today`) are removed — users discover IDs via `notes ls` or `notes resolve`. `--no-frontmatter` is preserved. Raw file bytes still come from disk (via `store.AbsPath`) so on-disk YAML formatting is unchanged ([#234]).
 
-[#234]: https://github.com/dreikanter/notes-cli/pull/234
+[#234]: https://github.com/dreikanter/notesctl/pull/234
 
 ## [0.3.3] - 2026-04-24
 
@@ -140,16 +146,16 @@
 
 - `internal/cli/tags.go`: `notes tags` now calls `store.All()` instead of `note.Load` + index walk. `OSStore.All()` already returns entries with `Meta.Tags` populated as the merged frontmatter/body-hashtag union, so the command drops the two-source merge. Output format is unchanged ([#233]).
 
-[#233]: https://github.com/dreikanter/notes-cli/pull/233
+[#233]: https://github.com/dreikanter/notesctl/pull/233
 
 ## [0.3.2] - 2026-04-24
 
 ### Added
 
 - `note/os_store.go`: `OSStore` — the filesystem-backed `Store` implementation over the existing `YYYY/MM/YYYYMMDD_id_slug.md` layout. Reuses `ParseFilename`, `Filename`, `DirPath`, `WriteAtomic`, `NextID`, `ExtractHashtags`, `ParseNote`, and `FormatNote`. Filename scan sorts by `(date DESC, id DESC)` using the integer ID so `_11_` sorts newer than `_9_`. `Put` handles atomic rename on slug/date changes.
-- `internal/cli/root.go`: `notesStore()` helper constructs an `*note.OSStore` from the resolved `--path` / `$NOTES_PATH` root. Threaded in now; individual commands adopt it in later phases ([#232]).
+- `internal/cli/root.go`: `notesStore()` helper constructs an `*note.OSStore` from the resolved `--path` / `$NOTESCTL_PATH` root. Threaded in now; individual commands adopt it in later phases ([#232]).
 
-[#232]: https://github.com/dreikanter/notes-cli/pull/232
+[#232]: https://github.com/dreikanter/notesctl/pull/232
 
 ## [0.3.1] - 2026-04-23
 
@@ -157,7 +163,7 @@
 
 - `note/mem_store.go`: `MemStore` — in-memory `Store` backed by `map[int]StoreEntry` with a `sync.RWMutex`. Test-only; validates the `Store` interface shape before `OSStore` is built. `IDs`, `All`, and `Find` sort newest-first by `Meta.CreatedAt` with a deterministic higher-ID tie-break. `Put` assigns IDs as `max(existing) + 1`, sets `Meta.CreatedAt` to now when zero, and always sets `Meta.UpdatedAt`. Includes a compile-time `var _ Store = (*MemStore)(nil)` assertion ([#231]).
 
-[#231]: https://github.com/dreikanter/notes-cli/pull/231
+[#231]: https://github.com/dreikanter/notesctl/pull/231
 
 ## [0.3.0] - 2026-04-23
 
@@ -168,7 +174,7 @@
 
 No implementations and no behaviour changes — this PR only establishes the contract the subsequent migration phases build on ([#230]).
 
-[#230]: https://github.com/dreikanter/notes-cli/pull/230
+[#230]: https://github.com/dreikanter/notesctl/pull/230
 
 ## [0.2.21] - 2026-04-23
 
@@ -176,7 +182,7 @@ No implementations and no behaviour changes — this PR only establishes the con
 
 - `internal/cli/update.go` local vars renamed: `updateTags`→`tags`, `updateNoTags`→`noTags`, `updateTitle`→`title`, `updateDescription`→`description`, `updateSlug`→`slug`, `updateNoSlug`→`noSlug`, `updateType`→`noteType`, `updateNoType`→`noType`. The `update` prefix was redundant inside a file already scoped to the update command ([#213])
 
-[#213]: https://github.com/dreikanter/notes-cli/pull/213
+[#213]: https://github.com/dreikanter/notesctl/pull/213
 
 ## [0.2.20] - 2026-04-23
 
@@ -186,7 +192,7 @@ No implementations and no behaviour changes — this PR only establishes the con
 - `update.go`: `syncNoteFilename` extracted from `RunE`; the hard-link rename path is now a standalone function
 - `annotate.go`: `invokeAnnotate` extracted; it wraps schema build, context deadline, `runClaude`, and result parse into one call ([#212])
 
-[#212]: https://github.com/dreikanter/notes-cli/pull/212
+[#212]: https://github.com/dreikanter/notesctl/pull/212
 
 ## [0.2.19] - 2026-04-23
 
@@ -194,7 +200,7 @@ No implementations and no behaviour changes — this PR only establishes the con
 
 - `runExternalSearch(cmd, args, tool, notInstalled, buildArgs)` extracted to `internal/cli/search.go`. Both `grep` and `rg` delegate to it; each command's `RunE` now only provides the tool-specific `buildArgs` closure. The `notInstalled` string triggers a `exec.LookPath` pre-check when non-empty ([#211])
 
-[#211]: https://github.com/dreikanter/notes-cli/pull/211
+[#211]: https://github.com/dreikanter/notesctl/pull/211
 
 ## [0.2.18] - 2026-04-23
 
@@ -202,7 +208,7 @@ No implementations and no behaviour changes — this PR only establishes the con
 
 - `resolveOrFilter(cmd, root, args, f, resolveOpts...)` added to `internal/cli/filter.go`. It handles the repeated "positional ref → `resolveRef`; filter flags → load+filter; neither → caller decides" pattern. `append` and `read` now delegate to it; `resolve` uses it for the filter-only path and keeps its positional-arg path inline since it allows `--today` alongside a positional argument ([#210])
 
-[#210]: https://github.com/dreikanter/notes-cli/pull/210
+[#210]: https://github.com/dreikanter/notesctl/pull/210
 
 ## [0.2.17] - 2026-04-23
 
@@ -210,7 +216,7 @@ No implementations and no behaviour changes — this PR only establishes the con
 
 - `lockStoreRoot` (the `syscall.Flock` helper used by `NextID`) moved from `note/id.go` into two build-tag files: `note/id_unix.go` (`//go:build unix`) and a no-op stub `note/id_other.go` (`//go:build !unix`). The package now compiles on non-Unix targets without a `syscall` dependency; behavior on Unix is unchanged ([#209])
 
-[#209]: https://github.com/dreikanter/notes-cli/pull/209
+[#209]: https://github.com/dreikanter/notesctl/pull/209
 
 ## [0.2.16] - 2026-04-23
 
@@ -218,7 +224,7 @@ No implementations and no behaviour changes — this PR only establishes the con
 
 - `Entry.MergedTags()` no longer recomputes on every call. The merged set (frontmatter tags ∪ body hashtags, lowercased, deduplicated, sorted) is now built once per entry during `Index.build()` and stored in an unexported `mergedTags` field; `MergedTags()` returns a fresh copy. `cloneEntry` clones the cached slice alongside the other slice fields ([#208])
 
-[#208]: https://github.com/dreikanter/notes-cli/pull/208
+[#208]: https://github.com/dreikanter/notesctl/pull/208
 
 ## [0.2.15] - 2026-04-23
 
@@ -226,7 +232,7 @@ No implementations and no behaviour changes — this PR only establishes the con
 
 - `Index.Snapshot()` added: returns a lightweight `Snapshot` value (slice-header copy, no deep copy) under a short read-lock. `Snapshot` exposes `Entries() []Entry` and `Len() int` and is safe to hold after the lock is released. Callers that need a stable view of the index after `Load` can use `Snapshot()` instead of `Entries()` ([#207])
 
-[#207]: https://github.com/dreikanter/notes-cli/pull/207
+[#207]: https://github.com/dreikanter/notesctl/pull/207
 
 ## [0.2.14] - 2026-04-23
 
@@ -234,7 +240,7 @@ No implementations and no behaviour changes — this PR only establishes the con
 
 - `note.Task` fields `Prefix`, `Marker`, and `Suffix` are now unexported — they were regex capture intermediates that leaked parse details to external consumers. Replaced with exported `State TaskState` (values: `TaskPending`, `TaskDone`, `TaskOther`) and `Text string` (trimmed task text after the bracket). `Reassembled` and `WithTag` continue to work; internal `RolloverTasks` uses the unexported captures ([#206])
 
-[#206]: https://github.com/dreikanter/notes-cli/pull/206
+[#206]: https://github.com/dreikanter/notesctl/pull/206
 
 ## [0.2.13] - 2026-04-23
 
@@ -242,7 +248,7 @@ No implementations and no behaviour changes — this PR only establishes the con
 
 - `note.FindLatestTodo` and `note.FindTodayTodo` removed from the `note` package. Both functions hardcode `Type == "todo"` and iterate `[]Entry` by date — CLI policy, not a library primitive. They are now unexported helpers in `internal/cli/new_todo.go`, their sole caller. `ParseTask`, `ExtractTasks`, `RolloverTasks`, and `FormatTodoContent` remain in `note` as reusable primitives ([#205])
 
-[#205]: https://github.com/dreikanter/notes-cli/pull/205
+[#205]: https://github.com/dreikanter/notesctl/pull/205
 
 ## [0.2.12] - 2026-04-23
 
@@ -250,7 +256,7 @@ No implementations and no behaviour changes — this PR only establishes the con
 
 - `parseEditor` and `isTerminalEditor` moved from `internal/cli/edit.go` to a new `internal/editor` package as exported `editor.Parse` and `editor.IsTerminal`. The new package is independently testable with no Cobra dependency ([#204])
 
-[#204]: https://github.com/dreikanter/notes-cli/pull/204
+[#204]: https://github.com/dreikanter/notesctl/pull/204
 
 ## [0.2.11] - 2026-04-23
 
@@ -258,7 +264,7 @@ No implementations and no behaviour changes — this PR only establishes the con
 
 - `writeAtomic` and `rootDirMode` moved from `internal/cli` to the `note` package as exported `note.WriteAtomic` and `note.StoreDirMode`. These are pure file-I/O primitives with no CLI dependency; exporting them makes them available to downstream consumers such as notes-pub / notes-view without duplication ([#203])
 
-[#203]: https://github.com/dreikanter/notes-cli/pull/203
+[#203]: https://github.com/dreikanter/notesctl/pull/203
 
 ## [0.2.10] - 2026-04-23
 
@@ -266,7 +272,7 @@ No implementations and no behaviour changes — this PR only establishes the con
 
 - `note.ResolveRef` removed. It called `Load(root, WithFrontmatter(false))` on every invocation, so external callers using it in a loop paid for a full store walk per call; the docs already steered callers toward `Index.Resolve`. External consumers should `Load` once and call `idx.Resolve(query, opts...)`, wrapping a `false`-bool miss in `note.ErrNotFound` when the caller's contract is `(_, error)`. The CLI now routes all seven call sites (`edit`, `append`, `annotate`, `read`, `resolve`, `update`, `rm`) through an internal `cli.resolveRef` helper that preserves the previous error surface ([#202])
 
-[#202]: https://github.com/dreikanter/notes-cli/pull/202
+[#202]: https://github.com/dreikanter/notesctl/pull/202
 
 ## [0.2.9] - 2026-04-23
 
@@ -275,7 +281,7 @@ No implementations and no behaviour changes — this PR only establishes the con
 - `note.ExtractTags(root)` removed. It ran a full `Load` on every call and hid body hashtags behind the unexported `bodyHashtags` field, so external consumers either paid for a re-walk or lost access. Callers that already hold an `Index` should combine `Index.Tags()` (frontmatter aggregate) with per-entry `Entry.BodyHashtags()` themselves; the `notes tags` CLI command routes through `Index` and is unchanged from the user's side. ([#201])
 - `note.Entry.BodyHashtags() []string` exported as a defensive-copy accessor returning the lowercased, deduplicated hashtags extracted from the note body during `Load`. Returns nil when `Load` ran with `WithFrontmatter(false)` or the body had no hashtags. Mutating the returned slice does not affect the index ([#201])
 
-[#201]: https://github.com/dreikanter/notes-cli/pull/201
+[#201]: https://github.com/dreikanter/notesctl/pull/201
 
 ## [0.2.8] - 2026-04-23
 
@@ -283,7 +289,7 @@ No implementations and no behaviour changes — this PR only establishes the con
 
 - Rename `note.Filter` → `note.FilterByFilename` for symmetry with `FilterByTags`, `FilterByDate`, `FilterBySlug`, and `FilterByTypes`. The bare `Filter` name hid the fact that it only matches against the base filename; the `By…` suffix makes the axis explicit. Internal CLI call site (`internal/cli/ls.go`) updated. External callers importing `note.Filter` need a straight rename ([#200])
 
-[#200]: https://github.com/dreikanter/notes-cli/pull/200
+[#200]: https://github.com/dreikanter/notesctl/pull/200
 
 ## [0.2.7] - 2026-04-23
 
@@ -291,7 +297,7 @@ No implementations and no behaviour changes — this PR only establishes the con
 
 - `note.IsID` removed; it was a one-line alias for `note.IsDigits` with no stricter semantics to enforce. Internal callers (`ParseFilename`, `Index.Resolve`) now call `IsDigits` directly. External consumers that imported `note.IsID` for wikilink / CLI argument detection should switch to `note.IsDigits`, which keeps identical behavior (non-empty, ASCII digits only) ([#199])
 
-[#199]: https://github.com/dreikanter/notes-cli/pull/199
+[#199]: https://github.com/dreikanter/notesctl/pull/199
 
 ## [0.2.6] - 2026-04-23
 
@@ -299,7 +305,7 @@ No implementations and no behaviour changes — this PR only establishes the con
 
 - Rename `isFilenameCacheSafeType` → `filenameRoundtripSafeType` in `note/note.go`. The predicate has nothing to do with a cache; it reports whether a type round-trips cleanly through `Filename` / `ParseFilename`. Unexported helper, no external callers affected ([#198])
 
-[#198]: https://github.com/dreikanter/notes-cli/pull/198
+[#198]: https://github.com/dreikanter/notesctl/pull/198
 
 ## [0.2.5] - 2026-04-23
 
@@ -307,7 +313,7 @@ No implementations and no behaviour changes — this PR only establishes the con
 
 - `note.Index.Reload()` now returns `<-chan error` (was `<-chan struct{}`). A successful rebuild closes the channel with the zero value; a failing rebuild sends the error on the buffered channel before close, so `err := <-ch` returns the build error or nil. The logger installed via `WithLogger` still sees the same error. Long-lived services can now react to a specific reload's outcome instead of only being able to wait for "some build has finished" ([#197])
 
-[#197]: https://github.com/dreikanter/notes-cli/pull/197
+[#197]: https://github.com/dreikanter/notesctl/pull/197
 
 ## [0.2.4] - 2026-04-23
 
@@ -315,7 +321,7 @@ No implementations and no behaviour changes — this PR only establishes the con
 
 - `note.ErrNotFound = errors.New("note not found")` exported so callers can match misses with `errors.Is` instead of string-comparing. `ResolveRef` now wraps it on the priority-chain miss path (previously `fmt.Errorf("note not found: %s", …)` with no sentinel) and on the `resolveRelPath` EvalSymlinks miss. `Index.Resolve` keeps its `(Entry, bool, error)` shape — `bool=false` is a miss, `error` is reserved for I/O — and the `ErrNotFound` doc-comment spells out the convention so the two APIs stay distinguishable ([#196])
 
-[#196]: https://github.com/dreikanter/notes-cli/pull/196
+[#196]: https://github.com/dreikanter/notesctl/pull/196
 
 ## [0.2.3] - 2026-04-23
 
@@ -323,7 +329,7 @@ No implementations and no behaviour changes — this PR only establishes the con
 
 - `note.cloneEntry` now deep-copies `Frontmatter.Extra` — the map, each `yaml.Node` value, and the nested `Content` slices — so a web-service consumer that mutates `Extra` after a lookup cannot race other readers of the same `Index` entry. Previously only `Tags`, `Aliases`, and `bodyHashtags` were cloned, and the doc-comment warned that `Extra` was aliased; that footgun is gone ([#195])
 
-[#195]: https://github.com/dreikanter/notes-cli/pull/195
+[#195]: https://github.com/dreikanter/notesctl/pull/195
 
 ## [0.2.2] - 2026-04-23
 
@@ -331,16 +337,16 @@ No implementations and no behaviour changes — this PR only establishes the con
 
 - `note.TypesWithSpecialBehavior` unexported to `typesWithSpecialBehavior`; external importers can no longer `append` to the package-level slice and silently change CLI behavior globally. `note.HasSpecialBehavior(s)` remains the public predicate, and a new `note.SpecialBehaviorTypes()` returns a fresh copy of the list for callers that need the values. `SCHEMA.md` now references `HasSpecialBehavior` instead of the unexported slice ([#194])
 
-[#194]: https://github.com/dreikanter/notes-cli/pull/194
+[#194]: https://github.com/dreikanter/notesctl/pull/194
 
 ## [0.2.1] - 2026-04-23
 
 ### Changed
 
-- `note` package no longer writes to `os.Stderr`. Per-note frontmatter parse failures (`note/index.go`), `Index.Reload` build failures, and unreadable-subdirectory warnings during `Scan` now route through a new `note.Logger = func(error)`. Install one via `note.WithLogger` (LoadOption) or `note.WithScanLogger` (ScanOption); the default is a no-op so external importers (notes-pub, notes-view) can embed the package without inheriting its stderr output. The `notes` CLI wires a single `stderrLogger(cmd)` helper through every `note.Load` call, so user-visible output is unchanged ([#193])
+- `note` package no longer writes to `os.Stderr`. Per-note frontmatter parse failures (`note/index.go`), `Index.Reload` build failures, and unreadable-subdirectory warnings during `Scan` now route through a new `note.Logger = func(error)`. Install one via `note.WithLogger` (LoadOption) or `note.WithScanLogger` (ScanOption); the default is a no-op so external importers (notes-pub, notes-view) can embed the package without inheriting its stderr output. The `notesctl` CLI wires a single `stderrLogger(cmd)` helper through every `note.Load` call, so user-visible output is unchanged ([#193])
 - `.github/workflows/tag.yml` preserves the major.minor segment of the latest tag instead of hardcoding `v0.1.*`; `CLAUDE.md`'s Versioning and Changelog sections are updated to match. Bumping minor now requires a manual `v0.X.0` tag, after which the workflow continues patch-bumping within that series ([#193])
 
-[#193]: https://github.com/dreikanter/notes-cli/pull/193
+[#193]: https://github.com/dreikanter/notesctl/pull/193
 
 ## [0.2.0] - 2026-04-23
 
@@ -348,7 +354,7 @@ No implementations and no behaviour changes — this PR only establishes the con
 
 - Rename `note.Note` → `note.Ref` to drop the package/type stutter. `Entry` now embeds `Ref` instead of `Note`, and `ResolveRef` / `Scan` / `ParseFilename` now return `Ref`. The `Ref` field name replaces `Note` in `Entry` struct literals. No cross-package changes required — external callers only consume `note.Entry` and never reference `note.Note` by name. ([#164])
 
-[#164]: https://github.com/dreikanter/notes-cli/pull/164
+[#164]: https://github.com/dreikanter/notesctl/pull/164
 
 ## [0.1.111] - 2026-04-23
 
@@ -468,7 +474,7 @@ No implementations and no behaviour changes — this PR only establishes the con
 
 ### Added
 
-- `note.Frontmatter` now has a reserved `Aliases []string` field (`yaml:"aliases,omitempty"`). Notes whose `aliases:` previously landed in `Frontmatter.Extra` now populate the typed field, so downstream publishers (notes-pub permalink redirects, notes-view rename-history resolution) no longer need to decode the `yaml.Node` themselves. notes-cli does not itself consume `aliases` yet; the field is reserved to stabilize the contract and avoid future collisions — see `SCHEMA.md` ([#139])
+- `note.Frontmatter` now has a reserved `Aliases []string` field (`yaml:"aliases,omitempty"`). Notes whose `aliases:` previously landed in `Frontmatter.Extra` now populate the typed field, so downstream publishers (notes-pub permalink redirects, notes-view rename-history resolution) no longer need to decode the `yaml.Node` themselves. notesctl does not itself consume `aliases` yet; the field is reserved to stabilize the contract and avoid future collisions — see `SCHEMA.md` ([#139])
 
 ## [0.1.90] - 2026-04-22
 
@@ -481,7 +487,7 @@ No implementations and no behaviour changes — this PR only establishes the con
 ### Added
 
 - `note.ExtractHashtags` is now exported (previously unexported `extractHashtags`). Downstream tools (notes-pub, notes-view) can reuse the same body-hashtag extraction rules — fenced code blocks, inline backticks, URL anchors, chained hashes — instead of re-implementing them ([#136])
-- `note.IsID` reports whether a string is a valid notes-cli note ID (non-empty, ASCII digits only). Replaces the ad-hoc `isNoteID` / `IsUID` helpers currently duplicated in consumer projects ([#136])
+- `note.IsID` reports whether a string is a valid notesctl note ID (non-empty, ASCII digits only). Replaces the ad-hoc `isNoteID` / `IsUID` helpers currently duplicated in consumer projects ([#136])
 - `note.NormalizeSlug` returns an ASCII-lowercase, URL-safe form of a string (non-alphanumeric runs collapse to `-`; leading/trailing dashes stripped). Shared normalization contract for filenames and URL path segments ([#136])
 - `note.DeriveSlug` returns the normalized slug for a note using the fallback chain: frontmatter slug → stem with id prefix stripped → empty. Consolidates the slug-resolution logic that consumers were each inventing ([#136])
 
@@ -540,7 +546,7 @@ No implementations and no behaviour changes — this PR only establishes the con
 
 ### Changed
 
-- Drop the hardcoded `~/notes` fallback when resolving the notes store path. If neither `--path` nor `$NOTES_PATH` is set, `notes` now exits with `no notes store configured. Set $NOTES_PATH or pass --path` instead of silently scanning a `~/notes` directory that may exist for unrelated reasons. Set `NOTES_PATH` once (e.g. `export NOTES_PATH=~/notes`) to restore the previous behavior ([#123], [#117])
+- Drop the hardcoded `~/notes` fallback when resolving the notes store path. If neither `--path` nor `$NOTESCTL_PATH` is set, `notesctl` now exits with `no notes store configured. Set $NOTESCTL_PATH or pass --path` instead of silently scanning a `~/notes` directory that may exist for unrelated reasons. Set `NOTESCTL_PATH` once (e.g. `export NOTESCTL_PATH=~/notes`) to restore the previous behavior ([#123], [#117])
 
 ## [0.1.77] - 2026-04-20
 
@@ -564,13 +570,13 @@ No implementations and no behaviour changes — this PR only establishes the con
 
 ### Changed
 
-- Small code-review follow-ups: `--path` help now documents the `$NOTES_PATH` / `~/notes` default; `notes resolve` Long help clarifies that `--today` is the only filter flag that can combine with a positional argument; `grep`/`rg` subcommands accept `-h` (not just `--help`) for help; frontmatter-parse warnings go to stderr directly instead of through `log.Printf` (no more timestamp prefix); `writeAtomic` is now shared across `update`, `annotate`, `append`, and the prev-todo rewrite in `new-todo` so partial writes never leave a corrupted file behind ([#116])
+- Small code-review follow-ups: `--path` help now documents the `$NOTESCTL_PATH` / `~/notes` default; `notes resolve` Long help clarifies that `--today` is the only filter flag that can combine with a positional argument; `grep`/`rg` subcommands accept `-h` (not just `--help`) for help; frontmatter-parse warnings go to stderr directly instead of through `log.Printf` (no more timestamp prefix); `writeAtomic` is now shared across `update`, `annotate`, `append`, and the prev-todo rewrite in `new-todo` so partial writes never leave a corrupted file behind ([#116])
 
 ## [0.1.73] - 2026-04-19
 
 ### Changed
 
-- Note frontmatter format: unknown keys are now preserved through `notes update` and any other format-rewriting command (via `Frontmatter.Extra`), enabling downstream tools and users to add custom fields without waiting for a notes-cli release. `type` moves from filename-only to a typed frontmatter field (filename still cached as a `.type` dot-suffix). `KnownTypes`/`IsKnownType` renamed to `TypesWithSpecialBehavior`/`HasSpecialBehavior` — the list is now a soft registry, not a validation gate; any string is a valid `type` value. `notes update` no longer auto-renames on `--slug`/`--type` changes; use the new `--sync-filename` flag to explicitly reconcile the filename with frontmatter. A repo-root `SCHEMA.md` documents reserved frontmatter keys. See [design spec](docs/superpowers/specs/2026-04-19-notes-schema-protocol-design.md) and [#104]. ([#114])
+- Note frontmatter format: unknown keys are now preserved through `notes update` and any other format-rewriting command (via `Frontmatter.Extra`), enabling downstream tools and users to add custom fields without waiting for a notesctl release. `type` moves from filename-only to a typed frontmatter field (filename still cached as a `.type` dot-suffix). `KnownTypes`/`IsKnownType` renamed to `TypesWithSpecialBehavior`/`HasSpecialBehavior` — the list is now a soft registry, not a validation gate; any string is a valid `type` value. `notes update` no longer auto-renames on `--slug`/`--type` changes; use the new `--sync-filename` flag to explicitly reconcile the filename with frontmatter. A repo-root `SCHEMA.md` documents reserved frontmatter keys. See [design spec](docs/superpowers/specs/2026-04-19-notes-schema-protocol-design.md) and [#104]. ([#114])
 
 ## [0.1.72] - 2026-04-19
 
@@ -615,7 +621,7 @@ No implementations and no behaviour changes — this PR only establishes the con
 
 ### Changed
 
-- Update all references from `dreikanter/notescli` to `dreikanter/notes-cli` to match the renamed repository ([#102])
+- Update repository references to match the renamed repository ([#102])
 
 ## [0.1.65] - 2026-04-05
 
@@ -907,144 +913,144 @@ No implementations and no behaviour changes — this PR only establishes the con
 - Add `new` and `new-todo` commands ([#2])
 - Add `--no-frontmatter` flag to `read` command ([#3], [#4])
 
-[0.1.71]: https://github.com/dreikanter/notes-cli/releases/tag/v0.1.71
-[0.1.70]: https://github.com/dreikanter/notes-cli/releases/tag/v0.1.70
-[0.1.69]: https://github.com/dreikanter/notes-cli/releases/tag/v0.1.69
-[0.1.66]: https://github.com/dreikanter/notes-cli/releases/tag/v0.1.66
-[0.1.63]: https://github.com/dreikanter/notes-cli/releases/tag/v0.1.63
-[0.1.60]: https://github.com/dreikanter/notes-cli/releases/tag/v0.1.60
-[0.1.59]: https://github.com/dreikanter/notes-cli/releases/tag/v0.1.59
-[0.1.58]: https://github.com/dreikanter/notes-cli/releases/tag/v0.1.58
-[0.1.57]: https://github.com/dreikanter/notes-cli/releases/tag/v0.1.57
-[0.1.55]: https://github.com/dreikanter/notes-cli/releases/tag/v0.1.55
-[0.1.41]: https://github.com/dreikanter/notes-cli/releases/tag/v0.1.41
-[0.1.40]: https://github.com/dreikanter/notes-cli/releases/tag/v0.1.40
-[0.1.39]: https://github.com/dreikanter/notes-cli/releases/tag/v0.1.39
-[0.1.38]: https://github.com/dreikanter/notes-cli/releases/tag/v0.1.38
-[0.1.37]: https://github.com/dreikanter/notes-cli/releases/tag/v0.1.37
-[0.1.36]: https://github.com/dreikanter/notes-cli/releases/tag/v0.1.36
-[0.1.35]: https://github.com/dreikanter/notes-cli/releases/tag/v0.1.35
-[0.1.34]: https://github.com/dreikanter/notes-cli/releases/tag/v0.1.34
-[0.1.32]: https://github.com/dreikanter/notes-cli/releases/tag/v0.1.32
-[0.1.31]: https://github.com/dreikanter/notes-cli/releases/tag/v0.1.31
-[0.1.30]: https://github.com/dreikanter/notes-cli/releases/tag/v0.1.30
-[0.1.29]: https://github.com/dreikanter/notes-cli/releases/tag/v0.1.29
-[0.1.28]: https://github.com/dreikanter/notes-cli/releases/tag/v0.1.28
-[0.1.27]: https://github.com/dreikanter/notes-cli/releases/tag/v0.1.27
-[0.1.26]: https://github.com/dreikanter/notes-cli/releases/tag/v0.1.26
-[0.1.25]: https://github.com/dreikanter/notes-cli/releases/tag/v0.1.25
-[0.1.24]: https://github.com/dreikanter/notes-cli/releases/tag/v0.1.24
-[0.1.23]: https://github.com/dreikanter/notes-cli/releases/tag/v0.1.23
-[0.1.19]: https://github.com/dreikanter/notes-cli/releases/tag/v0.1.19
-[0.1.18]: https://github.com/dreikanter/notes-cli/releases/tag/v0.1.18
-[0.1.17]: https://github.com/dreikanter/notes-cli/releases/tag/v0.1.17
-[0.1.12]: https://github.com/dreikanter/notes-cli/releases/tag/v0.1.12
-[0.1.11]: https://github.com/dreikanter/notes-cli/releases/tag/v0.1.11
-[0.1.10]: https://github.com/dreikanter/notes-cli/releases/tag/v0.1.10
-[0.1.9]: https://github.com/dreikanter/notes-cli/releases/tag/v0.1.9
-[0.1.8]: https://github.com/dreikanter/notes-cli/releases/tag/v0.1.8
-[0.1.7]: https://github.com/dreikanter/notes-cli/releases/tag/v0.1.7
-[0.1.6]: https://github.com/dreikanter/notes-cli/releases/tag/v0.1.6
-[0.1.5]: https://github.com/dreikanter/notes-cli/releases/tag/v0.1.5
-[0.1.4]: https://github.com/dreikanter/notes-cli/releases/tag/v0.1.4
-[0.1.2]: https://github.com/dreikanter/notes-cli/releases/tag/v0.1.2
-[0.1.0]: https://github.com/dreikanter/notes-cli/releases/tag/v0.1.0
-[#2]: https://github.com/dreikanter/notes-cli/pull/2
-[#3]: https://github.com/dreikanter/notes-cli/pull/3
-[#4]: https://github.com/dreikanter/notes-cli/pull/4
-[#8]: https://github.com/dreikanter/notes-cli/pull/8
-[#9]: https://github.com/dreikanter/notes-cli/pull/9
-[#11]: https://github.com/dreikanter/notes-cli/pull/11
-[#12]: https://github.com/dreikanter/notes-cli/pull/12
-[#13]: https://github.com/dreikanter/notes-cli/pull/13
-[#14]: https://github.com/dreikanter/notes-cli/pull/14
-[#15]: https://github.com/dreikanter/notes-cli/pull/15
-[#16]: https://github.com/dreikanter/notes-cli/pull/16
-[#17]: https://github.com/dreikanter/notes-cli/pull/17
-[#18]: https://github.com/dreikanter/notes-cli/pull/18
-[#23]: https://github.com/dreikanter/notes-cli/pull/23
-[#24]: https://github.com/dreikanter/notes-cli/pull/24
-[#25]: https://github.com/dreikanter/notes-cli/pull/25
-[#27]: https://github.com/dreikanter/notes-cli/pull/27
-[#28]: https://github.com/dreikanter/notes-cli/pull/28
-[#29]: https://github.com/dreikanter/notes-cli/pull/29
-[#30]: https://github.com/dreikanter/notes-cli/pull/30
-[#31]: https://github.com/dreikanter/notes-cli/pull/31
-[#33]: https://github.com/dreikanter/notes-cli/pull/33
-[#34]: https://github.com/dreikanter/notes-cli/pull/34
-[#36]: https://github.com/dreikanter/notes-cli/pull/36
-[#38]: https://github.com/dreikanter/notes-cli/pull/38
-[#39]: https://github.com/dreikanter/notes-cli/pull/39
-[#41]: https://github.com/dreikanter/notes-cli/pull/41
-[#42]: https://github.com/dreikanter/notes-cli/pull/42
-[#44]: https://github.com/dreikanter/notes-cli/pull/44
-[#45]: https://github.com/dreikanter/notes-cli/pull/45
-[#46]: https://github.com/dreikanter/notes-cli/pull/46
-[#48]: https://github.com/dreikanter/notes-cli/pull/48
-[#51]: https://github.com/dreikanter/notes-cli/pull/51
-[#52]: https://github.com/dreikanter/notes-cli/pull/52
-[#53]: https://github.com/dreikanter/notes-cli/pull/53
-[#71]: https://github.com/dreikanter/notes-cli/pull/71
-[#72]: https://github.com/dreikanter/notes-cli/pull/72
-[#73]: https://github.com/dreikanter/notes-cli/pull/73
-[#74]: https://github.com/dreikanter/notes-cli/pull/74
-[#75]: https://github.com/dreikanter/notes-cli/pull/75
-[#76]: https://github.com/dreikanter/notes-cli/pull/76
-[#77]: https://github.com/dreikanter/notes-cli/pull/77
-[#78]: https://github.com/dreikanter/notes-cli/pull/78
-[#79]: https://github.com/dreikanter/notes-cli/pull/79
-[#80]: https://github.com/dreikanter/notes-cli/pull/80
-[#81]: https://github.com/dreikanter/notes-cli/pull/81
-[#82]: https://github.com/dreikanter/notes-cli/pull/82
-[#83]: https://github.com/dreikanter/notes-cli/pull/83
-[#85]: https://github.com/dreikanter/notes-cli/issues/85
-[#88]: https://github.com/dreikanter/notes-cli/issues/88
-[#90]: https://github.com/dreikanter/notes-cli/issues/90
-[#92]: https://github.com/dreikanter/notes-cli/issues/92
-[#93]: https://github.com/dreikanter/notes-cli/issues/93
-[#97]: https://github.com/dreikanter/notes-cli/pull/97
-[#98]: https://github.com/dreikanter/notes-cli/pull/98
-[#99]: https://github.com/dreikanter/notes-cli/pull/99
-[#100]: https://github.com/dreikanter/notes-cli/pull/100
-[#102]: https://github.com/dreikanter/notes-cli/pull/102
-[#104]: https://github.com/dreikanter/notes-cli/issues/104
-[#106]: https://github.com/dreikanter/notes-cli/pull/106
-[#107]: https://github.com/dreikanter/notes-cli/pull/107
-[#108]: https://github.com/dreikanter/notes-cli/pull/108
-[#109]: https://github.com/dreikanter/notes-cli/pull/109
-[#110]: https://github.com/dreikanter/notes-cli/issues/110
-[#112]: https://github.com/dreikanter/notes-cli/issues/112
-[#114]: https://github.com/dreikanter/notes-cli/pull/114
-[#116]: https://github.com/dreikanter/notes-cli/pull/116
-[#118]: https://github.com/dreikanter/notes-cli/pull/118
-[#119]: https://github.com/dreikanter/notes-cli/issues/119
-[#120]: https://github.com/dreikanter/notes-cli/issues/120
-[#117]: https://github.com/dreikanter/notes-cli/issues/117
-[#123]: https://github.com/dreikanter/notes-cli/pull/123
-[#115]: https://github.com/dreikanter/notes-cli/issues/115
-[#131]: https://github.com/dreikanter/notes-cli/pull/131
-[#132]: https://github.com/dreikanter/notes-cli/pull/132
-[#133]: https://github.com/dreikanter/notes-cli/pull/133
-[#135]: https://github.com/dreikanter/notes-cli/pull/135
-[#136]: https://github.com/dreikanter/notes-cli/pull/136
-[#153]: https://github.com/dreikanter/notes-cli/pull/153
-[#139]: https://github.com/dreikanter/notes-cli/issues/139
-[#141]: https://github.com/dreikanter/notes-cli/issues/141
-[#138]: https://github.com/dreikanter/notes-cli/issues/138
-[#149]: https://github.com/dreikanter/notes-cli/pull/149
-[#150]: https://github.com/dreikanter/notes-cli/pull/150
-[#145]: https://github.com/dreikanter/notes-cli/issues/145
-[#143]: https://github.com/dreikanter/notes-cli/issues/143
-[#144]: https://github.com/dreikanter/notes-cli/issues/144
-[#140]: https://github.com/dreikanter/notes-cli/issues/140
-[#134]: https://github.com/dreikanter/notes-cli/issues/134
-[#156]: https://github.com/dreikanter/notes-cli/pull/156
-[#158]: https://github.com/dreikanter/notes-cli/pull/158
-[#159]: https://github.com/dreikanter/notes-cli/pull/159
-[#162]: https://github.com/dreikanter/notes-cli/pull/162
-[#161]: https://github.com/dreikanter/notes-cli/pull/161
-[#163]: https://github.com/dreikanter/notes-cli/pull/163
-[#165]: https://github.com/dreikanter/notes-cli/pull/165
-[#166]: https://github.com/dreikanter/notes-cli/pull/166
-[#167]: https://github.com/dreikanter/notes-cli/pull/167
-[#168]: https://github.com/dreikanter/notes-cli/pull/168
+[0.1.71]: https://github.com/dreikanter/notesctl/releases/tag/v0.1.71
+[0.1.70]: https://github.com/dreikanter/notesctl/releases/tag/v0.1.70
+[0.1.69]: https://github.com/dreikanter/notesctl/releases/tag/v0.1.69
+[0.1.66]: https://github.com/dreikanter/notesctl/releases/tag/v0.1.66
+[0.1.63]: https://github.com/dreikanter/notesctl/releases/tag/v0.1.63
+[0.1.60]: https://github.com/dreikanter/notesctl/releases/tag/v0.1.60
+[0.1.59]: https://github.com/dreikanter/notesctl/releases/tag/v0.1.59
+[0.1.58]: https://github.com/dreikanter/notesctl/releases/tag/v0.1.58
+[0.1.57]: https://github.com/dreikanter/notesctl/releases/tag/v0.1.57
+[0.1.55]: https://github.com/dreikanter/notesctl/releases/tag/v0.1.55
+[0.1.41]: https://github.com/dreikanter/notesctl/releases/tag/v0.1.41
+[0.1.40]: https://github.com/dreikanter/notesctl/releases/tag/v0.1.40
+[0.1.39]: https://github.com/dreikanter/notesctl/releases/tag/v0.1.39
+[0.1.38]: https://github.com/dreikanter/notesctl/releases/tag/v0.1.38
+[0.1.37]: https://github.com/dreikanter/notesctl/releases/tag/v0.1.37
+[0.1.36]: https://github.com/dreikanter/notesctl/releases/tag/v0.1.36
+[0.1.35]: https://github.com/dreikanter/notesctl/releases/tag/v0.1.35
+[0.1.34]: https://github.com/dreikanter/notesctl/releases/tag/v0.1.34
+[0.1.32]: https://github.com/dreikanter/notesctl/releases/tag/v0.1.32
+[0.1.31]: https://github.com/dreikanter/notesctl/releases/tag/v0.1.31
+[0.1.30]: https://github.com/dreikanter/notesctl/releases/tag/v0.1.30
+[0.1.29]: https://github.com/dreikanter/notesctl/releases/tag/v0.1.29
+[0.1.28]: https://github.com/dreikanter/notesctl/releases/tag/v0.1.28
+[0.1.27]: https://github.com/dreikanter/notesctl/releases/tag/v0.1.27
+[0.1.26]: https://github.com/dreikanter/notesctl/releases/tag/v0.1.26
+[0.1.25]: https://github.com/dreikanter/notesctl/releases/tag/v0.1.25
+[0.1.24]: https://github.com/dreikanter/notesctl/releases/tag/v0.1.24
+[0.1.23]: https://github.com/dreikanter/notesctl/releases/tag/v0.1.23
+[0.1.19]: https://github.com/dreikanter/notesctl/releases/tag/v0.1.19
+[0.1.18]: https://github.com/dreikanter/notesctl/releases/tag/v0.1.18
+[0.1.17]: https://github.com/dreikanter/notesctl/releases/tag/v0.1.17
+[0.1.12]: https://github.com/dreikanter/notesctl/releases/tag/v0.1.12
+[0.1.11]: https://github.com/dreikanter/notesctl/releases/tag/v0.1.11
+[0.1.10]: https://github.com/dreikanter/notesctl/releases/tag/v0.1.10
+[0.1.9]: https://github.com/dreikanter/notesctl/releases/tag/v0.1.9
+[0.1.8]: https://github.com/dreikanter/notesctl/releases/tag/v0.1.8
+[0.1.7]: https://github.com/dreikanter/notesctl/releases/tag/v0.1.7
+[0.1.6]: https://github.com/dreikanter/notesctl/releases/tag/v0.1.6
+[0.1.5]: https://github.com/dreikanter/notesctl/releases/tag/v0.1.5
+[0.1.4]: https://github.com/dreikanter/notesctl/releases/tag/v0.1.4
+[0.1.2]: https://github.com/dreikanter/notesctl/releases/tag/v0.1.2
+[0.1.0]: https://github.com/dreikanter/notesctl/releases/tag/v0.1.0
+[#2]: https://github.com/dreikanter/notesctl/pull/2
+[#3]: https://github.com/dreikanter/notesctl/pull/3
+[#4]: https://github.com/dreikanter/notesctl/pull/4
+[#8]: https://github.com/dreikanter/notesctl/pull/8
+[#9]: https://github.com/dreikanter/notesctl/pull/9
+[#11]: https://github.com/dreikanter/notesctl/pull/11
+[#12]: https://github.com/dreikanter/notesctl/pull/12
+[#13]: https://github.com/dreikanter/notesctl/pull/13
+[#14]: https://github.com/dreikanter/notesctl/pull/14
+[#15]: https://github.com/dreikanter/notesctl/pull/15
+[#16]: https://github.com/dreikanter/notesctl/pull/16
+[#17]: https://github.com/dreikanter/notesctl/pull/17
+[#18]: https://github.com/dreikanter/notesctl/pull/18
+[#23]: https://github.com/dreikanter/notesctl/pull/23
+[#24]: https://github.com/dreikanter/notesctl/pull/24
+[#25]: https://github.com/dreikanter/notesctl/pull/25
+[#27]: https://github.com/dreikanter/notesctl/pull/27
+[#28]: https://github.com/dreikanter/notesctl/pull/28
+[#30]: https://github.com/dreikanter/notesctl/pull/30
+[#31]: https://github.com/dreikanter/notesctl/pull/31
+[#33]: https://github.com/dreikanter/notesctl/pull/33
+[#34]: https://github.com/dreikanter/notesctl/pull/34
+[#36]: https://github.com/dreikanter/notesctl/pull/36
+[#38]: https://github.com/dreikanter/notesctl/pull/38
+[#39]: https://github.com/dreikanter/notesctl/pull/39
+[#41]: https://github.com/dreikanter/notesctl/pull/41
+[#42]: https://github.com/dreikanter/notesctl/pull/42
+[#44]: https://github.com/dreikanter/notesctl/pull/44
+[#45]: https://github.com/dreikanter/notesctl/pull/45
+[#46]: https://github.com/dreikanter/notesctl/pull/46
+[#48]: https://github.com/dreikanter/notesctl/pull/48
+[#51]: https://github.com/dreikanter/notesctl/pull/51
+[#52]: https://github.com/dreikanter/notesctl/pull/52
+[#53]: https://github.com/dreikanter/notesctl/pull/53
+[#71]: https://github.com/dreikanter/notesctl/pull/71
+[#72]: https://github.com/dreikanter/notesctl/pull/72
+[#73]: https://github.com/dreikanter/notesctl/pull/73
+[#74]: https://github.com/dreikanter/notesctl/pull/74
+[#75]: https://github.com/dreikanter/notesctl/pull/75
+[#76]: https://github.com/dreikanter/notesctl/pull/76
+[#77]: https://github.com/dreikanter/notesctl/pull/77
+[#78]: https://github.com/dreikanter/notesctl/pull/78
+[#79]: https://github.com/dreikanter/notesctl/pull/79
+[#80]: https://github.com/dreikanter/notesctl/pull/80
+[#81]: https://github.com/dreikanter/notesctl/pull/81
+[#82]: https://github.com/dreikanter/notesctl/pull/82
+[#83]: https://github.com/dreikanter/notesctl/pull/83
+[#85]: https://github.com/dreikanter/notesctl/issues/85
+[#88]: https://github.com/dreikanter/notesctl/issues/88
+[#90]: https://github.com/dreikanter/notesctl/issues/90
+[#92]: https://github.com/dreikanter/notesctl/issues/92
+[#93]: https://github.com/dreikanter/notesctl/issues/93
+[#97]: https://github.com/dreikanter/notesctl/pull/97
+[#98]: https://github.com/dreikanter/notesctl/pull/98
+[#99]: https://github.com/dreikanter/notesctl/pull/99
+[#100]: https://github.com/dreikanter/notesctl/pull/100
+[#102]: https://github.com/dreikanter/notesctl/pull/102
+[#104]: https://github.com/dreikanter/notesctl/issues/104
+[#106]: https://github.com/dreikanter/notesctl/pull/106
+[#107]: https://github.com/dreikanter/notesctl/pull/107
+[#108]: https://github.com/dreikanter/notesctl/pull/108
+[#109]: https://github.com/dreikanter/notesctl/pull/109
+[#110]: https://github.com/dreikanter/notesctl/issues/110
+[#112]: https://github.com/dreikanter/notesctl/issues/112
+[#114]: https://github.com/dreikanter/notesctl/pull/114
+[#116]: https://github.com/dreikanter/notesctl/pull/116
+[#118]: https://github.com/dreikanter/notesctl/pull/118
+[#119]: https://github.com/dreikanter/notesctl/issues/119
+[#120]: https://github.com/dreikanter/notesctl/issues/120
+[#117]: https://github.com/dreikanter/notesctl/issues/117
+[#123]: https://github.com/dreikanter/notesctl/pull/123
+[#115]: https://github.com/dreikanter/notesctl/issues/115
+[#131]: https://github.com/dreikanter/notesctl/pull/131
+[#132]: https://github.com/dreikanter/notesctl/pull/132
+[#133]: https://github.com/dreikanter/notesctl/pull/133
+[#135]: https://github.com/dreikanter/notesctl/pull/135
+[#136]: https://github.com/dreikanter/notesctl/pull/136
+[#153]: https://github.com/dreikanter/notesctl/pull/153
+[#139]: https://github.com/dreikanter/notesctl/issues/139
+[#141]: https://github.com/dreikanter/notesctl/issues/141
+[#138]: https://github.com/dreikanter/notesctl/issues/138
+[#149]: https://github.com/dreikanter/notesctl/pull/149
+[#150]: https://github.com/dreikanter/notesctl/pull/150
+[#145]: https://github.com/dreikanter/notesctl/issues/145
+[#143]: https://github.com/dreikanter/notesctl/issues/143
+[#144]: https://github.com/dreikanter/notesctl/issues/144
+[#140]: https://github.com/dreikanter/notesctl/issues/140
+[#134]: https://github.com/dreikanter/notesctl/issues/134
+[#156]: https://github.com/dreikanter/notesctl/pull/156
+[#158]: https://github.com/dreikanter/notesctl/pull/158
+[#159]: https://github.com/dreikanter/notesctl/pull/159
+[#162]: https://github.com/dreikanter/notesctl/pull/162
+[#161]: https://github.com/dreikanter/notesctl/pull/161
+[#163]: https://github.com/dreikanter/notesctl/pull/163
+[#165]: https://github.com/dreikanter/notesctl/pull/165
+[#166]: https://github.com/dreikanter/notesctl/pull/166
+[#167]: https://github.com/dreikanter/notesctl/pull/167
+[#168]: https://github.com/dreikanter/notesctl/pull/168
+[#254]: https://github.com/dreikanter/notesctl/pull/254

@@ -9,7 +9,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/dreikanter/notes-cli/note"
+	"github.com/dreikanter/notesctl/note"
 )
 
 func runNewTodo(t *testing.T, root string, args ...string) (string, error) {

@@ -2,11 +2,11 @@
 
 Date: 2026-04-19
 
-Issue: [#104](https://github.com/dreikanter/notes-cli/issues/104)
+Issue: [#104](https://github.com/dreikanter/notesctl/issues/104)
 
 ## Context
 
-After [PR #111](https://github.com/dreikanter/notes-cli/pull/111) and [PR #113](https://github.com/dreikanter/notes-cli/pull/113) the frontmatter API is:
+After [PR #111](https://github.com/dreikanter/notesctl/pull/111) and [PR #113](https://github.com/dreikanter/notesctl/pull/113) the frontmatter API is:
 
 - Struct: `note.Frontmatter`.
 - Parse: `note.ParseNote(data []byte) (Frontmatter, []byte, error)` — real errors, strict document-level validation.
@@ -15,23 +15,23 @@ After [PR #111](https://github.com/dreikanter/notes-cli/pull/111) and [PR #113](
 Adding a known field to `Frontmatter` is a one-line struct addition. Several problems remain:
 
 1. **Unknown-field loss.** `ParseNote` calls `yaml.Unmarshal` into the `Frontmatter` struct, which silently drops any YAML key that is not a declared field. A user (or downstream tool) hand-adding `featured: true` loses it on the next `notes update`.
-2. **Cross-project drift.** `notes-pub` imports `notes-cli/note` and depends on its typed struct. `notes-view` has its own parser. A new field (`featured`, `aliases`, etc.) that only matters to a downstream project today requires a notes-cli release before any of them can rely on it surviving edits.
+2. **Cross-project drift.** `notes-pub` imports `notesctl/note` and depends on its typed struct. `notes-view` has its own parser. A new field (`featured`, `aliases`, etc.) that only matters to a downstream project today requires a notesctl release before any of them can rely on it surviving edits.
 3. **Filename/frontmatter split.** Metadata lives in two places. Slug is duplicated between filename and frontmatter, with no documented rule about which wins. Type (`todo`, `backlog`, `weekly`) is filename-only (encoded as a `.type` dot-suffix) and gated by `KnownTypes`, making new types a code change.
-4. **No published contract.** Downstream projects and future contributors have no single place to look up which frontmatter keys notes-cli reserves, and with what semantics.
+4. **No published contract.** Downstream projects and future contributors have no single place to look up which frontmatter keys notesctl reserves, and with what semantics.
 
 Backward compatibility with existing stores is **not a concern** for this design — the format is treated as greenfield.
 
 ## Goals
 
-- Adding a new frontmatter field is trivial for notes-cli and free of charge for downstream consumers that don't care about it.
-- Unknown fields round-trip safely through `notes update` and any other notes-cli command that rewrites a note.
-- `notes-pub` and `notes-view` can consume fields that notes-cli doesn't recognize without waiting for a notes-cli release.
+- Adding a new frontmatter field is trivial for notesctl and free of charge for downstream consumers that don't care about it.
+- Unknown fields round-trip safely through `notes update` and any other notesctl command that rewrites a note.
+- `notes-pub` and `notes-view` can consume fields that notesctl doesn't recognize without waiting for a notesctl release.
 - Filename identity is stable and minimal; everything else is frontmatter.
 - There is one documented source of truth for which frontmatter keys are reserved and what they mean.
 
 ## Non-goals
 
-- No schema version marker, no migration protocol between schema versions. Semantic changes (e.g., renaming a reserved field, changing a type) happen ad-hoc and are announced in `CHANGELOG.md` under the relevant notes-cli version.
+- No schema version marker, no migration protocol between schema versions. Semantic changes (e.g., renaming a reserved field, changing a type) happen ad-hoc and are announced in `CHANGELOG.md` under the relevant notesctl version.
 - No `notes lint` command. Can be added later if format drift becomes a real problem.
 - No namespacing convention for custom frontmatter keys. Bare keys, Obsidian-style.
 - No one-shot migration of existing `~/Notes` archives. Existing notes parse as before for the identity fields (date, ID); previously filename-only `type` is read as empty until the user edits the frontmatter.
@@ -85,7 +85,7 @@ type Frontmatter struct {
 
 ### Type registry
 
-`note.KnownTypes` becomes a soft registry of types that trigger special notes-cli behavior. Proposed name: `note.TypesWithSpecialBehavior` (final name subject to review; any well-named symbol is fine).
+`note.KnownTypes` becomes a soft registry of types that trigger special notesctl behavior. Proposed name: `note.TypesWithSpecialBehavior` (final name subject to review; any well-named symbol is fine).
 
 - Populated with `"todo"`, `"backlog"`, `"weekly"` — unchanged set.
 - `IsKnownType` is renamed to `HasSpecialBehavior` (or removed; most call sites are doing `KnownTypes`-style filtering and can inline).
@@ -125,14 +125,14 @@ type Frontmatter struct {
 
 ## Cross-project contract: `SCHEMA.md`
 
-A single markdown file at the notes-cli repo root, with one section per reserved key:
+A single markdown file at the notesctl repo root, with one section per reserved key:
 
 ```markdown
 # Note frontmatter schema
 
 Reserved keys live in the typed `Frontmatter` struct in
-`github.com/dreikanter/notes-cli/note`. Any key not listed here is
-preserved verbatim on read/write and ignored by notes-cli itself.
+`github.com/dreikanter/notesctl/note`. Any key not listed here is
+preserved verbatim on read/write and ignored by notesctl itself.
 
 Downstream projects (notes-pub, notes-view) and users are free to
 introduce new bare keys. Collision risk with future reserved names
@@ -149,22 +149,22 @@ is called out in CHANGELOG when a new reserved key is added.
 - Type: string
 - Semantics: URL-safe identifier, canonical in frontmatter. The
   filename may carry a cached copy; on mismatch, frontmatter wins.
-- Consumers: notes-cli (`new`, `update --sync-filename`),
+- Consumers: notesctl (`new`, `update --sync-filename`),
   notes-pub (URL path segment).
 
 ### type
 - Type: string
 - Semantics: note category. Any value is valid. A small set of
-  values (`todo`, `backlog`, `weekly`) trigger special notes-cli
+  values (`todo`, `backlog`, `weekly`) trigger special notesctl
   behavior; see `TypesWithSpecialBehavior`.
-- Consumers: notes-cli (filters, rollover), notes-pub / notes-view
+- Consumers: notesctl (filters, rollover), notes-pub / notes-view
   (optional rendering).
 
 ### tags
 - Type: list of strings
 - Semantics: free-form tags. Matched case-sensitively. In-body
   `#hashtag` usage is a separate feature not governed by this field.
-- Consumers: notes-cli (`tags`, filters), notes-pub (tag pages,
+- Consumers: notesctl (`tags`, filters), notes-pub (tag pages,
   feed), notes-view.
 
 ### description
@@ -180,7 +180,7 @@ is called out in CHANGELOG when a new reserved key is added.
 
 ## Unreserved keys
 
-Any other top-level key is preserved untouched by notes-cli.
+Any other top-level key is preserved untouched by notesctl.
 Nested structures (mappings, sequences) are preserved intact.
 
 Duplicate top-level keys are rejected at the document level (per
@@ -195,7 +195,7 @@ Adding a key to `Frontmatter` requires updating `SCHEMA.md` in the same PR. Revi
 
 ## Rollout
 
-Order of operations within notes-cli:
+Order of operations within notesctl:
 
 1. Land `note` package changes: add `Type` and `Extra` to `Frontmatter`; extend parser; extend writer; rename `KnownTypes` → `TypesWithSpecialBehavior`; relax `ParseFilename` dot-suffix handling.
 2. Update `notes new` to set `Type` in fm and cache in filename at creation.
@@ -207,8 +207,8 @@ Each of these is a separate commit, per the repo's atomic-commit convention.
 
 Downstream:
 
-- **notes-pub** — separate issue tracks dep bump to the new notes-cli, exposure of `Type` (already implicit via struct), and reading `featured` / other future fields via `fm.Extra`.
-- **notes-view** — separate issue tracks whether to switch its index to `notes-cli/note` (deduplicates parsing) or mirror the `Extra` pattern locally.
+- **notes-pub** — separate issue tracks dep bump to the new notesctl, exposure of `Type` (already implicit via struct), and reading `featured` / other future fields via `fm.Extra`.
+- **notes-view** — separate issue tracks whether to switch its index to `notesctl/note` (deduplicates parsing) or mirror the `Extra` pattern locally.
 
 ## Open points (review-time)
 

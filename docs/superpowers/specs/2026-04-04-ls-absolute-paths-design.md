@@ -1,6 +1,6 @@
 # Design: Make `ls` output absolute paths
 
-**Issue:** [#55](https://github.com/dreikanter/notes-cli/issues/55)
+**Issue:** [#55](https://github.com/dreikanter/notesctl/issues/55)
 **Date:** 2026-04-04
 
 ## Problem

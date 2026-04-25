@@ -567,7 +567,7 @@ package cli
 import (
 	"fmt"
 
-	"github.com/dreikanter/notes-cli/note"
+	"github.com/dreikanter/notesctl/note"
 	"github.com/spf13/cobra"
 )
 
@@ -639,7 +639,7 @@ At the top of `CHANGELOG.md` (just under the `# Changelog` heading), insert a ne
 Also add the footer link alongside the other entries at the bottom:
 
 ```markdown
-[#{{PR}}]: https://github.com/dreikanter/notes-cli/pull/{{PR}}
+[#{{PR}}]: https://github.com/dreikanter/notesctl/pull/{{PR}}
 ```
 
 - [ ] **Step 3: Add a README usage example**

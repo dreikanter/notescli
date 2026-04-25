@@ -153,6 +153,6 @@ for _, e := range entries {
 }
 ```
 
-No change to `notes-cli` is required to unblock that migration beyond
+No change to `notesctl` is required to unblock that migration beyond
 releasing this PR with a new patch version and a downstream
-`go get notes-cli@vX.Y.Z` bump.
+`go get notesctl@vX.Y.Z` bump.

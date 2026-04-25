@@ -72,7 +72,7 @@ func TestAppendPrivateWithoutCreateErrors(t *testing.T) {
 - [ ] **Step 2: Run the new tests to verify they fail**
 
 ```bash
-cd /Users/alex/src/notescli-issue-68 && go test ./internal/cli/ -run "TestAppendCreateWithPublic|TestAppendCreatePrivateOverridesPublic|TestAppendPublicWithoutCreateErrors|TestAppendPrivateWithoutCreateErrors" -v
+cd /Users/alex/src/notesctl-issue-68 && go test ./internal/cli/ -run "TestAppendCreateWithPublic|TestAppendCreatePrivateOverridesPublic|TestAppendPublicWithoutCreateErrors|TestAppendPrivateWithoutCreateErrors" -v
 ```
 
 Expected: FAIL — `TestAppendCreateWithPublic` and `TestAppendCreatePrivateOverridesPublic` will fail because `--public`/`--private` flags don't exist yet (cobra will error "unknown flag"). `TestAppendPublicWithoutCreateErrors` and `TestAppendPrivateWithoutCreateErrors` will also fail for the same reason — the error they expect won't come from validation but the unknown-flag error may cause them to pass for the wrong reason. Either way, the implementation is missing.
@@ -180,7 +180,7 @@ Find the `createNote(createNoteParams{...})` call inside the `if needsCreate {` 
 - [ ] **Step 1: Run the four new tests**
 
 ```bash
-cd /Users/alex/src/notescli-issue-68 && go test ./internal/cli/ -run "TestAppendCreateWithPublic|TestAppendCreatePrivateOverridesPublic|TestAppendPublicWithoutCreateErrors|TestAppendPrivateWithoutCreateErrors" -v
+cd /Users/alex/src/notesctl-issue-68 && go test ./internal/cli/ -run "TestAppendCreateWithPublic|TestAppendCreatePrivateOverridesPublic|TestAppendPublicWithoutCreateErrors|TestAppendPrivateWithoutCreateErrors" -v
 ```
 
 Expected: all four PASS.
@@ -188,7 +188,7 @@ Expected: all four PASS.
 - [ ] **Step 2: Run the full test suite**
 
 ```bash
-cd /Users/alex/src/notescli-issue-68 && make test
+cd /Users/alex/src/notesctl-issue-68 && make test
 ```
 
 Expected: all tests pass, no failures.
@@ -196,7 +196,7 @@ Expected: all tests pass, no failures.
 - [ ] **Step 3: Run lint**
 
 ```bash
-cd /Users/alex/src/notescli-issue-68 && make lint
+cd /Users/alex/src/notesctl-issue-68 && make lint
 ```
 
 Expected: no lint errors.
@@ -204,7 +204,7 @@ Expected: no lint errors.
 - [ ] **Step 4: Commit**
 
 ```bash
-cd /Users/alex/src/notescli-issue-68 && git add internal/cli/append.go internal/cli/append_test.go && git commit -m "Add --public/--private flags to append command"
+cd /Users/alex/src/notesctl-issue-68 && git add internal/cli/append.go internal/cli/append_test.go && git commit -m "Add --public/--private flags to append command"
 ```
 
 ---
@@ -217,7 +217,7 @@ cd /Users/alex/src/notescli-issue-68 && git add internal/cli/append.go internal/
 - [ ] **Step 1: Find next version**
 
 ```bash
-cd /Users/alex/src/notescli-issue-68 && git describe --tags
+cd /Users/alex/src/notesctl-issue-68 && git describe --tags
 ```
 
 Current tag base is `v0.1.40`, so next PR version is `v0.1.41`.
@@ -231,19 +231,19 @@ Open `CHANGELOG.md` and insert a new entry at the top (after the `# Changelog` h
 
 - Add `--public` and `--private` flags to `append` command, gated on `--create`/`--today` [#68]
 
-[#68]: https://github.com/dreikanter/notes-cli/pull/68
+[#68]: https://github.com/dreikanter/notesctl/pull/68
 ```
 
 - [ ] **Step 3: Commit changelog**
 
 ```bash
-cd /Users/alex/src/notescli-issue-68 && git add CHANGELOG.md && git commit -m "Update CHANGELOG for v0.1.41"
+cd /Users/alex/src/notesctl-issue-68 && git add CHANGELOG.md && git commit -m "Update CHANGELOG for v0.1.41"
 ```
 
 - [ ] **Step 4: Push branch**
 
 ```bash
-cd /Users/alex/src/notescli-issue-68 && git push -u origin issue-68
+cd /Users/alex/src/notesctl-issue-68 && git push -u origin issue-68
 ```
 
 - [ ] **Step 5: Open PR using the project template**

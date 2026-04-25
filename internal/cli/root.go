@@ -8,7 +8,7 @@ import (
 	"path/filepath"
 	"runtime/debug"
 
-	"github.com/dreikanter/notes-cli/note"
+	"github.com/dreikanter/notesctl/note"
 	"github.com/spf13/cobra"
 )
 
@@ -30,7 +30,7 @@ func init() {
 		}
 	}
 	rootCmd.Version = Version
-	rootCmd.PersistentFlags().StringVar(&notesPath, "path", "", "path to notes store (default: $NOTES_PATH)")
+	rootCmd.PersistentFlags().StringVar(&notesPath, "path", "", "path to notes store (default: $NOTESCTL_PATH)")
 }
 
 func Execute() {
@@ -47,10 +47,10 @@ func resolveNotesPath() (string, error) {
 	if notesPath != "" {
 		return notesPath, nil
 	}
-	if env := os.Getenv("NOTES_PATH"); env != "" {
+	if env := os.Getenv("NOTESCTL_PATH"); env != "" {
 		return env, nil
 	}
-	return "", errors.New("no notes store configured. Set $NOTES_PATH or pass --path")
+	return "", errors.New("no notes store configured. Set $NOTESCTL_PATH or pass --path")
 }
 
 func notesRoot() (string, error) {
@@ -74,7 +74,7 @@ func notesRoot() (string, error) {
 
 // notesStore returns the Store instance the CLI uses for note-package
 // operations. It resolves the root path the same way notesRoot does — flag
-// first, then $NOTES_PATH, then error.
+// first, then $NOTESCTL_PATH, then error.
 func notesStore() (*note.OSStore, error) {
 	root, err := notesRoot()
 	if err != nil {

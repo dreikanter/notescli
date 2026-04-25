@@ -2,9 +2,9 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Make the note frontmatter format extensible, round-trip-safe, and clearly contracted across notes-cli / notes-pub / notes-view — implementing the design at `docs/superpowers/specs/2026-04-19-notes-schema-protocol-design.md`.
+**Goal:** Make the note frontmatter format extensible, round-trip-safe, and clearly contracted across notesctl / notes-pub / notes-view — implementing the design at `docs/superpowers/specs/2026-04-19-notes-schema-protocol-design.md`.
 
-**Architecture:** All work lives inside notes-cli. The `note` package's `Frontmatter` gains a `Type` field and an `Extra map[string]yaml.Node` so unknown frontmatter keys survive edits. Preservation is implemented by adding custom `UnmarshalYAML` / `MarshalYAML` methods on `Frontmatter`; the public `ParseNote` / `FormatNote` signatures are unchanged. `ParseFilename` is relaxed to accept any dot-suffix as a filename-reported type. `KnownTypes` / `IsKnownType` are renamed to reflect their soft-registry semantics. The `new` and `update` commands stop rejecting unknown types and no longer auto-rename files; a new `--sync-filename` flag on `update` is the explicit reconciliation hook. A `SCHEMA.md` at repo root documents the reserved frontmatter keys.
+**Architecture:** All work lives inside notesctl. The `note` package's `Frontmatter` gains a `Type` field and an `Extra map[string]yaml.Node` so unknown frontmatter keys survive edits. Preservation is implemented by adding custom `UnmarshalYAML` / `MarshalYAML` methods on `Frontmatter`; the public `ParseNote` / `FormatNote` signatures are unchanged. `ParseFilename` is relaxed to accept any dot-suffix as a filename-reported type. `KnownTypes` / `IsKnownType` are renamed to reflect their soft-registry semantics. The `new` and `update` commands stop rejecting unknown types and no longer auto-rename files; a new `--sync-filename` flag on `update` is the explicit reconciliation hook. A `SCHEMA.md` at repo root documents the reserved frontmatter keys.
 
 **Tech Stack:** Go, `gopkg.in/yaml.v3` (a dependency since PR #111), cobra CLI, standard Go testing.
 
@@ -12,8 +12,8 @@
 
 ## Prereqs
 
-- Run from the worktree at `/Users/alex/src/notes-cli/.claude/worktrees/humming-foraging-wozniak`.
-- Branch is rebased onto `origin/main` (commit `b30f330`, which is [PR #113](https://github.com/dreikanter/notes-cli/pull/113) — the `ParseNote` / `FormatNote` API refactor).
+- Run from the worktree at `$REPO_ROOT/.claude/worktrees/humming-foraging-wozniak`.
+- Branch is rebased onto `origin/main` (commit `b30f330`, which is [PR #113](https://github.com/dreikanter/notesctl/pull/113) — the `ParseNote` / `FormatNote` API refactor).
 - The design spec is already committed on the branch.
 - PR #113 also moved `CHANGELOG.md`'s "next patch" to `[0.1.72]`. This plan's CHANGELOG entry targets `[0.1.73]`.
 
@@ -477,12 +477,12 @@ Expected: FAIL / compile error — `HasSpecialBehavior` does not yet exist.
 Replace the top of the file:
 
 ```go
-// TypesWithSpecialBehavior lists note types that trigger notes-cli-specific
+// TypesWithSpecialBehavior lists note types that trigger notesctl-specific
 // handling (e.g., daily rollover, weekly review conventions). Any string is a
 // valid `type` value; this list is a soft registry, not a validation gate.
 var TypesWithSpecialBehavior = []string{"todo", "backlog", "weekly"}
 
-// HasSpecialBehavior reports whether s is a type with special notes-cli behavior.
+// HasSpecialBehavior reports whether s is a type with special notesctl behavior.
 func HasSpecialBehavior(s string) bool {
     for _, t := range TypesWithSpecialBehavior {
         if s == t {
@@ -960,7 +960,7 @@ import (
     "path/filepath"
     "strconv"
 
-    "github.com/dreikanter/notes-cli/note"
+    "github.com/dreikanter/notesctl/note"
     "github.com/spf13/cobra"
 )
 
@@ -1164,9 +1164,9 @@ Write `SCHEMA.md` at the repo root with this content:
 # Note frontmatter schema
 
 Reserved keys are the fields declared on `Frontmatter` in
-`github.com/dreikanter/notes-cli/note`. Any key not listed below is
+`github.com/dreikanter/notesctl/note`. Any key not listed below is
 preserved verbatim on read/write (stored in `Frontmatter.Extra`)
-and ignored by notes-cli itself.
+and ignored by notesctl itself.
 
 Downstream projects (notes-pub, notes-view) and users are free to
 introduce new bare keys. Collision risk with future reserved names
@@ -1183,24 +1183,24 @@ is called out in `CHANGELOG.md` when a new reserved key is added.
 - **Type:** string
 - **Semantics:** URL-safe identifier, canonical in frontmatter. The
   filename may carry a cached copy; on mismatch, frontmatter wins.
-- **Consumers:** notes-cli (`new`, `update --sync-filename`),
+- **Consumers:** notesctl (`new`, `update --sync-filename`),
   notes-pub (URL path segment).
 
 ### type
 - **Type:** string
 - **Semantics:** note category. Any value is valid. A small set of
-  values (`todo`, `backlog`, `weekly`) trigger special notes-cli
+  values (`todo`, `backlog`, `weekly`) trigger special notesctl
   behavior; see `note.TypesWithSpecialBehavior`. The filename may
   carry a cached copy as a `.type` dot-suffix; on mismatch,
   frontmatter wins.
-- **Consumers:** notes-cli (filters, rollover), notes-pub / notes-view
+- **Consumers:** notesctl (filters, rollover), notes-pub / notes-view
   (optional rendering).
 
 ### tags
 - **Type:** list of strings
 - **Semantics:** free-form tags, matched case-sensitively. In-body
   `#hashtag` usage is a separate feature not governed by this field.
-- **Consumers:** notes-cli (`tags`, filters), notes-pub (tag pages,
+- **Consumers:** notesctl (`tags`, filters), notes-pub (tag pages,
   feed), notes-view.
 
 ### description
@@ -1216,13 +1216,13 @@ is called out in `CHANGELOG.md` when a new reserved key is added.
 
 ## Unreserved keys
 
-Any other top-level key is preserved untouched by notes-cli. Nested
+Any other top-level key is preserved untouched by notesctl. Nested
 structures (mappings, sequences) are preserved intact.
 
 Duplicate top-level keys are rejected at the document level (per
 PR #113). Non-string keys and anchors/aliases in the YAML tree
 are preserved inside `Extra` values as-is but are not specifically
-tested in notes-cli; use at your own risk.
+tested in notesctl; use at your own risk.
 
 ## Process
 
@@ -1258,7 +1258,7 @@ Insert above the existing `## [0.1.72]` heading in `CHANGELOG.md`:
 
 ### Changed
 
-- Note frontmatter format: unknown keys are now preserved through `notes update` and any other format-rewriting command (via `Frontmatter.Extra`), enabling downstream tools and users to add custom fields without waiting for a notes-cli release. `type` moves from filename-only to a typed frontmatter field (filename still cached as a `.type` dot-suffix). `KnownTypes`/`IsKnownType` renamed to `TypesWithSpecialBehavior`/`HasSpecialBehavior` — the list is now a soft registry, not a validation gate; any string is a valid `type` value. `notes update` no longer auto-renames on `--slug`/`--type` changes; use the new `--sync-filename` flag to explicitly reconcile the filename with frontmatter. A repo-root `SCHEMA.md` documents reserved frontmatter keys. See [design spec](docs/superpowers/specs/2026-04-19-notes-schema-protocol-design.md) and [#104]. ([#TBD])
+- Note frontmatter format: unknown keys are now preserved through `notes update` and any other format-rewriting command (via `Frontmatter.Extra`), enabling downstream tools and users to add custom fields without waiting for a notesctl release. `type` moves from filename-only to a typed frontmatter field (filename still cached as a `.type` dot-suffix). `KnownTypes`/`IsKnownType` renamed to `TypesWithSpecialBehavior`/`HasSpecialBehavior` — the list is now a soft registry, not a validation gate; any string is a valid `type` value. `notes update` no longer auto-renames on `--slug`/`--type` changes; use the new `--sync-filename` flag to explicitly reconcile the filename with frontmatter. A repo-root `SCHEMA.md` documents reserved frontmatter keys. See [design spec](docs/superpowers/specs/2026-04-19-notes-schema-protocol-design.md) and [#104]. ([#TBD])
 ```
 
 (Replace `#TBD` with the PR number once the PR is opened; this is a plan-time placeholder.)
@@ -1317,14 +1317,14 @@ aliases:
 body
 EOF
 
-NOTES_PATH=/tmp/schema-smoke ./notes update --title "Sample 2" 9999
+NOTESCTL_PATH=/tmp/schema-smoke ./notes update --title "Sample 2" 9999
 cat /tmp/schema-smoke/2026/04/20260419_9999_sample.md
 ```
 
 Expected: `title: Sample 2` is present; `featured: true` and the `aliases` list are still present.
 
 ```bash
-NOTES_PATH=/tmp/schema-smoke ./notes update --slug renamed --sync-filename 9999
+NOTESCTL_PATH=/tmp/schema-smoke ./notes update --slug renamed --sync-filename 9999
 ls /tmp/schema-smoke/2026/04/
 ```
 

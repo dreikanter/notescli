@@ -9,7 +9,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/dreikanter/notes-cli/note"
+	"github.com/dreikanter/notesctl/note"
 )
 
 func runAnnotate(t *testing.T, root string, args ...string) (string, error) {

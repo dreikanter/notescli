@@ -285,7 +285,7 @@ Add at the top of `CHANGELOG.md` (after `# Changelog`):
 - Fix `grep` and `rg` commands passing `--help` to the subprocess instead of showing notes-specific help ([#63])
 - Improve `Long` descriptions for `grep` and `rg` to document injected default flags
 
-[#63]: https://github.com/dreikanter/notes-cli/pull/63
+[#63]: https://github.com/dreikanter/notesctl/pull/63
 ```
 
 - [ ] **Step 4: Commit**
