@@ -2,6 +2,8 @@ package note
 
 import (
 	"encoding/json"
+	"errors"
+	"io/fs"
 	"os"
 	"path/filepath"
 	"testing"
@@ -251,5 +253,5 @@ func assertFileExists(t *testing.T, path string) {
 func assertNoFile(t *testing.T, path string) {
 	t.Helper()
 	_, err := os.Stat(path)
-	assert.True(t, os.IsNotExist(err), "expected %s not to exist, got err=%v", path, err)
+	assert.True(t, errors.Is(err, fs.ErrNotExist), "expected %s not to exist, got err=%v", path, err)
 }
