@@ -66,3 +66,4 @@ a follow-up commit on the same branch:
 ## Pull Requests
 
 Use `.github/pull_request_template.md` for all PR bodies. When running `gh pr create`, pass its content via `--body`.
+Drop the `References` section from the PR description when it would only contain the empty placeholder.
