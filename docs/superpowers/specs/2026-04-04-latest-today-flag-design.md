@@ -23,7 +23,7 @@ Add `--today` to `latestCmd` so it filters candidates to notes created today bef
    ```go
    today, _ := cmd.Flags().GetBool("today")
    if today {
-       notesctl = note.FilterByDate(notes, time.Now().Format("20060102"))
+       notes = note.FilterByDate(notes, time.Now().Format("20060102"))
    }
    ```
 4. Expand the no-match error condition to include `today`:
@@ -44,7 +44,7 @@ Add one entry for the next patch version referencing the PR.
 
 ## Error Behavior
 
-When `--today` is set and no notesctl match:
+When `--today` is set and no notes match:
 - Returns: `"no notes found matching the given criteria"`
 - Consistent with how other filters behave on `latest`.
 

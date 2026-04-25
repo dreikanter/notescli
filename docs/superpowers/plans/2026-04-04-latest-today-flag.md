@@ -54,7 +54,7 @@ func TestLatestTodayNoMatch(t *testing.T) {
 	// --today should find nothing.
 	_, err := runLatest(t, "--today")
 	if err == nil {
-		t.Fatal("expected error when no notesctl match today, got nil")
+		t.Fatal("expected error when no notes match today, got nil")
 	}
 }
 ```
@@ -100,7 +100,7 @@ var latestCmd = &cobra.Command{
 	},
 }
 
-// scanAndFilter scans notesctl and applies --today, --type, --slug, --tag filter flags,
+// scanAndFilter scans notes and applies --today, --type, --slug, --tag filter flags,
 // returning the most recent match.
 func scanAndFilter(cmd *cobra.Command, root string) (*note.Note, error) {
 	notes, err := note.Scan(root)

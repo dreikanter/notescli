@@ -889,7 +889,7 @@ Replace the `FilterByTags` function with:
 // Per-note frontmatter parse errors are logged via log.Printf and the note is skipped.
 func FilterByTags(notes []Note, root string, tags []string) ([]Note, error) {
 	var results []Note
-	for _, n := range notesctl {
+	for _, n := range notes {
 		path := filepath.Join(root, n.RelPath)
 		data, err := os.ReadFile(path)
 		if err != nil {
@@ -961,7 +961,7 @@ func ExtractTags(root string) ([]string, error) {
 
 	g.Go(func() error {
 		defer close(jobs)
-		for _, n := range notesctl {
+		for _, n := range notes {
 			select {
 			case <-ctx.Done():
 				return ctx.Err()

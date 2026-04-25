@@ -34,7 +34,7 @@ Backward compatibility with existing stores is **not a concern** for this design
 - No schema version marker, no migration protocol between schema versions. Semantic changes (e.g., renaming a reserved field, changing a type) happen ad-hoc and are announced in `CHANGELOG.md` under the relevant notesctl version.
 - No `notes lint` command. Can be added later if format drift becomes a real problem.
 - No namespacing convention for custom frontmatter keys. Bare keys, Obsidian-style.
-- No one-shot migration of existing `~/Notes` archives. Existing notesctl parse as before for the identity fields (date, ID); previously filename-only `type` is read as empty until the user edits the frontmatter.
+- No one-shot migration of existing `~/Notes` archives. Existing notes parse as before for the identity fields (date, ID); previously filename-only `type` is read as empty until the user edits the frontmatter.
 - No `aliases`, `featured`, or other specific new reserved fields in this design. It enables them; the actual fields land when there is a concrete use case.
 
 ## Mental model

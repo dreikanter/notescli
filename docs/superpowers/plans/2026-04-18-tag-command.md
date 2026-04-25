@@ -406,7 +406,7 @@ func ExtractTags(root string) ([]string, error) {
 		}()
 	}
 
-	for _, n := range notesctl {
+	for _, n := range notes {
 		jobs <- n
 	}
 	close(jobs)
@@ -697,7 +697,7 @@ done
 time ./notes tags --path "$root" | wc -l
 ```
 
-Expected: finishes in well under a second on a modern machine (3600 notesctl total), with a plausible tag count printed. This is a manual sanity check — no assertion beyond "feels fast."
+Expected: finishes in well under a second on a modern machine (3600 notes total), with a plausible tag count printed. This is a manual sanity check — no assertion beyond "feels fast."
 
 ---
 

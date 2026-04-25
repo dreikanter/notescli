@@ -233,7 +233,7 @@ func TestReadByTodayFilter(t *testing.T) {
 	today := time.Now().Format("20060102")
 	_, err := runRead(t, "--today")
 	if err == nil {
-		t.Fatalf("expected error for --today with no matching notesctl (today=%s), got nil", today)
+		t.Fatalf("expected error for --today with no matching notes (today=%s), got nil", today)
 	}
 }
 

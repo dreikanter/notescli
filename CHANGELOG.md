@@ -4,7 +4,7 @@
 
 ### Changed
 
-- Complete the notesctl rename: update the Go module path, install target, import paths, documentation, and configuration environment variable (`NOTESCTL_PATH`) without compatibility shims for the old naming ([#254]).
+- Complete the notesctl rename: update the Go module path, Go install path, import paths, documentation, and configuration environment variable (`NOTESCTL_PATH`) without compatibility shims for the old naming. The CLI command and binary remain `notes` ([#254]).
 
 [#254]: https://github.com/dreikanter/notesctl/pull/254
 
