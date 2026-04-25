@@ -2,7 +2,6 @@ package note
 
 import (
 	"encoding/json"
-	"errors"
 	"os"
 	"path/filepath"
 	"testing"
@@ -18,9 +17,7 @@ func newOSTestStore(t *testing.T) *OSStore {
 	t.Helper()
 	dir := t.TempDir()
 	data, _ := json.Marshal(map[string]int{"last_id": 0})
-	if err := os.WriteFile(filepath.Join(dir, "id.json"), data, 0o644); err != nil {
-		t.Fatalf("cannot write id.json: %v", err)
-	}
+	require.NoError(t, os.WriteFile(filepath.Join(dir, "id.json"), data, 0o644))
 	return NewOSStore(dir)
 }
 
@@ -48,12 +45,8 @@ func TestOSStore_IDsOrderIntegerIDNotLexicographic(t *testing.T) {
 
 	ids, err := s.IDs()
 	require.NoError(t, err)
-	if len(ids) != 11 {
-		t.Fatalf("IDs len = %d, want 11", len(ids))
-	}
-	if ids[0] != 11 || ids[1] != 10 || ids[2] != 9 {
-		t.Fatalf("IDs order = %v, want [11 10 9 ...]", ids)
-	}
+	assert.Equal(t, []int{11, 10, 9}, ids[:3])
+	assert.Len(t, ids, 11)
 }
 
 func TestOSStore_PutNewCreatesFile(t *testing.T) {
@@ -65,17 +58,11 @@ func TestOSStore_PutNewCreatesFile(t *testing.T) {
 		Body: "body text\n",
 	})
 	require.NoError(t, err)
-	if entry.ID != 1 {
-		t.Fatalf("assigned ID = %d, want 1", entry.ID)
-	}
-	if entry.Meta.UpdatedAt.IsZero() {
-		t.Fatal("Put did not set UpdatedAt")
-	}
+	assert.Equal(t, 1, entry.ID)
+	assert.False(t, entry.Meta.UpdatedAt.IsZero())
 
 	expected := filepath.Join(s.Root(), "2026", "01", "20260115_1_hi.md")
-	if _, err := os.Stat(expected); err != nil {
-		t.Fatalf("expected file at %s: %v", expected, err)
-	}
+	assertFileExists(t, expected)
 }
 
 func TestOSStore_PutSlugChangeRenames(t *testing.T) {
@@ -90,11 +77,8 @@ func TestOSStore_PutSlugChangeRenames(t *testing.T) {
 	_, err = s.Put(entry)
 	require.NoError(t, err)
 	newPath := filepath.Join(s.Root(), "2026", "01", "20260115_1_new.md")
-	_, err = os.Stat(newPath)
-	require.NoError(t, err)
-	if _, err := os.Stat(oldPath); !os.IsNotExist(err) {
-		t.Fatalf("old file should be gone, got err=%v", err)
-	}
+	assertFileExists(t, newPath)
+	assertNoFile(t, oldPath)
 }
 
 func TestOSStore_PutDateChangeMovesToNewSubdir(t *testing.T) {
@@ -109,11 +93,8 @@ func TestOSStore_PutDateChangeMovesToNewSubdir(t *testing.T) {
 	_, err = s.Put(entry)
 	require.NoError(t, err)
 	newPath := filepath.Join(s.Root(), "2026", "03", "20260320_1_x.md")
-	_, err = os.Stat(newPath)
-	require.NoError(t, err)
-	if _, err := os.Stat(oldPath); !os.IsNotExist(err) {
-		t.Fatalf("old path should be gone, got err=%v", err)
-	}
+	assertFileExists(t, newPath)
+	assertNoFile(t, oldPath)
 }
 
 func TestOSStore_Get(t *testing.T) {
@@ -125,13 +106,11 @@ func TestOSStore_Get(t *testing.T) {
 
 	got, err := s.Get(1)
 	require.NoError(t, err)
-	if got.Meta.Title != "t" || got.Body != "body" {
-		t.Fatalf("Get = %+v, want title=t body=body", got)
-	}
+	assert.Equal(t, "t", got.Meta.Title)
+	assert.Equal(t, "body", got.Body)
 
-	if _, err := s.Get(99); !errors.Is(err, ErrNotFound) {
-		t.Fatalf("Get miss err = %v, want ErrNotFound", err)
-	}
+	_, err = s.Get(99)
+	assert.ErrorIs(t, err, ErrNotFound)
 }
 
 func TestOSStore_AllFilterByTagIncludesBodyHashtags(t *testing.T) {
@@ -150,15 +129,11 @@ func TestOSStore_AllFilterByTagIncludesBodyHashtags(t *testing.T) {
 
 	gotAlpha, err := s.All(WithTag("alpha"))
 	require.NoError(t, err)
-	if len(gotAlpha) != 1 || gotAlpha[0].ID != 1 {
-		t.Fatalf("All alpha = %v, want [1]", entryIDs(gotAlpha))
-	}
+	assertEntryIDs(t, []int{1}, gotAlpha)
 
 	gotBeta, err := s.All(WithTag("beta"))
 	require.NoError(t, err)
-	if len(gotBeta) != 1 || gotBeta[0].ID != 2 {
-		t.Fatalf("All beta = %v, want [2]", entryIDs(gotBeta))
-	}
+	assertEntryIDs(t, []int{2}, gotBeta)
 }
 
 func TestOSStore_FindStopsAtFirstMatch(t *testing.T) {
@@ -172,9 +147,7 @@ func TestOSStore_FindStopsAtFirstMatch(t *testing.T) {
 
 	got, err := s.Find(WithType("todo"))
 	require.NoError(t, err)
-	if got.ID != 3 {
-		t.Fatalf("Find newest todo ID = %d, want 3", got.ID)
-	}
+	assert.Equal(t, 3, got.ID)
 }
 
 func TestOSStore_FindNoMatch(t *testing.T) {
@@ -190,15 +163,9 @@ func TestOSStore_Delete(t *testing.T) {
 	entry, err := s.Put(Entry{Meta: Meta{Slug: "x", CreatedAt: created}, Body: "b"})
 	require.NoError(t, err)
 
-	if err := s.Delete(entry.ID); err != nil {
-		t.Fatalf("Delete hit: %v", err)
-	}
-	if _, err := os.Stat(s.AbsPath(entry)); !os.IsNotExist(err) {
-		t.Fatalf("file should be gone, got err=%v", err)
-	}
-	if err := s.Delete(entry.ID); !errors.Is(err, ErrNotFound) {
-		t.Fatalf("Delete miss err = %v, want ErrNotFound", err)
-	}
+	require.NoError(t, s.Delete(entry.ID))
+	assertNoFile(t, s.AbsPath(entry))
+	assert.ErrorIs(t, s.Delete(entry.ID), ErrNotFound)
 }
 
 func TestOSStore_AbsPathNoIO(t *testing.T) {
@@ -215,9 +182,7 @@ func TestOSStore_AbsPathNoIO(t *testing.T) {
 	want := filepath.Join(root, "2026", "02", "20260201_42_demo.md")
 	assert.Equal(t, want, s.AbsPath(entry))
 	// no file should have been created as a side effect
-	if _, err := os.Stat(want); !os.IsNotExist(err) {
-		t.Fatalf("AbsPath created a file: err=%v", err)
-	}
+	assertNoFile(t, want)
 }
 
 func TestOSStore_RoundTripPreservesFrontmatterAndTags(t *testing.T) {
@@ -241,18 +206,28 @@ func TestOSStore_RoundTripPreservesFrontmatterAndTags(t *testing.T) {
 	got, err := s.Get(entry.ID)
 	require.NoError(t, err)
 
-	if got.Meta.Title != "Test" || got.Meta.Slug != "test" || got.Meta.Type != "note" {
-		t.Fatalf("round-trip meta = %+v", got.Meta)
-	}
-	if !got.Meta.CreatedAt.Equal(created) {
-		t.Fatalf("round-trip CreatedAt = %v, want %v", got.Meta.CreatedAt, created)
-	}
+	assert.Equal(t, "Test", got.Meta.Title)
+	assert.Equal(t, "test", got.Meta.Slug)
+	assert.Equal(t, "note", got.Meta.Type)
+	assert.True(t, got.Meta.CreatedAt.Equal(created))
 	// Tags should include both frontmatter values and the body hashtag.
 	want := map[string]bool{"alpha": true, "beta": true, "gamma": true}
 	for _, tag := range got.Meta.Tags {
 		delete(want, tag)
 	}
 	assert.Empty(t, want)
+}
+
+func assertFileExists(t *testing.T, path string) {
+	t.Helper()
+	_, err := os.Stat(path)
+	require.NoError(t, err)
+}
+
+func assertNoFile(t *testing.T, path string) {
+	t.Helper()
+	_, err := os.Stat(path)
+	assert.True(t, os.IsNotExist(err), "expected %s not to exist, got err=%v", path, err)
 }
 
 func TestOSStore_AllFilterByPublic(t *testing.T) {
@@ -268,21 +243,13 @@ func TestOSStore_AllFilterByPublic(t *testing.T) {
 
 	pub, err := s.All(WithPublic(true))
 	require.NoError(t, err)
-	if len(pub) != 2 {
-		t.Fatalf("WithPublic(true) len = %d, want 2 (got IDs %v)", len(pub), entryIDs(pub))
-	}
+	assertEntryIDs(t, []int{3, 1}, pub)
 	for _, e := range pub {
-		if !e.Meta.Public {
-			t.Fatalf("WithPublic(true) returned Public=false entry %d", e.ID)
-		}
+		assert.True(t, e.Meta.Public)
 	}
 
 	priv, err := s.All(WithPublic(false))
 	require.NoError(t, err)
-	if len(priv) != 1 {
-		t.Fatalf("WithPublic(false) len = %d, want 1 (got IDs %v)", len(priv), entryIDs(priv))
-	}
-	if priv[0].Meta.Public {
-		t.Fatalf("WithPublic(false) returned Public=true entry %d", priv[0].ID)
-	}
+	assertEntryIDs(t, []int{2}, priv)
+	assert.False(t, priv[0].Meta.Public)
 }

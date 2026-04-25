@@ -1,7 +1,6 @@
 package note
 
 import (
-	"errors"
 	"sync"
 	"testing"
 	"time"
@@ -28,10 +27,7 @@ func TestMemStore_IDsOrderNewestFirstThenIDDesc(t *testing.T) {
 
 	ids, err := s.IDs()
 	require.NoError(t, err)
-	want := []int{3, 2, 1}
-	if !sliceEqual(ids, want) {
-		t.Fatalf("IDs = %v, want %v", ids, want)
-	}
+	assert.Equal(t, []int{3, 2, 1}, ids)
 }
 
 func TestMemStore_AllNoOpts(t *testing.T) {
@@ -41,12 +37,7 @@ func TestMemStore_AllNoOpts(t *testing.T) {
 	}
 	entries, err := s.All()
 	require.NoError(t, err)
-	if len(entries) != 3 {
-		t.Fatalf("All len = %d, want 3", len(entries))
-	}
-	if entries[0].ID != 3 || entries[2].ID != 1 {
-		t.Fatalf("All order = %v, want [3 2 1]", entryIDs(entries))
-	}
+	assertEntryIDs(t, []int{3, 2, 1}, entries)
 }
 
 func TestMemStore_AllFilterByType(t *testing.T) {
@@ -57,9 +48,7 @@ func TestMemStore_AllFilterByType(t *testing.T) {
 
 	got, err := s.All(WithType("todo"))
 	require.NoError(t, err)
-	if len(got) != 2 || got[0].ID != 3 || got[1].ID != 1 {
-		t.Fatalf("All WithType(todo) = %v, want [3 1]", entryIDs(got))
-	}
+	assertEntryIDs(t, []int{3, 1}, got)
 }
 
 func TestMemStore_AllMultipleTagsAreAND(t *testing.T) {
@@ -70,9 +59,7 @@ func TestMemStore_AllMultipleTagsAreAND(t *testing.T) {
 
 	got, err := s.All(WithTag("a"), WithTag("b"))
 	require.NoError(t, err)
-	if len(got) != 2 || got[0].ID != 3 || got[1].ID != 2 {
-		t.Fatalf("All WithTag(a)+WithTag(b) = %v, want [3 2]", entryIDs(got))
-	}
+	assertEntryIDs(t, []int{3, 2}, got)
 }
 
 func TestMemStore_TagMatchCaseInsensitive(t *testing.T) {
@@ -80,9 +67,7 @@ func TestMemStore_TagMatchCaseInsensitive(t *testing.T) {
 	mustPut(t, s, Entry{ID: 1, Meta: Meta{Tags: []string{"Alpha"}, CreatedAt: day(2026, 1, 1)}})
 	got, err := s.All(WithTag("alpha"))
 	require.NoError(t, err)
-	if len(got) != 1 {
-		t.Fatalf("All WithTag(alpha) len = %d, want 1", len(got))
-	}
+	assertEntryIDs(t, []int{1}, got)
 }
 
 func TestMemStore_AllNoMatchEmptySliceNotError(t *testing.T) {
@@ -103,9 +88,7 @@ func TestMemStore_AllFilterByExactDate(t *testing.T) {
 
 	got, err := s.All(WithExactDate(day(2026, 1, 1)))
 	require.NoError(t, err)
-	if len(got) != 2 {
-		t.Fatalf("All WithExactDate len = %d, want 2", len(got))
-	}
+	assertEntryIDs(t, []int{2, 1}, got)
 }
 
 func TestMemStore_AllFilterByBeforeDate(t *testing.T) {
@@ -116,9 +99,7 @@ func TestMemStore_AllFilterByBeforeDate(t *testing.T) {
 
 	got, err := s.All(WithBeforeDate(day(2026, 1, 3)))
 	require.NoError(t, err)
-	if len(got) != 2 || got[0].ID != 2 || got[1].ID != 1 {
-		t.Fatalf("All WithBeforeDate = %v, want [2 1]", entryIDs(got))
-	}
+	assertEntryIDs(t, []int{2, 1}, got)
 }
 
 func TestMemStore_FindReturnsNewest(t *testing.T) {
@@ -128,9 +109,7 @@ func TestMemStore_FindReturnsNewest(t *testing.T) {
 
 	got, err := s.Find(WithType("todo"))
 	require.NoError(t, err)
-	if got.ID != 2 {
-		t.Fatalf("Find ID = %d, want 2", got.ID)
-	}
+	assert.Equal(t, 2, got.ID)
 }
 
 func TestMemStore_FindNoMatchErrNotFound(t *testing.T) {
@@ -145,9 +124,7 @@ func TestMemStore_Get(t *testing.T) {
 
 	got, err := s.Get(1)
 	require.NoError(t, err)
-	if got.Meta.Title != "one" {
-		t.Fatalf("Get title = %q, want one", got.Meta.Title)
-	}
+	assert.Equal(t, "one", got.Meta.Title)
 
 	_, err = s.Get(99)
 	assert.ErrorIs(t, err, ErrNotFound)
@@ -157,9 +134,7 @@ func TestMemStore_PutAssignsIDStartingAt1(t *testing.T) {
 	s := NewMemStore()
 	e, err := s.Put(Entry{Body: "hello"})
 	require.NoError(t, err)
-	if e.ID != 1 {
-		t.Fatalf("first Put ID = %d, want 1", e.ID)
-	}
+	assert.Equal(t, 1, e.ID)
 }
 
 func TestMemStore_PutAssignsMaxPlusOne(t *testing.T) {
@@ -169,9 +144,7 @@ func TestMemStore_PutAssignsMaxPlusOne(t *testing.T) {
 
 	e, err := s.Put(Entry{Body: "new"})
 	require.NoError(t, err)
-	if e.ID != 6 {
-		t.Fatalf("Put new ID = %d, want 6", e.ID)
-	}
+	assert.Equal(t, 6, e.ID)
 }
 
 func TestMemStore_PutExistingIDReplaces(t *testing.T) {
@@ -181,13 +154,11 @@ func TestMemStore_PutExistingIDReplaces(t *testing.T) {
 
 	e, err := s.Put(Entry{ID: 1, Meta: Meta{Title: "new", CreatedAt: created}, Body: "new body"})
 	require.NoError(t, err)
-	if e.Meta.Title != "new" || e.Body != "new body" {
-		t.Fatalf("Put replace = %+v, want title=new body=new body", e)
-	}
-	got, _ := s.Get(1)
-	if got.Meta.Title != "new" {
-		t.Fatalf("Get after replace title = %q, want new", got.Meta.Title)
-	}
+	assert.Equal(t, "new", e.Meta.Title)
+	assert.Equal(t, "new body", e.Body)
+	got, err := s.Get(1)
+	require.NoError(t, err)
+	assert.Equal(t, "new", got.Meta.Title)
 }
 
 func TestMemStore_PutUpdateZeroCreatedAtErrors(t *testing.T) {
@@ -195,9 +166,7 @@ func TestMemStore_PutUpdateZeroCreatedAtErrors(t *testing.T) {
 	mustPut(t, s, Entry{ID: 1, Meta: Meta{CreatedAt: day(2026, 1, 1)}})
 
 	_, err := s.Put(Entry{ID: 1, Meta: Meta{Title: "x"}})
-	if err == nil {
-		t.Fatal("Put update with zero CreatedAt: expected error, got nil")
-	}
+	require.Error(t, err)
 }
 
 func TestMemStore_PutZeroCreatedAtSetsToNow(t *testing.T) {
@@ -207,9 +176,8 @@ func TestMemStore_PutZeroCreatedAtSetsToNow(t *testing.T) {
 	require.NoError(t, err)
 	after := time.Now()
 
-	if e.Meta.CreatedAt.Before(before) || e.Meta.CreatedAt.After(after) {
-		t.Fatalf("CreatedAt = %v, want between %v and %v", e.Meta.CreatedAt, before, after)
-	}
+	assert.False(t, e.Meta.CreatedAt.Before(before))
+	assert.False(t, e.Meta.CreatedAt.After(after))
 }
 
 func TestMemStore_PutAlwaysSetsUpdatedAt(t *testing.T) {
@@ -217,34 +185,23 @@ func TestMemStore_PutAlwaysSetsUpdatedAt(t *testing.T) {
 	originalCreated := day(2026, 1, 1)
 	e, err := s.Put(Entry{ID: 1, Meta: Meta{CreatedAt: originalCreated}})
 	require.NoError(t, err)
-	if !e.Meta.CreatedAt.Equal(originalCreated) {
-		t.Fatalf("Put changed provided CreatedAt: got %v", e.Meta.CreatedAt)
-	}
-	if e.Meta.UpdatedAt.IsZero() {
-		t.Fatalf("Put did not set UpdatedAt")
-	}
+	assert.True(t, e.Meta.CreatedAt.Equal(originalCreated))
+	assert.False(t, e.Meta.UpdatedAt.IsZero())
 
 	time.Sleep(time.Millisecond)
 	e2, err := s.Put(Entry{ID: 1, Meta: Meta{CreatedAt: originalCreated}})
 	require.NoError(t, err)
-	if !e2.Meta.UpdatedAt.After(e.Meta.UpdatedAt) {
-		t.Fatalf("UpdatedAt did not advance: first=%v second=%v", e.Meta.UpdatedAt, e2.Meta.UpdatedAt)
-	}
+	assert.True(t, e2.Meta.UpdatedAt.After(e.Meta.UpdatedAt))
 }
 
 func TestMemStore_Delete(t *testing.T) {
 	s := NewMemStore()
 	mustPut(t, s, Entry{ID: 1, Meta: Meta{CreatedAt: day(2026, 1, 1)}})
 
-	if err := s.Delete(1); err != nil {
-		t.Fatalf("Delete hit: %v", err)
-	}
-	if _, err := s.Get(1); !errors.Is(err, ErrNotFound) {
-		t.Fatalf("Get after Delete = %v, want ErrNotFound", err)
-	}
-	if err := s.Delete(1); !errors.Is(err, ErrNotFound) {
-		t.Fatalf("Delete miss err = %v, want ErrNotFound", err)
-	}
+	require.NoError(t, s.Delete(1))
+	_, err := s.Get(1)
+	assert.ErrorIs(t, err, ErrNotFound)
+	assert.ErrorIs(t, s.Delete(1), ErrNotFound)
 }
 
 func TestMemStore_ConcurrentReads(t *testing.T) {
@@ -281,15 +238,11 @@ func TestMemStore_AllFilterByPublic(t *testing.T) {
 
 	pub, err := s.All(WithPublic(true))
 	require.NoError(t, err)
-	if len(pub) != 2 || pub[0].ID != 3 || pub[1].ID != 1 {
-		t.Fatalf("WithPublic(true) = %v, want [3 1]", entryIDs(pub))
-	}
+	assertEntryIDs(t, []int{3, 1}, pub)
 
 	priv, err := s.All(WithPublic(false))
 	require.NoError(t, err)
-	if len(priv) != 1 || priv[0].ID != 2 {
-		t.Fatalf("WithPublic(false) = %v, want [2]", entryIDs(priv))
-	}
+	assertEntryIDs(t, []int{2}, priv)
 }
 
 func TestMemStore_AllPublicComposesWithTag(t *testing.T) {
@@ -300,9 +253,7 @@ func TestMemStore_AllPublicComposesWithTag(t *testing.T) {
 
 	got, err := s.All(WithPublic(true), WithTag("x"))
 	require.NoError(t, err)
-	if len(got) != 1 || got[0].ID != 1 {
-		t.Fatalf("WithPublic(true)+WithTag(x) = %v, want [1]", entryIDs(got))
-	}
+	assertEntryIDs(t, []int{1}, got)
 }
 
 func mustPut(t *testing.T, s *MemStore, e Entry) Entry {
@@ -316,22 +267,15 @@ func day(y int, m time.Month, d int) time.Time {
 	return time.Date(y, m, d, 0, 0, 0, 0, time.UTC)
 }
 
+func assertEntryIDs(t *testing.T, want []int, entries []Entry) {
+	t.Helper()
+	assert.Equal(t, want, entryIDs(entries))
+}
+
 func entryIDs(entries []Entry) []int {
 	out := make([]int, len(entries))
 	for i, e := range entries {
 		out[i] = e.ID
 	}
 	return out
-}
-
-func sliceEqual(a, b []int) bool {
-	if len(a) != len(b) {
-		return false
-	}
-	for i := range a {
-		if a[i] != b[i] {
-			return false
-		}
-	}
-	return true
 }
