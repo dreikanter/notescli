@@ -20,7 +20,7 @@ enough to feel instant when piped.
 New top-level command, no args, no flags:
 
 ```
-notesctl tags
+notes tags
 ```
 
 Prints unique tags, one per line, sorted alphabetically (byte order). Exits 0

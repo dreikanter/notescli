@@ -9,7 +9,7 @@
 ref-consuming command (`read`, `resolve`, `append`, `update`) uses `ResolveRef` which
 resolves paths containing `/` via `filepath.Abs` relative to CWD — not the store root.
 
-This breaks the natural Unix pipeline: `notesctl ls --type todo | xargs notesctl read`.
+This breaks the natural Unix pipeline: `notes ls --type todo | xargs notes read`.
 
 Every other path-emitting command (`new`, `append`, `latest`, `resolve`, `update`) already
 outputs absolute paths. `ls` is the only outlier.

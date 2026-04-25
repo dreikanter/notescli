@@ -5,7 +5,7 @@
 
 ## Problem
 
-`notesctl update <id>` with no flags silently reads the file, re-serializes it unchanged, writes it back, and prints the path as if the update succeeded. This is confusing for users and masks bugs in scripts where a flag variable may be empty.
+`notes update <id>` with no flags silently reads the file, re-serializes it unchanged, writes it back, and prints the path as if the update succeeded. This is confusing for users and masks bugs in scripts where a flag variable may be empty.
 
 ## Solution
 

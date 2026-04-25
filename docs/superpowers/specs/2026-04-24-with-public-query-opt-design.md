@@ -29,7 +29,7 @@ and compose it with any existing filter.
 
 ## Non-goals
 
-- No CLI surface (`notesctl ls --public` / `--private`) — deferred to a
+- No CLI surface (`notes ls --public` / `--private`) — deferred to a
   later PR once the primitive exists.
 - No change to `Frontmatter` serialisation or the filename layout.
 - No I/O optimisation (e.g., partial frontmatter reads). Frontmatter is

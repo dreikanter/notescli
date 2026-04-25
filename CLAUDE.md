@@ -3,8 +3,8 @@
 ## Build & Install
 
 ```sh
-make install     # builds and installs to ~/go/bin/notesctl
-make build       # builds local ./notesctl binary
+make install     # builds and installs to ~/go/bin/notes
+make build       # builds local ./notes binary
 make test        # run tests
 make lint        # run golangci-lint
 ```

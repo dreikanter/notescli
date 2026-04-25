@@ -242,14 +242,14 @@ In `README.md`, change line 27-28 from:
 
 ```markdown
 # Create today's todo from the previous todo
-notesctl new-todo
+notes new-todo
 ```
 
 to:
 
 ```markdown
 # Create today's todo (rolls over pending tasks from the previous one)
-notesctl new-todo
+notes new-todo
 ```
 
 - [ ] **Step 3: Run lint**

@@ -18,7 +18,7 @@ var (
 )
 
 var rootCmd = &cobra.Command{
-	Use:          "notesctl",
+	Use:          "notes",
 	Short:        "Interact with a notes store",
 	SilenceUsage: true,
 }

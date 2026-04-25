@@ -4,7 +4,7 @@
 
 ### Changed
 
-- Complete the notesctl rename: update the Go module path, install target, binary/command name, import paths, documentation, and configuration environment variable (`NOTESCTL_PATH`) without compatibility shims for the old naming ([#254]).
+- Complete the notesctl rename: update the Go module path, install target, import paths, documentation, and configuration environment variable (`NOTESCTL_PATH`) without compatibility shims for the old naming ([#254]).
 
 [#254]: https://github.com/dreikanter/notesctl/pull/254
 
@@ -57,7 +57,7 @@
 - `note.ResolveEntryDate`, `note.Ref.Time`, `note.Logger`, `note.NormalizeSlug`, `note.DeriveSlug`
 - `note/watch/` package (dead once `Index.Reload` was gone)
 - `internal/editor/` package (dead once the `edit` command was removed)
-- `notesctl grep` / `notesctl rg` commands (deferred feature; removed rather than parked) ([#243])
+- `notes grep` / `notes rg` commands (deferred feature; removed rather than parked) ([#243])
 
 [#243]: https://github.com/dreikanter/notesctl/pull/243
 
@@ -65,7 +65,7 @@
 
 ### Changed
 
-- `internal/cli/new_todo.go`: `notesctl new-todo` now routes through the `Store`. Existence check uses `store.Find(WithType("todo"), WithExactDate(today))`; previous-todo lookup uses `store.Find(WithType("todo"), WithBeforeDate(today))`. Rollover still reuses `note.RolloverTasks` and `note.FormatTodoContent`.
+- `internal/cli/new_todo.go`: `notes new-todo` now routes through the `Store`. Existence check uses `store.Find(WithType("todo"), WithExactDate(today))`; previous-todo lookup uses `store.Find(WithType("todo"), WithBeforeDate(today))`. Rollover still reuses `note.RolloverTasks` and `note.FormatTodoContent`.
 - `internal/cli/filter.go` removed — the `stderrLogger` helper has no remaining callers now that every command uses the Store ([#242]).
 
 [#242]: https://github.com/dreikanter/notesctl/pull/242
@@ -74,7 +74,7 @@
 
 ### Changed
 
-- `internal/cli/new.go`: `notesctl new` now builds a `StoreEntry` and routes through `store.Put`. `--upsert` uses `store.Find(WithType, WithExactDate(today), WithSlug)` + conditional `store.Put`. `internal/cli/create.go` is deleted — ID generation, directory creation, and atomic write are owned by `OSStore.Put` ([#241]).
+- `internal/cli/new.go`: `notes new` now builds a `StoreEntry` and routes through `store.Put`. `--upsert` uses `store.Find(WithType, WithExactDate(today), WithSlug)` + conditional `store.Put`. `internal/cli/create.go` is deleted — ID generation, directory creation, and atomic write are owned by `OSStore.Put` ([#241]).
 
 [#241]: https://github.com/dreikanter/notesctl/pull/241
 
@@ -82,12 +82,12 @@
 
 ### Changed
 
-- `internal/cli/resolve.go`: `notesctl resolve` no longer takes a positional argument. Explicit flags replace the priority chain: `--id`, `--type`, `--slug`, `--tag` (at most one). With no flags, it returns the newest note via `store.Find()`. Output is the absolute path via `OSStore.AbsPath`.
+- `internal/cli/resolve.go`: `notes resolve` no longer takes a positional argument. Explicit flags replace the priority chain: `--id`, `--type`, `--slug`, `--tag` (at most one). With no flags, it returns the newest note via `store.Find()`. Output is the absolute path via `OSStore.AbsPath`.
 - `internal/cli/filter.go`: `resolveRef`, `resolveOrFilter`, `filterOpts`, `applyFilters`, `loadOptsFor`, and `addFilterFlags` are removed — the only remaining consumer is `stderrLogger`, which stays until `new` / `new-todo` migrate.
 
 ### Removed
 
-- `notesctl edit` command. Open a note in your editor with e.g. `$EDITOR $(notesctl resolve --type todo)` ([#240]).
+- `notes edit` command. Open a note in your editor with e.g. `$EDITOR $(notes resolve --type todo)` ([#240]).
 
 [#240]: https://github.com/dreikanter/notesctl/pull/240
 
@@ -95,7 +95,7 @@
 
 ### Changed
 
-- `internal/cli/update.go`: `notesctl update` now takes a single `<id>` integer argument and routes through `store.Get` / `store.Put`. The `--sync-filename` flag is removed — `OSStore.Put` detects filename drift from `Meta.Slug`/`Type`/`CreatedAt` and renames atomically. New `--date YYYYMMDD` flag moves the note to the requested year/month directory. `syncNoteFilename` and its associated rename-via-link logic are deleted ([#239]).
+- `internal/cli/update.go`: `notes update` now takes a single `<id>` integer argument and routes through `store.Get` / `store.Put`. The `--sync-filename` flag is removed — `OSStore.Put` detects filename drift from `Meta.Slug`/`Type`/`CreatedAt` and renames atomically. New `--date YYYYMMDD` flag moves the note to the requested year/month directory. `syncNoteFilename` and its associated rename-via-link logic are deleted ([#239]).
 
 [#239]: https://github.com/dreikanter/notesctl/pull/239
 
@@ -103,7 +103,7 @@
 
 ### Changed
 
-- `internal/cli/annotate.go`: `notesctl annotate` now takes a single `<id>` integer argument. Load/save go through `store.Get` / `store.Put`; the Claude invocation flow (schema, exec, timeout handling, error mapping) is unchanged. `annotateEmptyFields` and `mergeAnnotation` now operate on `note.StoreMeta` instead of `note.Frontmatter` ([#238]).
+- `internal/cli/annotate.go`: `notes annotate` now takes a single `<id>` integer argument. Load/save go through `store.Get` / `store.Put`; the Claude invocation flow (schema, exec, timeout handling, error mapping) is unchanged. `annotateEmptyFields` and `mergeAnnotation` now operate on `note.StoreMeta` instead of `note.Frontmatter` ([#238]).
 
 [#238]: https://github.com/dreikanter/notesctl/pull/238
 
@@ -111,7 +111,7 @@
 
 ### Changed
 
-- `internal/cli/append.go`: `notesctl append` now takes a single `<id>` integer argument. Load goes through `store.Get`, body is modified in-memory, and save goes through `store.Put`. Filter flags (`--type`, `--slug`, `--tag`, `--today`) are removed — users get IDs from `notesctl ls` or `notesctl resolve` ([#237]).
+- `internal/cli/append.go`: `notes append` now takes a single `<id>` integer argument. Load goes through `store.Get`, body is modified in-memory, and save goes through `store.Put`. Filter flags (`--type`, `--slug`, `--tag`, `--today`) are removed — users get IDs from `notes ls` or `notes resolve` ([#237]).
 
 [#237]: https://github.com/dreikanter/notesctl/pull/237
 
@@ -119,7 +119,7 @@
 
 ### Changed
 
-- **Breaking**: `notesctl ls` now prints one integer ID per line (newest first) instead of one absolute path per line. Scripts that piped `notesctl ls` into `notesctl read` / `notesctl rm` should switch to `notesctl resolve` if they need paths.
+- **Breaking**: `notes ls` now prints one integer ID per line (newest first) instead of one absolute path per line. Scripts that piped `notes ls` into `notes read` / `notes rm` should switch to `notes resolve` if they need paths.
 - `internal/cli/ls.go`: replace `note.Load` + filter pipeline with `store.IDs()` (fast directory-scan path) when no filter flags are set, and `store.All(...)` with composed `QueryOpt`s otherwise.
 - Flag mapping: `--type` → `WithType` (now single-valued), `--slug` → `WithSlug`, `--tag` → `WithTag` (repeatable, AND), `--today` → `WithExactDate(time.Now())`.
 - Removed the `--name` filename-fragment flag; it will return as a tag/title-fragment query option in a future phase ([#236]).
@@ -130,7 +130,7 @@
 
 ### Changed
 
-- `internal/cli/rm.go`: `notesctl rm` now takes a single `<id>` integer argument and deletes via `store.Delete(id)`. The `--today` flag is removed — users get today's ID from `notesctl ls --today` or `notesctl resolve`. Non-existent IDs surface `note.ErrNotFound` as a clear "not found" message ([#235]).
+- `internal/cli/rm.go`: `notes rm` now takes a single `<id>` integer argument and deletes via `store.Delete(id)`. The `--today` flag is removed — users get today's ID from `notes ls --today` or `notes resolve`. Non-existent IDs surface `note.ErrNotFound` as a clear "not found" message ([#235]).
 
 [#235]: https://github.com/dreikanter/notesctl/pull/235
 
@@ -138,7 +138,7 @@
 
 ### Changed
 
-- `internal/cli/read.go`: `notesctl read` now takes a single `<id>` integer argument and resolves it via `store.Get(id)`. The filter flags (`--type`, `--slug`, `--tag`, `--today`) are removed — users discover IDs via `notesctl ls` or `notesctl resolve`. `--no-frontmatter` is preserved. Raw file bytes still come from disk (via `store.AbsPath`) so on-disk YAML formatting is unchanged ([#234]).
+- `internal/cli/read.go`: `notes read` now takes a single `<id>` integer argument and resolves it via `store.Get(id)`. The filter flags (`--type`, `--slug`, `--tag`, `--today`) are removed — users discover IDs via `notes ls` or `notes resolve`. `--no-frontmatter` is preserved. Raw file bytes still come from disk (via `store.AbsPath`) so on-disk YAML formatting is unchanged ([#234]).
 
 [#234]: https://github.com/dreikanter/notesctl/pull/234
 
@@ -146,7 +146,7 @@
 
 ### Changed
 
-- `internal/cli/tags.go`: `notesctl tags` now calls `store.All()` instead of `note.Load` + index walk. `OSStore.All()` already returns entries with `Meta.Tags` populated as the merged frontmatter/body-hashtag union, so the command drops the two-source merge. Output format is unchanged ([#233]).
+- `internal/cli/tags.go`: `notes tags` now calls `store.All()` instead of `note.Load` + index walk. `OSStore.All()` already returns entries with `Meta.Tags` populated as the merged frontmatter/body-hashtag union, so the command drops the two-source merge. Output format is unchanged ([#233]).
 
 [#233]: https://github.com/dreikanter/notesctl/pull/233
 
@@ -280,7 +280,7 @@ No implementations and no behaviour changes — this PR only establishes the con
 
 ### Changed
 
-- `note.ExtractTags(root)` removed. It ran a full `Load` on every call and hid body hashtags behind the unexported `bodyHashtags` field, so external consumers either paid for a re-walk or lost access. Callers that already hold an `Index` should combine `Index.Tags()` (frontmatter aggregate) with per-entry `Entry.BodyHashtags()` themselves; the `notesctl tags` CLI command routes through `Index` and is unchanged from the user's side. ([#201])
+- `note.ExtractTags(root)` removed. It ran a full `Load` on every call and hid body hashtags behind the unexported `bodyHashtags` field, so external consumers either paid for a re-walk or lost access. Callers that already hold an `Index` should combine `Index.Tags()` (frontmatter aggregate) with per-entry `Entry.BodyHashtags()` themselves; the `notes tags` CLI command routes through `Index` and is unchanged from the user's side. ([#201])
 - `note.Entry.BodyHashtags() []string` exported as a defensive-copy accessor returning the lowercased, deduplicated hashtags extracted from the note body during `Load`. Returns nil when `Load` ran with `WithFrontmatter(false)` or the body had no hashtags. Mutating the returned slice does not affect the index ([#201])
 
 [#201]: https://github.com/dreikanter/notesctl/pull/201
@@ -378,7 +378,7 @@ No implementations and no behaviour changes — this PR only establishes the con
 
 ### Changed
 
-- `notesctl new` and `notesctl append` now read stdin via `cmd.InOrStdin()` instead of reading `os.Stdin` directly, so tests (or any caller) can inject input by setting `rootCmd.SetIn(...)`. The terminal-detection heuristic is now `stdinIsTerminal(io.Reader)` and only runs the `Stat()` check when the reader is an `*os.File`; any other reader (pipe, `strings.Reader`, `bytes.Buffer`, etc.) is treated as non-terminal. `new_test.go` and `append_test.go` drop the `os.Stdin = r` / `os.Pipe` dance and use `rootCmd.SetIn(strings.NewReader(...))` ([#165])
+- `notes new` and `notes append` now read stdin via `cmd.InOrStdin()` instead of reading `os.Stdin` directly, so tests (or any caller) can inject input by setting `rootCmd.SetIn(...)`. The terminal-detection heuristic is now `stdinIsTerminal(io.Reader)` and only runs the `Stat()` check when the reader is an `*os.File`; any other reader (pipe, `strings.Reader`, `bytes.Buffer`, etc.) is treated as non-terminal. `new_test.go` and `append_test.go` drop the `os.Stdin = r` / `os.Pipe` dance and use `rootCmd.SetIn(strings.NewReader(...))` ([#165])
 
 ## [0.1.107] - 2026-04-23
 
@@ -406,7 +406,7 @@ No implementations and no behaviour changes — this PR only establishes the con
 ### Changed
 
 - `note.NoteFilename` and `note.NoteDirPath` renamed to `note.Filename` and `note.DirPath` to drop the package-name stutter (`note.Note*`) that repeated at every call site. Tests and the one surviving doc-comment reference were updated in the same pass ([#159])
-- `notesctl update` now reads the parsed bool value for both `--public` and `--private` instead of hardcoding `true`/`false` on `Changed()`. Previously `--public=false` would flip `Public` to `true` (the inverse of intent) and `--private=false` was a no-op. `MarkFlagsMutuallyExclusive("public","private")` still prevents both being set at once ([#159])
+- `notes update` now reads the parsed bool value for both `--public` and `--private` instead of hardcoding `true`/`false` on `Changed()`. Previously `--public=false` would flip `Public` to `true` (the inverse of intent) and `--private=false` was a no-op. `MarkFlagsMutuallyExclusive("public","private")` still prevents both being set at once ([#159])
 - `buildAnnotateSchema` in `internal/cli/annotate.go` now returns `(string, error)` and propagates the `json.Marshal` failure instead of silently discarding it with `_`. The input is controlled so today's callers can't trigger the error, but the pattern violated the "no silent error swallowing" rule ([#159])
 - `CLAUDE.md` documents the CHANGELOG workflow explicitly: open the PR first, note the assigned number, then add the CHANGELOG entry referencing that number in a follow-up atomic commit. Avoids the chicken-and-egg of trying to predict the PR number before creation ([#159])
 
@@ -421,7 +421,7 @@ No implementations and no behaviour changes — this PR only establishes the con
 
 ### Changed
 
-- `notesctl new` and `notesctl new-todo` now write the new note file via the existing `writeAtomic` helper (tmp + rename), matching every other note-write path in the CLI (`append`, `annotate`, `update`, and the rollover-update step of `new-todo`). A mid-write crash can no longer leave a truncated note at the target path; failure modes collapse to "nothing written" or "fully written" ([#134], [#156])
+- `notes new` and `notes new-todo` now write the new note file via the existing `writeAtomic` helper (tmp + rename), matching every other note-write path in the CLI (`append`, `annotate`, `update`, and the rollover-update step of `new-todo`). A mid-write crash can no longer leave a truncated note at the target path; failure modes collapse to "nothing written" or "fully written" ([#134], [#156])
 - `note/watch`: dropped the internal `strictDirPrefix` helper. Its strict-mode semantics were identical to `shouldWatchDir`, so `addTree`'s descent-pruning branch now simply returns `fs.SkipDir` whenever `shouldWatchDir` rejects a directory in strict mode. No behavior change; the fixed-depth YYYY/MM strict layout has nowhere deeper worth descending to ([#134], [#156])
 
 ## [0.1.99] - 2026-04-22
@@ -517,32 +517,32 @@ No implementations and no behaviour changes — this PR only establishes the con
 
 ### Changed
 
-- `notesctl ls --tag`, `notesctl read --tag`, `notesctl append --tag`, and `notesctl resolve --tag` now match body hashtags (`#tag`) in addition to frontmatter `tags:`, mirroring the sources already used by `notesctl tags`. Tag-based filtering no longer silently ignores inline hashtags ([#131])
+- `notes ls --tag`, `notes read --tag`, `notes append --tag`, and `notes resolve --tag` now match body hashtags (`#tag`) in addition to frontmatter `tags:`, mirroring the sources already used by `notes tags`. Tag-based filtering no longer silently ignores inline hashtags ([#131])
 
 ## [0.1.84] - 2026-04-20
 
 ### Changed
 
-- `notesctl read`, `notesctl append`, and `notesctl resolve` now include the effective filters in the "no notes found" error (e.g. `no notes found matching filters: type=[todo] today=true`) so you can tell which filter narrowed too far ([#115])
-- `notesctl new` and `notesctl new-todo` now inherit the notes-store root's directory permissions when creating date subdirectories, instead of hardcoding `0o755`, so a `0o700` root is no longer silently widened ([#115])
-- `note.NextID` now flocks the store root directory instead of a sibling `id.json.lock` file, so no lockfile artifact is left behind after `notesctl new` / `notesctl new-todo` runs. Serialization semantics are unchanged ([#115])
-- `notesctl annotate --timeout 0` now disables the deadline (previously it caused the command to fail immediately), mirroring `--max-chars 0 = no limit` ([#115])
-- `note.NextID` now serializes the id.json read-modify-write across processes via an exclusive `flock` on a sibling `id.json.lock`, so parallel `notesctl new` / `notesctl new-todo` runs can no longer duplicate IDs ([#115])
-- `notesctl grep` and `notesctl rg` propagate the child process's exit code instead of collapsing every failure to `1`: "no match" (exit 1) is now distinguishable from real tool errors (exit 2+) by the caller ([#115])
-- `notesctl annotate` now runs the `claude` CLI with a context-bound timeout (default 60s, configurable via `--timeout`), so a hung Claude binary no longer hangs the command indefinitely ([#115])
-- `notesctl update --sync-filename` now reserves the target atomically with `os.Link` + `os.Remove`, closing a TOCTOU between `os.Stat` and `os.Rename` that could silently clobber a file created between the two syscalls ([#115])
+- `notes read`, `notes append`, and `notes resolve` now include the effective filters in the "no notes found" error (e.g. `no notes found matching filters: type=[todo] today=true`) so you can tell which filter narrowed too far ([#115])
+- `notes new` and `notes new-todo` now inherit the notes-store root's directory permissions when creating date subdirectories, instead of hardcoding `0o755`, so a `0o700` root is no longer silently widened ([#115])
+- `note.NextID` now flocks the store root directory instead of a sibling `id.json.lock` file, so no lockfile artifact is left behind after `notes new` / `notes new-todo` runs. Serialization semantics are unchanged ([#115])
+- `notes annotate --timeout 0` now disables the deadline (previously it caused the command to fail immediately), mirroring `--max-chars 0 = no limit` ([#115])
+- `note.NextID` now serializes the id.json read-modify-write across processes via an exclusive `flock` on a sibling `id.json.lock`, so parallel `notes new` / `notes new-todo` runs can no longer duplicate IDs ([#115])
+- `notes grep` and `notes rg` propagate the child process's exit code instead of collapsing every failure to `1`: "no match" (exit 1) is now distinguishable from real tool errors (exit 2+) by the caller ([#115])
+- `notes annotate` now runs the `claude` CLI with a context-bound timeout (default 60s, configurable via `--timeout`), so a hung Claude binary no longer hangs the command indefinitely ([#115])
+- `notes update --sync-filename` now reserves the target atomically with `os.Link` + `os.Remove`, closing a TOCTOU between `os.Stat` and `os.Rename` that could silently clobber a file created between the two syscalls ([#115])
 - `mustNotesPath` replaced by `notesRoot() (string, error)`: the notes-store resolution no longer calls `os.Exit(1)` from inside `RunE` handlers, so errors now flow through Cobra's normal error pipeline (and respect `SilenceUsage`). Error output and exit code are unchanged ([#115])
-- `notesctl annotate` error messages are more useful when the `claude` CLI fails with empty stderr: the exit code and the first 500 bytes of stdout are now included, replacing the previous opaque `exit status 1`. Successful runs and failures that write to stderr are unchanged ([#115])
-- `notesctl new --public` and `--private` are now mutually exclusive (matching `notesctl update`). Passing both returns an error instead of silently letting `--private` override `--public`; the old silent-override logic is gone ([#115])
-- `notesctl grep` no longer injects `-i`; searches are case-sensitive by default. Pass `-i` explicitly for case-insensitive search ([#115])
-- `notesctl rg` now only injects `--glob *.md`; the previously forced `--sortr path`, `--heading`, `--no-line-number`, and `--ignore-case` defaults are gone, so the subcommand behaves like plain `rg` restricted to Markdown files. Pass those flags explicitly if you want the old output style ([#115])
+- `notes annotate` error messages are more useful when the `claude` CLI fails with empty stderr: the exit code and the first 500 bytes of stdout are now included, replacing the previous opaque `exit status 1`. Successful runs and failures that write to stderr are unchanged ([#115])
+- `notes new --public` and `--private` are now mutually exclusive (matching `notes update`). Passing both returns an error instead of silently letting `--private` override `--public`; the old silent-override logic is gone ([#115])
+- `notes grep` no longer injects `-i`; searches are case-sensitive by default. Pass `-i` explicitly for case-insensitive search ([#115])
+- `notes rg` now only injects `--glob *.md`; the previously forced `--sortr path`, `--heading`, `--no-line-number`, and `--ignore-case` defaults are gone, so the subcommand behaves like plain `rg` restricted to Markdown files. Pass those flags explicitly if you want the old output style ([#115])
 - `ValidateSlug` now rejects anything outside `[A-Za-z0-9_-]` (previously only all-digit slugs were rejected), so slugs containing `/`, `\`, `.`, whitespace, or control characters can no longer reach `NoteFilename` and corrupt filesystem paths or the filename's dot-suffix cache ([#115])
-- Internal cleanups from the code-review follow-up list (no user-visible behavior change): `notesctl update`'s "at least one flag" guard now walks `cmd.LocalFlags()` instead of a hand-maintained flag-name slice that had to stay in sync with registrations; `ParseTask`'s regex requires exactly one marker character (`[ ]`, `[x]`, …) instead of accepting zero-or-one, so stray `[]` no longer parses as a task ([#115])
+- Internal cleanups from the code-review follow-up list (no user-visible behavior change): `notes update`'s "at least one flag" guard now walks `cmd.LocalFlags()` instead of a hand-maintained flag-name slice that had to stay in sync with registrations; `ParseTask`'s regex requires exactly one marker character (`[ ]`, `[x]`, …) instead of accepting zero-or-one, so stray `[]` no longer parses as a task ([#115])
 
 ### Removed
 
-- `notesctl read --no-frontmatter` no longer has a `-F` short form. Use the long flag ([#115])
-- `notesctl new-todo --force` flag has been removed. Its help text promised to "regenerate today's todo even if it exists," but it actually allocated a new ID and wrote a *second* todo for the same day, which was never the intended behavior. If today's todo already exists, `notesctl new-todo` now unconditionally returns its path ([#115])
+- `notes read --no-frontmatter` no longer has a `-F` short form. Use the long flag ([#115])
+- `notes new-todo --force` flag has been removed. Its help text promised to "regenerate today's todo even if it exists," but it actually allocated a new ID and wrote a *second* todo for the same day, which was never the intended behavior. If today's todo already exists, `notes new-todo` now unconditionally returns its path ([#115])
 
 ## [0.1.78] - 2026-04-20
 
@@ -554,7 +554,7 @@ No implementations and no behaviour changes — this PR only establishes the con
 
 ### Changed
 
-- `notesctl tags` output and `--tag` filter comparisons are now case-insensitive: tags are lowercased when extracted from frontmatter and body hashtags, and both sides are lowercased when matching `--tag` values against note frontmatter. On-disk frontmatter is left unchanged ([#120])
+- `notes tags` output and `--tag` filter comparisons are now case-insensitive: tags are lowercased when extracted from frontmatter and body hashtags, and both sides are lowercased when matching `--tag` values against note frontmatter. On-disk frontmatter is left unchanged ([#120])
 
 ## [0.1.76] - 2026-04-20
 
@@ -572,20 +572,20 @@ No implementations and no behaviour changes — this PR only establishes the con
 
 ### Changed
 
-- Small code-review follow-ups: `--path` help now documents the `$NOTESCTL_PATH` / `~/notes` default; `notesctl resolve` Long help clarifies that `--today` is the only filter flag that can combine with a positional argument; `grep`/`rg` subcommands accept `-h` (not just `--help`) for help; frontmatter-parse warnings go to stderr directly instead of through `log.Printf` (no more timestamp prefix); `writeAtomic` is now shared across `update`, `annotate`, `append`, and the prev-todo rewrite in `new-todo` so partial writes never leave a corrupted file behind ([#116])
+- Small code-review follow-ups: `--path` help now documents the `$NOTESCTL_PATH` / `~/notes` default; `notes resolve` Long help clarifies that `--today` is the only filter flag that can combine with a positional argument; `grep`/`rg` subcommands accept `-h` (not just `--help`) for help; frontmatter-parse warnings go to stderr directly instead of through `log.Printf` (no more timestamp prefix); `writeAtomic` is now shared across `update`, `annotate`, `append`, and the prev-todo rewrite in `new-todo` so partial writes never leave a corrupted file behind ([#116])
 
 ## [0.1.73] - 2026-04-19
 
 ### Changed
 
-- Note frontmatter format: unknown keys are now preserved through `notesctl update` and any other format-rewriting command (via `Frontmatter.Extra`), enabling downstream tools and users to add custom fields without waiting for a notesctl release. `type` moves from filename-only to a typed frontmatter field (filename still cached as a `.type` dot-suffix). `KnownTypes`/`IsKnownType` renamed to `TypesWithSpecialBehavior`/`HasSpecialBehavior` — the list is now a soft registry, not a validation gate; any string is a valid `type` value. `notesctl update` no longer auto-renames on `--slug`/`--type` changes; use the new `--sync-filename` flag to explicitly reconcile the filename with frontmatter. A repo-root `SCHEMA.md` documents reserved frontmatter keys. See [design spec](docs/superpowers/specs/2026-04-19-notes-schema-protocol-design.md) and [#104]. ([#114])
+- Note frontmatter format: unknown keys are now preserved through `notes update` and any other format-rewriting command (via `Frontmatter.Extra`), enabling downstream tools and users to add custom fields without waiting for a notesctl release. `type` moves from filename-only to a typed frontmatter field (filename still cached as a `.type` dot-suffix). `KnownTypes`/`IsKnownType` renamed to `TypesWithSpecialBehavior`/`HasSpecialBehavior` — the list is now a soft registry, not a validation gate; any string is a valid `type` value. `notes update` no longer auto-renames on `--slug`/`--type` changes; use the new `--sync-filename` flag to explicitly reconcile the filename with frontmatter. A repo-root `SCHEMA.md` documents reserved frontmatter keys. See [design spec](docs/superpowers/specs/2026-04-19-notes-schema-protocol-design.md) and [#104]. ([#114])
 
 ## [0.1.72] - 2026-04-19
 
 ### Changed
 
-- `notesctl update` and `notesctl annotate` now fail with a clear error when the target note has malformed frontmatter, instead of silently dropping bad fields and rewriting the file ([#112])
-- `notesctl ls --tag` and `notesctl tags` log a per-note warning to stderr for any note with unparseable frontmatter and skip it, instead of silently treating it as tagless ([#112])
+- `notes update` and `notes annotate` now fail with a clear error when the target note has malformed frontmatter, instead of silently dropping bad fields and rewriting the file ([#112])
+- `notes ls --tag` and `notes tags` log a per-note warning to stderr for any note with unparseable frontmatter and skip it, instead of silently treating it as tagless ([#112])
 - Stricter frontmatter parsing: duplicate keys, non-mapping top-level documents, control characters, and type mismatches are now rejected at the document level; previously the parser preserved siblings of a bad field ([#112])
 - CRLF line endings inside the note body are now preserved verbatim through read/write round-trips ([#112])
 
@@ -599,7 +599,7 @@ No implementations and no behaviour changes — this PR only establishes the con
 
 ### Added
 
-- `notesctl annotate <ref>` command that uses Claude Code CLI to fill empty frontmatter fields (`title`, `description`, `tags`). Defaults to `claude-haiku-4-5`; override with `--model`. Non-destructive: existing field values are never overwritten. ([#109])
+- `notes annotate <ref>` command that uses Claude Code CLI to fill empty frontmatter fields (`title`, `description`, `tags`). Defaults to `claude-haiku-4-5`; override with `--model`. Non-destructive: existing field values are never overwritten. ([#109])
 
 ## [0.1.69] - 2026-04-18
 
@@ -716,7 +716,7 @@ No implementations and no behaviour changes — this PR only establishes the con
 
 ### Fixed
 
-- Output absolute paths from `ls` to enable Unix pipelines like `notesctl ls | xargs notesctl read` ([#73])
+- Output absolute paths from `ls` to enable Unix pipelines like `notes ls | xargs notes read` ([#73])
 - Fix ref resolution for all-digit slugs; reject all-digit slugs in `new` and `update` commands ([#72])
 - Fix `new-todo` when no previous todo exists; creates an empty todo instead. `--force` works correctly when today's todo is the only one ([#75])
 - Fix `ls --type` and `--slug` flags to accept multiple values, matching `latest` behavior ([#78])
@@ -864,13 +864,13 @@ No implementations and no behaviour changes — this PR only establishes the con
 
 ### Changed
 
-- Change default notesctl path to `~/notes` ([#16])
+- Change default notes path to `~/notes` ([#16])
 
 ## [0.1.9] - 2026-03-20
 
 ### Fixed
 
-- Make `notesctl path` return absolute path ([#15])
+- Make `notes path` return absolute path ([#15])
 
 ## [0.1.8] - 2026-03-20
 

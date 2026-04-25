@@ -1,11 +1,11 @@
 .PHONY: build test lint clean install update
 
-BINARY := notesctl
+BINARY := notes
 VERSION := $(shell git describe --tags --always --dirty 2>/dev/null || echo dev)
 LDFLAGS := -X github.com/dreikanter/notesctl/internal/cli.Version=$(VERSION)
 
 build:
-	go build -ldflags "$(LDFLAGS)" -o $(BINARY) ./cmd/notesctl
+	go build -ldflags "$(LDFLAGS)" -o $(BINARY) ./cmd/notes
 
 test:
 	go test ./...
@@ -17,11 +17,11 @@ clean:
 	rm -f $(BINARY)
 
 install:
-	go install -ldflags "$(LDFLAGS)" ./cmd/notesctl
+	go install -ldflags "$(LDFLAGS)" ./cmd/notes
 
 update:
 	git checkout main
 	git pull --tags
 	$(MAKE) install
-	@echo "Installed: $$(notesctl --version)"
+	@echo "Installed: $$(notes --version)"
 

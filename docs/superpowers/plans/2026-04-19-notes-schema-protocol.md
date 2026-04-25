@@ -600,7 +600,7 @@ if idx := strings.LastIndex(baseName, "."); idx >= 0 {
 Run: `go test ./note/ -v`
 Expected: PASS on all cases.
 
-- [ ] **Step 4.5: Run the full suite — the `store.go` resolve-by-type path still uses `HasSpecialBehavior`, so `notesctl resolve todo` continues to work; other callers (filters) rely on `Note.Type` which is now populated by any dot-suffix.**
+- [ ] **Step 4.5: Run the full suite — the `store.go` resolve-by-type path still uses `HasSpecialBehavior`, so `notes resolve todo` continues to work; other callers (filters) rely on `Note.Type` which is now populated by any dot-suffix.**
 
 Run: `go test ./... -v`
 Expected: PASS.
@@ -619,14 +619,14 @@ git commit -m "Relax ParseFilename to accept any dot-suffix as filename-reported
 
 ---
 
-## Task 5: Update `notesctl new` and `createNote` to write `Type` into frontmatter and drop the validation gate
+## Task 5: Update `notes new` and `createNote` to write `Type` into frontmatter and drop the validation gate
 
 **Files:**
 - Modify: `internal/cli/create.go`
 - Modify: `internal/cli/new.go`
 - Test: `internal/cli/new_test.go`
 
-- [ ] **Step 5.1: Write the failing test — `notesctl new --type meeting` succeeds and writes `type: meeting` to frontmatter**
+- [ ] **Step 5.1: Write the failing test — `notes new --type meeting` succeeds and writes `type: meeting` to frontmatter**
 
 The test harness in `internal/cli/new_test.go` uses a `runNew(t, root, stdin, ...args)` helper and `copyTestdata(t)` (defined in `append_test.go`). Add these two cases at the end of `new_test.go`, matching the existing style:
 
@@ -729,12 +729,12 @@ Expected: clean.
 
 ```bash
 git add internal/cli/new.go internal/cli/create.go internal/cli/new_test.go
-git commit -m "notesctl new: write Type to frontmatter and accept free-form type values"
+git commit -m "notes new: write Type to frontmatter and accept free-form type values"
 ```
 
 ---
 
-## Task 6: Update `notesctl update` — preserve Extra, stop auto-renaming, add `--sync-filename`
+## Task 6: Update `notes update` — preserve Extra, stop auto-renaming, add `--sync-filename`
 
 **Files:**
 - Modify: `internal/cli/update.go`
@@ -1146,7 +1146,7 @@ Expected: clean.
 
 ```bash
 git add internal/cli/update.go internal/cli/update_test.go
-git commit -m "notesctl update: preserve Extra, stop auto-renaming, add --sync-filename"
+git commit -m "notes update: preserve Extra, stop auto-renaming, add --sync-filename"
 ```
 
 ---
@@ -1258,7 +1258,7 @@ Insert above the existing `## [0.1.72]` heading in `CHANGELOG.md`:
 
 ### Changed
 
-- Note frontmatter format: unknown keys are now preserved through `notesctl update` and any other format-rewriting command (via `Frontmatter.Extra`), enabling downstream tools and users to add custom fields without waiting for a notesctl release. `type` moves from filename-only to a typed frontmatter field (filename still cached as a `.type` dot-suffix). `KnownTypes`/`IsKnownType` renamed to `TypesWithSpecialBehavior`/`HasSpecialBehavior` — the list is now a soft registry, not a validation gate; any string is a valid `type` value. `notesctl update` no longer auto-renames on `--slug`/`--type` changes; use the new `--sync-filename` flag to explicitly reconcile the filename with frontmatter. A repo-root `SCHEMA.md` documents reserved frontmatter keys. See [design spec](docs/superpowers/specs/2026-04-19-notes-schema-protocol-design.md) and [#104]. ([#TBD])
+- Note frontmatter format: unknown keys are now preserved through `notes update` and any other format-rewriting command (via `Frontmatter.Extra`), enabling downstream tools and users to add custom fields without waiting for a notesctl release. `type` moves from filename-only to a typed frontmatter field (filename still cached as a `.type` dot-suffix). `KnownTypes`/`IsKnownType` renamed to `TypesWithSpecialBehavior`/`HasSpecialBehavior` — the list is now a soft registry, not a validation gate; any string is a valid `type` value. `notes update` no longer auto-renames on `--slug`/`--type` changes; use the new `--sync-filename` flag to explicitly reconcile the filename with frontmatter. A repo-root `SCHEMA.md` documents reserved frontmatter keys. See [design spec](docs/superpowers/specs/2026-04-19-notes-schema-protocol-design.md) and [#104]. ([#TBD])
 ```
 
 (Replace `#TBD` with the PR number once the PR is opened; this is a plan-time placeholder.)
@@ -1299,7 +1299,7 @@ Expected: clean.
 - [ ] **Step 9.3: Build**
 
 Run: `make build`
-Expected: builds cleanly; `./notesctl --help` lists `update`, and `./notesctl update --help` shows the new `--sync-filename` flag.
+Expected: builds cleanly; `./notes --help` lists `update`, and `./notes update --help` shows the new `--sync-filename` flag.
 
 - [ ] **Step 9.4: Smoke-test the contract manually**
 
@@ -1317,14 +1317,14 @@ aliases:
 body
 EOF
 
-NOTESCTL_PATH=/tmp/schema-smoke ./notesctl update --title "Sample 2" 9999
+NOTESCTL_PATH=/tmp/schema-smoke ./notes update --title "Sample 2" 9999
 cat /tmp/schema-smoke/2026/04/20260419_9999_sample.md
 ```
 
 Expected: `title: Sample 2` is present; `featured: true` and the `aliases` list are still present.
 
 ```bash
-NOTESCTL_PATH=/tmp/schema-smoke ./notesctl update --slug renamed --sync-filename 9999
+NOTESCTL_PATH=/tmp/schema-smoke ./notes update --slug renamed --sync-filename 9999
 ls /tmp/schema-smoke/2026/04/
 ```
 
@@ -1332,7 +1332,7 @@ Expected: file is now `20260419_9999_renamed.md`; previous name is gone.
 
 - [ ] **Step 9.5: Push the branch and open a PR**
 
-Follow the repo's PR convention (`.github/pull_request_template.md`); title something like "Notes schema protocol: extensible frontmatter and explicit filename sync (#104)". PR body should link to the design spec and `SCHEMA.md`, reference issue #104, and point out the behavior change on `notesctl update` (no more auto-rename).
+Follow the repo's PR convention (`.github/pull_request_template.md`); title something like "Notes schema protocol: extensible frontmatter and explicit filename sync (#104)". PR body should link to the design spec and `SCHEMA.md`, reference issue #104, and point out the behavior change on `notes update` (no more auto-rename).
 
 Then update `CHANGELOG.md` to replace `#TBD` with the actual PR number, and push the follow-up commit.
 
@@ -1347,9 +1347,9 @@ Run through the spec once the plan is complete:
 - [x] **Writer emits reserved fields first, then Extra alpha-sorted.** Task 1 Step 1.9 (`MarshalYAML` composes a node).
 - [x] **KnownTypes renamed to TypesWithSpecialBehavior (soft registry, not a gate).** Task 3, Task 5 (drops gate in `new`), Task 6 (drops gate in `update`).
 - [x] **ParseFilename accepts any dot-suffix.** Task 4.
-- [x] **notesctl new writes Type to fm; always caches slug/type in filename.** Task 5.
-- [x] **notesctl update no longer auto-renames.** Task 6 (`contentChanged` branch writes in place).
-- [x] **notesctl update preserves Extra.** Task 6 (`updated := existing` carries `Extra`).
+- [x] **notes new writes Type to fm; always caches slug/type in filename.** Task 5.
+- [x] **notes update no longer auto-renames.** Task 6 (`contentChanged` branch writes in place).
+- [x] **notes update preserves Extra.** Task 6 (`updated := existing` carries `Extra`).
 - [x] **`--sync-filename` flag added, prints new path, idempotent.** Task 6.
 - [x] **fm canonical when both fm and filename have slug/type.** Task 6 Step 6.5 (fills `existing.Slug` from `n.Slug` only when fm has none, so fm always wins when present).
 - [x] **SCHEMA.md present, reserved keys documented.** Task 7.

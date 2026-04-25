@@ -154,7 +154,7 @@ At the top of `CHANGELOG.md`, after the `# Changelog` heading and before the `##
 
 ### Fixed
 
-- Output absolute paths from `ls` to enable Unix pipelines like `notesctl ls | xargs notesctl read` ([#55])
+- Output absolute paths from `ls` to enable Unix pipelines like `notes ls | xargs notes read` ([#55])
 
 [#55]: https://github.com/dreikanter/notesctl/pull/55
 ```

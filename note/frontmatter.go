@@ -238,7 +238,7 @@ func FormatNote(f frontmatter, body []byte) ([]byte, error) {
 // StripFrontmatter returns data with any leading frontmatter block removed.
 // If no valid frontmatter block is present, data is returned unchanged.
 // Convenience for callers that want the body without parsing (e.g.
-// `notesctl read --no-frontmatter`).
+// `notes read --no-frontmatter`).
 func StripFrontmatter(data []byte) []byte {
 	bodyStart, _, ok := frontmatterEnd(data)
 	if !ok {

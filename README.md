@@ -11,7 +11,7 @@ Every note is a markdown file in a date-stamped folder (`2026/04/20260405_9522.m
 
 The tool doesn't try to be a knowledge graph, a publishing platform, or a second brain app. It covers a deliberately small scope:
 
-1. **Capture** — get text into a file quickly (`echo "..." | notesctl new`)
+1. **Capture** — get text into a file quickly (`echo "..." | notes new`)
 2. **Retrieve** — find it again by ID, type, tag, or slug
 3. **Integrate** — pipe notes into other tools, scripts, and AI assistants
 
@@ -20,7 +20,7 @@ Think of it as the storage layer that sits underneath your workflow, not the wor
 ## Install
 
 ```sh
-go install github.com/dreikanter/notesctl/cmd/notesctl@latest
+go install github.com/dreikanter/notesctl/cmd/notes@latest
 ```
 
 Make sure `~/go/bin` is on your `PATH`:
@@ -36,65 +36,65 @@ For development, use `make build` or `make install` from a local clone.
 
 Commands take a note's numeric ID (printed by `new`, `ls`, `resolve`, etc.).
 To act on "the most recent note of type X" or "the most recent note with slug
-Y", use `notesctl resolve` or `notesctl ls --limit 1` to turn a filter into an ID
+Y", use `notes resolve` or `notes ls --limit 1` to turn a filter into an ID
 and compose with shell substitution.
 
 ```sh
 # Create a new note
-notesctl new
-notesctl new --title "Meeting notes" --slug meeting --tag work
-notesctl new --type todo --upsert   # create or return existing today's todo
+notes new
+notes new --title "Meeting notes" --slug meeting --tag work
+notes new --type todo --upsert   # create or return existing today's todo
 
 # Create today's todo (rolls over pending tasks from the previous one)
-notesctl new-todo
+notes new-todo
 
 # List note IDs, newest first
-notesctl ls
-notesctl ls --limit 10
-notesctl ls --type todo
-notesctl ls --slug meeting
-notesctl ls --tag work
-notesctl ls --tag work --tag meeting     # multiple --tag flags are ANDed
-notesctl ls --today
+notes ls
+notes ls --limit 10
+notes ls --type todo
+notes ls --slug meeting
+notes ls --tag work
+notes ls --tag work --tag meeting     # multiple --tag flags are ANDed
+notes ls --today
 
 # Resolve a note and print its absolute path (exactly one lookup flag, or none)
-notesctl resolve                    # most recent note overall
-notesctl resolve --id 8823          # by exact numeric ID
-notesctl resolve --type todo        # most recent note of that type
-notesctl resolve --slug meeting     # most recent note with that slug
-notesctl resolve --tag work         # most recent note with that tag
+notes resolve                    # most recent note overall
+notes resolve --id 8823          # by exact numeric ID
+notes resolve --type todo        # most recent note of that type
+notes resolve --slug meeting     # most recent note with that slug
+notes resolve --tag work         # most recent note with that tag
 
 # Read a note by numeric ID
-notesctl read 8823
-notesctl read 8823 --no-frontmatter
+notes read 8823
+notes read 8823 --no-frontmatter
 
 # Fill empty frontmatter (title, description, tags) using Claude Code CLI
-notesctl annotate 8823
-notesctl annotate 8823 --model claude-sonnet-4-6
-notesctl annotate 8823 --max-chars 4000   # truncate body before sending
-notesctl annotate 8823 --timeout 2m       # override the 60s default
+notes annotate 8823
+notes annotate 8823 --model claude-sonnet-4-6
+notes annotate 8823 --max-chars 4000   # truncate body before sending
+notes annotate 8823 --timeout 2m       # override the 60s default
 
 # Append stdin text to a note
-echo "text" | notesctl append 8823
+echo "text" | notes append 8823
 
 # Delete a note
-notesctl rm 8823
+notes rm 8823
 
 # Update frontmatter (file is renamed automatically when slug, type, or date changes)
-notesctl update 8823 --title "New Title"
-notesctl update 8823 --description "One-line summary"
-notesctl update 8823 --tag work --tag planning
-notesctl update 8823 --no-tags
-notesctl update 8823 --slug meeting
-notesctl update 8823 --no-slug
-notesctl update 8823 --type todo
-notesctl update 8823 --no-type
-notesctl update 8823 --date 20260420        # move to a different day (YYYYMMDD)
-notesctl update 8823 --public
-notesctl update 8823 --private
+notes update 8823 --title "New Title"
+notes update 8823 --description "One-line summary"
+notes update 8823 --tag work --tag planning
+notes update 8823 --no-tags
+notes update 8823 --slug meeting
+notes update 8823 --no-slug
+notes update 8823 --type todo
+notes update 8823 --no-type
+notes update 8823 --date 20260420        # move to a different day (YYYYMMDD)
+notes update 8823 --public
+notes update 8823 --private
 
 # List all tags (frontmatter + body hashtags)
-notesctl tags
+notes tags
 ```
 
 Composing with the shell — since most commands take an ID, use `ls` or
@@ -102,13 +102,13 @@ Composing with the shell — since most commands take an ID, use `ls` or
 
 ```sh
 # Append to the most recent note with a given slug
-echo "text" | notesctl append "$(notesctl ls --slug claude-sessions --limit 1)"
+echo "text" | notes append "$(notes ls --slug claude-sessions --limit 1)"
 
 # Read the most recent todo
-notesctl read "$(notesctl ls --type todo --limit 1)"
+notes read "$(notes ls --type todo --limit 1)"
 
 # Open the most recent meeting note in $EDITOR
-$EDITOR "$(notesctl resolve --slug meeting)"
+$EDITOR "$(notes resolve --slug meeting)"
 ```
 
 The notes store path is resolved in this order:
@@ -116,14 +116,14 @@ The notes store path is resolved in this order:
 1. `--path` flag
 2. `NOTESCTL_PATH` environment variable
 
-If neither is set, `notesctl` exits with an error. There is no implicit default —
+If neither is set, `notes` exits with an error. There is no implicit default —
 set `NOTESCTL_PATH` (e.g. `export NOTESCTL_PATH=~/notes`) or pass `--path`.
 
 ## Development
 
 ```sh
-make build       # build local ./notesctl binary
-make install     # build and install to ~/go/bin/notesctl
+make build       # build local ./notes binary
+make install     # build and install to ~/go/bin/notes
 make test        # run all tests
 make lint        # run golangci-lint
 make clean       # remove built binary

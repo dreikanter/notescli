@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Add `--type`, `--slug`, `--tag`, and `--today` filter flags to `notesctl read`, mutually exclusive with the positional argument, so users can read notes by filter criteria in a single command.
+**Goal:** Add `--type`, `--slug`, `--tag`, and `--today` filter flags to `notes read`, mutually exclusive with the positional argument, so users can read notes by filter criteria in a single command.
 
 **Architecture:** The positional-ref path is unchanged (`note.ResolveRef`). A new filter path calls `note.Scan`, applies `FilterByDate`/`FilterByTypes`/`FilterBySlugs`/`FilterByTags` in sequence, then reads `notes[0]`. Validation guards prevent combining both paths. No new shared helpers — `read.go` is small enough to be self-contained.
 
@@ -364,6 +364,6 @@ gh pr create \
 ```
 
 Fill in the PR template body with:
-- **What**: Add `--type`, `--slug`, `--tag`, `--today` filter flags to `notesctl read`
+- **What**: Add `--type`, `--slug`, `--tag`, `--today` filter flags to `notes read`
 - **Why**: Fixes #62 — reading by tag previously required two commands
 - **How**: Same pattern as `append` — positional arg becomes optional, filters are mutually exclusive with it, most recent matching note is read

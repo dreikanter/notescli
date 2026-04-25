@@ -1,4 +1,4 @@
-# Design: `notesctl annotate <ref>` — AI-generated frontmatter
+# Design: `notes annotate <ref>` — AI-generated frontmatter
 
 **Issue:** #105 — Annotate a note using AI
 
@@ -11,7 +11,7 @@ Notes are created with minimal metadata. Users want the `title`, `description`, 
 Add a new command:
 
 ```
-notesctl annotate <ref> [--model <name>]
+notes annotate <ref> [--model <name>]
 ```
 
 It resolves the ref (same rules as `read`/`edit`/`update`), shells out to `claude` for structured metadata, and rewrites the note's frontmatter — filling only previously-empty fields.
@@ -101,7 +101,7 @@ One entry for the next patch version, referencing the PR.
 
 ### Updated: `README.md`
 
-Add `notesctl annotate <ref>` to the usage section, alongside `edit` and `update`.
+Add `notes annotate <ref>` to the usage section, alongside `edit` and `update`.
 
 ## Error behavior summary
 

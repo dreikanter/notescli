@@ -14,11 +14,11 @@ var resolveCmd = &cobra.Command{
 	Short: "Print the absolute path of a note by explicit lookup flag",
 	Long: `Resolve a note by an explicit lookup flag and print its absolute path.
 
-  notesctl resolve               - most recent note
-  notesctl resolve --id <id>     - exact ID
-  notesctl resolve --type <t>    - most recent note of that type
-  notesctl resolve --slug <s>    - most recent note with that slug
-  notesctl resolve --tag <t>     - most recent note with that tag
+  notes resolve               - most recent note
+  notes resolve --id <id>     - exact ID
+  notes resolve --type <t>    - most recent note of that type
+  notes resolve --slug <s>    - most recent note with that slug
+  notes resolve --tag <t>     - most recent note with that tag
 
 Exactly one lookup flag (or none) may be provided.`,
 	Args: cobra.NoArgs,

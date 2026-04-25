@@ -2,7 +2,7 @@
 
 ## Problem
 
-`notesctl update` accepts mutually exclusive flag pairs without error, silently
+`notes update` accepts mutually exclusive flag pairs without error, silently
 picking one winner. This makes intent ambiguous and can cause unexpected results
 in scripts where flags are composed from variables.
 

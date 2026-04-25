@@ -1,8 +1,8 @@
-# `notesctl annotate` Command Implementation Plan
+# `notes annotate` Command Implementation Plan
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Add `notesctl annotate <ref>` command that shells out to the Claude Code CLI to fill empty `title`, `description`, and `tags` fields in a note's frontmatter.
+**Goal:** Add `notes annotate <ref>` command that shells out to the Claude Code CLI to fill empty `title`, `description`, and `tags` fields in a note's frontmatter.
 
 **Architecture:** One new file `internal/cli/annotate.go` holds the cobra command, Claude invocation, schema builder, response parser, and merge logic. Tests in `internal/cli/annotate_test.go` use a fake `claude` shell script (pattern from `edit_test.go`) swapped in via a package-level `claudeBinary` variable. The command is non-destructive: filled fields are never touched, file is left unchanged on any error.
 
@@ -19,7 +19,7 @@
 - **Create** `internal/cli/annotate.go` — command, helpers, main flow
 - **Create** `internal/cli/annotate_test.go` — all tests (pure helpers + integration via fake binary)
 - **Modify** `CHANGELOG.md` — one entry for the next patch version
-- **Modify** `README.md` — add `notesctl annotate` to usage section
+- **Modify** `README.md` — add `notes annotate` to usage section
 
 ---
 
@@ -116,7 +116,7 @@ Expected: PASS.
 
 ```bash
 git add internal/cli/annotate.go internal/cli/annotate_test.go
-git commit -m "Scaffold notesctl annotate command"
+git commit -m "Scaffold notes annotate command"
 ```
 
 ---
@@ -820,7 +820,7 @@ Expected: All previous tests still PASS.
 
 ```bash
 git add internal/cli/annotate.go internal/cli/annotate_test.go
-git commit -m "Implement notesctl annotate end-to-end"
+git commit -m "Implement notes annotate end-to-end"
 ```
 
 ---
@@ -1167,8 +1167,8 @@ Add an `annotate` example in `README.md` after the `edit` block (around the "Ope
 
 ```markdown
 # Fill empty frontmatter (title, description, tags) using Claude Code CLI
-notesctl annotate 8823
-notesctl annotate meeting --model claude-sonnet-4-6
+notes annotate 8823
+notes annotate meeting --model claude-sonnet-4-6
 ```
 
 - [ ] **Step 2: Update CHANGELOG**
@@ -1188,7 +1188,7 @@ Prepend a new section at the top of `CHANGELOG.md`, immediately after the `# Cha
 
 ### Added
 
-- `notesctl annotate <ref>` command that uses Claude Code CLI to fill empty frontmatter fields (`title`, `description`, `tags`). Defaults to `claude-haiku-4-5`; override with `--model`. Non-destructive: existing field values are never overwritten. ([#N])
+- `notes annotate <ref>` command that uses Claude Code CLI to fill empty frontmatter fields (`title`, `description`, `tags`). Defaults to `claude-haiku-4-5`; override with `--model`. Non-destructive: existing field values are never overwritten. ([#N])
 ```
 
 Add the PR-number link footer entry at the bottom of `CHANGELOG.md` (sorted with the other `[#…]: …` entries):
@@ -1213,7 +1213,7 @@ Expected: all green.
 
 ```bash
 git add README.md CHANGELOG.md
-git commit -m "Document notesctl annotate command"
+git commit -m "Document notes annotate command"
 ```
 
 ---
@@ -1223,7 +1223,7 @@ git commit -m "Document notesctl annotate command"
 - [ ] All tests pass: `go test ./...`
 - [ ] Lint clean: `make lint`
 - [ ] Binary builds: `make build`
-- [ ] `./notesctl annotate --help` shows the expected short description
-- [ ] End-to-end sanity: run `./notesctl annotate <some-ref>` against a real note with real `claude` in PATH; inspect the file; confirm it added only empty fields
+- [ ] `./notes annotate --help` shows the expected short description
+- [ ] End-to-end sanity: run `./notes annotate <some-ref>` against a real note with real `claude` in PATH; inspect the file; confirm it added only empty fields
 - [ ] CHANGELOG entry uses the version that `git describe --tags` will produce on merge
 - [ ] PR body uses `.github/pull_request_template.md`
