@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.3.25] - 2026-04-26
+
+### Added
+
+- `note.Store.Reconcile(known)` returns an mtime-keyed `note.Diff` so long-running consumers can cheaply resync added, updated, and removed notes without rereading unchanged files ([#259]).
+
+[#259]: https://github.com/dreikanter/notesctl/pull/259
+
 ## [0.3.24] - 2026-04-26
 
 ### Added

@@ -1,6 +1,9 @@
 package note
 
-import "errors"
+import (
+	"errors"
+	"time"
+)
 
 // ErrNotFound is the package-wide "entry not found" sentinel. It is returned
 // (wrapped) by Store.Get, Store.Find, and Store.Delete when no entry matches.
@@ -8,6 +11,19 @@ import "errors"
 //
 //	if errors.Is(err, note.ErrNotFound) { … }
 var ErrNotFound = errors.New("entry not found")
+
+// Diff is the result of a Reconcile call: what changed since the caller's
+// last known view of the store.
+type Diff struct {
+	// Added contains entries whose IDs were not present in the caller's known map.
+	Added []Entry
+	// Updated contains entries whose IDs were present in known with a different
+	// modification time. Stores compare mtimes for equality, not freshness, so
+	// callers also detect files whose mtimes moved backwards.
+	Updated []Entry
+	// Removed contains IDs from known that no longer exist in the store.
+	Removed []int
+}
 
 // Store is the backend abstraction the note package exposes. Implementations
 // encapsulate the storage substrate (filesystem, in-memory, future cloud/DB)
@@ -50,4 +66,11 @@ type Store interface {
 	// Delete removes the entry with the given ID. Returns ErrNotFound when
 	// no entry has that ID.
 	Delete(id int) error
+
+	// Reconcile returns the delta between known and the current store state.
+	// known maps entry ID to the mtime the caller last observed for that ID.
+	// Entries with matching mtimes are skipped; changed entries are returned
+	// fully populated. Use this for cheap periodic resync; use All for an
+	// initial load.
+	Reconcile(known map[int]time.Time) (Diff, error)
 }

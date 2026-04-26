@@ -131,6 +131,68 @@ func (s *OSStore) IDs() ([]int, error) {
 	return ids, nil
 }
 
+// Reconcile returns the delta between known and the current on-disk state.
+// known maps note ID to the file mtime the caller last observed, usually from
+// Entry.Meta.UpdatedAt returned by All, Get, Find, or a previous Reconcile.
+// Files whose mtimes match known are skipped entirely: no file read and no YAML
+// parse. Files whose mtimes differ are read and parsed, even when the on-disk
+// mtime moved backwards; mtime equality is the cache key. Do not seed known
+// from the Entry returned by Put: Put avoids an extra stat and its UpdatedAt is
+// the write time, not necessarily the exact filesystem mtime.
+//
+// Caveats: filesystem mtime resolution can coalesce rapid writes on some
+// filesystems, so a rewrite inside that resolution may be missed; tools such as
+// rsync or touch can set mtimes backwards, which is why Reconcile compares
+// equality rather than newer-than; a rename that changes the ID-bearing
+// filename prefix appears as Removed+Added.
+func (s *OSStore) Reconcile(known map[int]time.Time) (Diff, error) {
+	refs, err := s.scanFileRefs()
+	if err != nil {
+		return Diff{}, err
+	}
+
+	seen := make(map[int]struct{}, len(refs))
+	var diff Diff
+	for _, ref := range refs {
+		path := ref.absPath(s.root)
+		info, err := os.Stat(path)
+		if err != nil {
+			if os.IsNotExist(err) {
+				continue
+			}
+			return Diff{}, err
+		}
+
+		modTime := info.ModTime()
+		if knownTime, ok := known[ref.id]; ok && knownTime.Equal(modTime) {
+			seen[ref.id] = struct{}{}
+			continue
+		}
+
+		entry, err := s.readEntry(ref)
+		if err != nil {
+			if os.IsNotExist(err) {
+				continue
+			}
+			return Diff{}, err
+		}
+		seen[ref.id] = struct{}{}
+		if _, ok := known[ref.id]; ok {
+			diff.Updated = append(diff.Updated, entry)
+		} else {
+			diff.Added = append(diff.Added, entry)
+		}
+	}
+
+	for id := range known {
+		if _, ok := seen[id]; !ok {
+			diff.Removed = append(diff.Removed, id)
+		}
+	}
+	sort.Ints(diff.Removed)
+	return diff, nil
+}
+
 // refMatchesFilename evaluates the subset of q that can be answered from the
 // filename alone: WithType, WithSlug, WithExactDate, WithBeforeDate.
 // Body-dependent filters (WithTag) are always passed as matching at this

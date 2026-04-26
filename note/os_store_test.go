@@ -245,10 +245,96 @@ func TestOSStore_AllFilterByPublic(t *testing.T) {
 	assert.False(t, priv[0].Meta.Public)
 }
 
+func TestOSStore_ReconcileUnchangedSkipsFileReadAndParse(t *testing.T) {
+	s := newOSTestStore(t)
+	entry, err := s.Put(Entry{Meta: Meta{CreatedAt: time.Date(2026, 1, 1, 0, 0, 0, 0, time.UTC)}, Body: "body"})
+	require.NoError(t, err)
+	path := s.AbsPath(entry)
+	modTime := fileModTime(t, path)
+
+	// If Reconcile reads this file despite the matching mtime, the malformed
+	// frontmatter will fail the test. Reset the mtime to simulate an unchanged
+	// cache key.
+	require.NoError(t, os.WriteFile(path, []byte("---\n: bad\n---\nbody"), 0o644))
+	require.NoError(t, os.Chtimes(path, modTime, modTime))
+
+	diff, err := s.Reconcile(map[int]time.Time{entry.ID: modTime.In(time.FixedZone("offset", 3600))})
+	require.NoError(t, err)
+	assert.Empty(t, diff.Added)
+	assert.Empty(t, diff.Updated)
+	assert.Empty(t, diff.Removed)
+}
+
+func TestOSStore_ReconcileUpdatedAddedAndRemoved(t *testing.T) {
+	s := newOSTestStore(t)
+	created := time.Date(2026, 1, 1, 0, 0, 0, 0, time.UTC)
+	updated, err := s.Put(Entry{Meta: Meta{CreatedAt: created}, Body: "old"})
+	require.NoError(t, err)
+	oldModTime := fileModTime(t, s.AbsPath(updated))
+
+	added, err := s.Put(Entry{Meta: Meta{CreatedAt: created.Add(24 * time.Hour)}, Body: "new"})
+	require.NoError(t, err)
+
+	updatedPath := s.AbsPath(updated)
+	require.NoError(t, os.WriteFile(updatedPath, []byte("changed"), 0o644))
+	newModTime := oldModTime.Add(2 * time.Second)
+	require.NoError(t, os.Chtimes(updatedPath, newModTime, newModTime))
+
+	diff, err := s.Reconcile(map[int]time.Time{updated.ID: oldModTime, 99: oldModTime})
+	require.NoError(t, err)
+	assertEntryIDsUnordered(t, []int{added.ID}, diff.Added)
+	assertEntryIDsUnordered(t, []int{updated.ID}, diff.Updated)
+	assert.Equal(t, "changed", diff.Updated[0].Body)
+	assert.Equal(t, []int{99}, diff.Removed)
+}
+
+func TestOSStore_ReconcileMTimeSetBackwardsStillDetected(t *testing.T) {
+	s := newOSTestStore(t)
+	entry, err := s.Put(Entry{Meta: Meta{CreatedAt: time.Date(2026, 1, 1, 0, 0, 0, 0, time.UTC)}, Body: "body"})
+	require.NoError(t, err)
+	path := s.AbsPath(entry)
+	current := fileModTime(t, path)
+	backwards := current.Add(-time.Hour)
+	require.NoError(t, os.Chtimes(path, backwards, backwards))
+
+	diff, err := s.Reconcile(map[int]time.Time{entry.ID: current})
+	require.NoError(t, err)
+	assertEntryIDsUnordered(t, []int{entry.ID}, diff.Updated)
+}
+
+func TestOSStore_ReconcileSkipsFileWithNoParseableID(t *testing.T) {
+	s := newOSTestStore(t)
+	dir := filepath.Join(s.Root(), "2026", "01")
+	require.NoError(t, os.MkdirAll(dir, 0o755))
+	require.NoError(t, os.WriteFile(filepath.Join(dir, "not-a-note.md"), []byte("body"), 0o644))
+
+	diff, err := s.Reconcile(nil)
+	require.NoError(t, err)
+	assert.Empty(t, diff.Added)
+	assert.Empty(t, diff.Updated)
+	assert.Empty(t, diff.Removed)
+}
+
 func assertFileExists(t *testing.T, path string) {
 	t.Helper()
 	_, err := os.Stat(path)
 	require.NoError(t, err)
+}
+
+func assertEntryIDsUnordered(t *testing.T, want []int, entries []Entry) {
+	t.Helper()
+	got := make([]int, len(entries))
+	for i, e := range entries {
+		got[i] = e.ID
+	}
+	assert.ElementsMatch(t, want, got)
+}
+
+func fileModTime(t *testing.T, path string) time.Time {
+	t.Helper()
+	info, err := os.Stat(path)
+	require.NoError(t, err)
+	return info.ModTime()
 }
 
 func assertNoFile(t *testing.T, path string) {

@@ -118,6 +118,36 @@ func (s *MemStore) Delete(id int) error {
 	return nil
 }
 
+// Reconcile returns the delta between known and the current in-memory state.
+// known maps entry ID to the UpdatedAt timestamp the caller last observed.
+func (s *MemStore) Reconcile(known map[int]time.Time) (Diff, error) {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+
+	seen := make(map[int]struct{}, len(s.entries))
+	var diff Diff
+	for id, entry := range s.entries {
+		seen[id] = struct{}{}
+		knownTime, ok := known[id]
+		if !ok {
+			diff.Added = append(diff.Added, entry)
+			continue
+		}
+		if !knownTime.Equal(entry.Meta.UpdatedAt) {
+			diff.Updated = append(diff.Updated, entry)
+		}
+	}
+	for id := range known {
+		if _, ok := seen[id]; !ok {
+			diff.Removed = append(diff.Removed, id)
+		}
+	}
+	s.sortEntriesByRecency(diff.Added)
+	s.sortEntriesByRecency(diff.Updated)
+	sort.Ints(diff.Removed)
+	return diff, nil
+}
+
 // matchLocked returns every entry that matches q. Caller holds s.mu for
 // read (RLock or Lock).
 func (s *MemStore) matchLocked(q query) []Entry {
