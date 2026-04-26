@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.3.24] - 2026-04-26
+
+### Added
+
+- `OSStore.Watch(ctx, opts...)` returns a channel-based watcher that emits debounced, per-ID `EventCreated`, `EventUpdated`, and `EventDeleted` notifications for note changes. Watchers are going-forward only; subscribe before `Store.All()` to queue changes during the initial list ([#258]).
+
+[#258]: https://github.com/dreikanter/notesctl/pull/258
+
 ## [0.3.23] - 2026-04-25
 
 ### Changed
