@@ -1,0 +1,33 @@
+name: test
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+        go: [stable]
+    runs-on: ${{ matrix.os }}
+    steps:
+      # https://github.com/actions/checkout
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      # https://github.com/actions/setup-go
+      - name: Set up Go
+        uses: actions/setup-go@v6
+        with:
+          go-version: ${{ matrix.go }}
+
+      - name: Run tests
+        run: make test
+
+      # https://github.com/codecov/codecov-action
+      - name: Upload coverage
+        uses: codecov/codecov-action@v6
+        with:
+          files: coverage.out

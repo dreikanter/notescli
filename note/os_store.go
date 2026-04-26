@@ -210,7 +210,7 @@ func refMatchesFilename(r fileRef, q query) bool {
 		}
 	}
 	if q.beforeSet {
-		if !(r.date < q.beforeDate.Format(DateFormat)) {
+		if r.date >= q.beforeDate.Format(DateFormat) {
 			return false
 		}
 	}

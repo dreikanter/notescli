@@ -1,0 +1,14 @@
+name: vuln
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  vuln:
+    runs-on: ubuntu-latest
+    steps:
+      # https://github.com/golang/govulncheck-action
+      - name: Run govulncheck
+        uses: golang/govulncheck-action@v1
