@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.3.26] - 2026-04-26
+
+### Added
+
+- Add GitHub Actions workflows that reuse go-simpler's shared lint, test, and vulnerability scans; the test workflow runs against stable Go and the module now targets Go 1.25.8 so govulncheck uses the fixed standard library ([#260]).
+
+[#260]: https://github.com/dreikanter/notesctl/pull/260
+
 ## [0.3.25] - 2026-04-26
 
 ### Added
