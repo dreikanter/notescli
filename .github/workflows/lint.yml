@@ -7,4 +7,20 @@ on:
 
 jobs:
   lint:
-    uses: go-simpler/.github/.github/workflows/lint.yaml@main
+    runs-on: ubuntu-latest
+    steps:
+      # https://github.com/actions/checkout
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      # https://github.com/actions/setup-go
+      - name: Set up Go
+        uses: actions/setup-go@v6
+        with:
+          go-version: stable
+
+      # https://github.com/golangci/golangci-lint-action
+      - name: Run linters
+        uses: golangci/golangci-lint-action@v9
+        with:
+          version: v1.64.8
