@@ -108,7 +108,7 @@ func TestOSStoreWatchDebouncesSameID(t *testing.T) {
 	require.NoError(t, err)
 
 	assertWatchEvent(t, w, Event{Type: EventUpdated, ID: entry.ID})
-	assertNoWatchEvent(t, w, 150*time.Millisecond)
+	assertNoWatchEvent(t, w, 300*time.Millisecond)
 }
 
 func TestOSStoreWatchCloseWhilePending(t *testing.T) {

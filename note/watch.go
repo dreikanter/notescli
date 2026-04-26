@@ -61,12 +61,18 @@ func (w *osWatcher) Close() error         { return w.close() }
 // changes that happen during the initial list are queued on the watcher.
 //
 // Implementations debounce internally. The current debounce window is fixed at
-// 100 ms and coalesces by ID: create+delete in one window emits nothing, and
-// otherwise the last event in the window wins.
+// 100 ms and coalesces by ID: create+delete in one window emits nothing,
+// create+update emits create, and otherwise the last event in the window wins.
+// Watch performs an initial filename scan before arming filesystem watches.
 func (s *OSStore) Watch(ctx context.Context, opts ...WatchOpt) (Watcher, error) {
 	cfg := watchConfig{}
 	for _, opt := range opts {
 		opt(&cfg)
+	}
+
+	known, err := s.watchKnownIDs()
+	if err != nil {
+		return nil, err
 	}
 
 	fsw, err := fsnotify.NewWatcher()
@@ -75,12 +81,6 @@ func (s *OSStore) Watch(ctx context.Context, opts ...WatchOpt) (Watcher, error) 
 	}
 
 	if err := addWatchDirs(fsw, s.root); err != nil {
-		_ = fsw.Close()
-		return nil, err
-	}
-
-	known, err := s.watchKnownIDs()
-	if err != nil {
 		_ = fsw.Close()
 		return nil, err
 	}
@@ -178,6 +178,9 @@ func (s *OSStore) runWatch(
 				stopTimer()
 				return
 			}
+			// Watch has no error event in its initial API. Consumers that suspect
+			// drift should recover by re-listing the store; a future WatchOpt can
+			// surface backend errors without changing the Watch signature.
 			_ = err
 		case ev, ok := <-fsw.Events:
 			if !ok {
@@ -269,7 +272,7 @@ func classifyWatchEvent(ev fsnotify.Event, known map[int]bool) (Event, bool) {
 		if !known[id] {
 			return Event{}, false
 		}
-		known[id] = false
+		delete(known, id)
 		return Event{Type: EventDeleted, ID: id}, true
 	}
 
