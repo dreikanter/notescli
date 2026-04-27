@@ -11,7 +11,7 @@ import (
 
 var rmCmd = &cobra.Command{
 	Use:   "rm <id>",
-	Short: "Delete a note by numeric ID",
+	Short: "Delete a note",
 	Args:  cobra.ExactArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		id, err := strconv.Atoi(args[0])

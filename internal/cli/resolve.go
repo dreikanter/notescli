@@ -11,8 +11,8 @@ import (
 
 var resolveCmd = &cobra.Command{
 	Use:   "resolve",
-	Short: "Print the absolute path of a note by explicit lookup flag",
-	Long: `Resolve a note by an explicit lookup flag and print its absolute path.
+	Short: "Print the absolute path of a note",
+	Long: `Print the absolute path of a note.
 
   notes resolve               - most recent note
   notes resolve --id <id>     - exact ID
@@ -20,7 +20,7 @@ var resolveCmd = &cobra.Command{
   notes resolve --slug <s>    - most recent note with that slug
   notes resolve --tag <t>     - most recent note with that tag
 
-Exactly one lookup flag (or none) may be provided.`,
+At most one lookup flag may be provided.`,
 	Args: cobra.NoArgs,
 	RunE: resolveRunE,
 }
@@ -89,7 +89,7 @@ func lookupEntry(store *note.OSStore, idStr, noteType, slug, tag string) (note.E
 }
 
 func registerResolveFlags() {
-	resolveCmd.Flags().String("id", "", "resolve by exact numeric ID")
+	resolveCmd.Flags().String("id", "", "resolve by ID")
 	resolveCmd.Flags().String("type", "", "resolve the most recent note with the given type")
 	resolveCmd.Flags().String("slug", "", "resolve the most recent note with the given slug")
 	resolveCmd.Flags().String("tag", "", "resolve the most recent note with the given tag")

@@ -92,13 +92,13 @@ func findUpsertEntry(store note.Store, noteType, slug string) (note.Entry, bool,
 }
 
 func registerNewFlags() {
-	newCmd.Flags().String("slug", "", "descriptive slug appended to filename")
-	newCmd.Flags().String("type", "", "note type (free-form; todo/backlog/weekly get special behavior)")
-	newCmd.Flags().StringSlice("tag", nil, "tag for frontmatter (repeatable)")
-	newCmd.Flags().String("description", "", "description for frontmatter")
-	newCmd.Flags().String("title", "", "title for frontmatter")
-	newCmd.Flags().Bool("public", false, "mark note as public in frontmatter (private is the default)")
-	newCmd.Flags().Bool("upsert", false, "return existing note if today already has one matching --type/--slug")
+	newCmd.Flags().String("slug", "", "descriptive slug for the note")
+	newCmd.Flags().String("type", "", "note type (free-form; todo/backlog/weekly get special handling)")
+	newCmd.Flags().StringSlice("tag", nil, "tag (repeatable)")
+	newCmd.Flags().String("description", "", "note description")
+	newCmd.Flags().String("title", "", "note title")
+	newCmd.Flags().Bool("public", false, "mark note as public (private is the default)")
+	newCmd.Flags().Bool("upsert", false, "reuse today's note if one already matches --type/--slug")
 }
 
 func init() {

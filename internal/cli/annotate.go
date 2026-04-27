@@ -48,7 +48,7 @@ Generate concise metadata for the provided note body, returning ONLY the fields 
 
 var annotateCmd = &cobra.Command{
 	Use:   "annotate <id>",
-	Short: "Fill empty frontmatter (title, description, tags) using Claude Code CLI",
+	Short: "Fill empty frontmatter (title, description, tags) using Claude Code",
 	Args:  cobra.ExactArgs(1),
 	RunE:  annotateRunE,
 }
@@ -271,7 +271,7 @@ func mergeAnnotation(existing note.Meta, gen annotateResult) note.Meta {
 func registerAnnotateFlags() {
 	annotateCmd.Flags().String("model", annotateDefaultModel, "Claude model to use")
 	annotateCmd.Flags().Int("max-chars", 0, "truncate note body to this many characters before annotating (0 = no limit)")
-	annotateCmd.Flags().Duration("timeout", annotateDefaultTimeout, "maximum time to wait for the claude CLI to respond (0 = no timeout)")
+	annotateCmd.Flags().Duration("timeout", annotateDefaultTimeout, "maximum time to wait for Claude to respond (0 = no timeout)")
 }
 
 func init() {

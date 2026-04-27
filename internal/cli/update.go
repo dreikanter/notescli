@@ -13,7 +13,7 @@ import (
 
 var updateCmd = &cobra.Command{
 	Use:   "update <id>",
-	Short: "Update frontmatter fields on a note (rename is automatic on slug/type/date changes)",
+	Short: "Update note frontmatter (file is renamed automatically when slug, type, or date changes)",
 	Args:  cobra.ExactArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		id, err := strconv.Atoi(args[0])
@@ -110,17 +110,17 @@ var updateCmd = &cobra.Command{
 }
 
 func registerUpdateFlags() {
-	updateCmd.Flags().StringSlice("tag", nil, "tag for frontmatter (repeatable); replaces existing tags")
-	updateCmd.Flags().Bool("no-tags", false, "remove all tags from frontmatter")
-	updateCmd.Flags().String("title", "", "title for frontmatter (empty string clears it)")
-	updateCmd.Flags().String("description", "", "description for frontmatter (empty string clears it)")
-	updateCmd.Flags().String("slug", "", "slug for frontmatter; file is renamed to match")
-	updateCmd.Flags().Bool("no-slug", false, "remove slug from frontmatter; file is renamed to match")
-	updateCmd.Flags().String("type", "", "note type; file cache suffix is rewritten to match")
-	updateCmd.Flags().Bool("no-type", false, "remove type; file cache suffix is stripped to match")
-	updateCmd.Flags().Bool("public", false, "mark note as public in frontmatter")
-	updateCmd.Flags().Bool("private", false, "mark note as private in frontmatter")
-	updateCmd.Flags().String("date", "", "move the note to this date (YYYYMMDD); affects the year/month directory and filename prefix")
+	updateCmd.Flags().StringSlice("tag", nil, "tag (repeatable); replaces existing tags")
+	updateCmd.Flags().Bool("no-tags", false, "remove all tags")
+	updateCmd.Flags().String("title", "", "note title (empty string clears it)")
+	updateCmd.Flags().String("description", "", "note description (empty string clears it)")
+	updateCmd.Flags().String("slug", "", "set slug; file is renamed to match")
+	updateCmd.Flags().Bool("no-slug", false, "remove slug; file is renamed to match")
+	updateCmd.Flags().String("type", "", "set note type; file is renamed to match")
+	updateCmd.Flags().Bool("no-type", false, "remove type; file is renamed to match")
+	updateCmd.Flags().Bool("public", false, "mark note as public")
+	updateCmd.Flags().Bool("private", false, "mark note as private")
+	updateCmd.Flags().String("date", "", "move the note to this date (YYYYMMDD); file is moved to match")
 	updateCmd.MarkFlagsMutuallyExclusive("slug", "no-slug")
 	updateCmd.MarkFlagsMutuallyExclusive("type", "no-type")
 	updateCmd.MarkFlagsMutuallyExclusive("tag", "no-tags")

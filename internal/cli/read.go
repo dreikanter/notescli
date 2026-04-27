@@ -12,7 +12,7 @@ import (
 
 var readCmd = &cobra.Command{
 	Use:   "read <id>",
-	Short: "Read a note by numeric ID",
+	Short: "Read a note",
 	Args:  cobra.ExactArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		id, err := strconv.Atoi(args[0])
