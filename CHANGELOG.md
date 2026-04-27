@@ -4,8 +4,10 @@
 
 ### Changed
 
+- Rename the configuration environment variable from `NOTESCTL_PATH` back to `NOTES_PATH`, restoring the shorter name. Update `--path` help, error messages, README, and the `resolveNotesPath` lookup accordingly ([#262]).
 - Streamline CLI help text: drop "by numeric ID" from `read`/`rm` short descriptions and the `resolve --id` flag, drop redundant "for frontmatter" / "in frontmatter" suffixes from `new` and `update` flags, replace internal "file cache suffix" jargon in `update` with plain "file is renamed", and tighten the `resolve` long help and a few other phrasings ([#263]).
 
+[#262]: https://github.com/dreikanter/notesctl/pull/262
 [#263]: https://github.com/dreikanter/notesctl/pull/263
 
 ## [0.3.26] - 2026-04-26
