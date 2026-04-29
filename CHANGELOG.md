@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.3.28] - 2026-04-29
+
+### Changed
+
+- Track whether a note's `CreatedAt` came from an explicit frontmatter `date` (or `update --date`) vs. the filename UID fallback, and only emit the `date` field on write when it was explicit. `notes new` no longer stamps a redundant auto-generated date into the frontmatter; the filename remains the canonical source per `SCHEMA.md` ([#264]).
+
+[#264]: https://github.com/dreikanter/notesctl/pull/264
+
 ## [0.3.27] - 2026-04-27
 
 ### Changed
