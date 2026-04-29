@@ -39,6 +39,15 @@ func TestNewDefault(t *testing.T) {
 	}
 }
 
+func TestNewOmitsAutoDateFrontmatter(t *testing.T) {
+	root := copyTestdata(t)
+	out, err := runNew(t, root, "")
+	require.NoError(t, err)
+	data, err := os.ReadFile(out)
+	require.NoError(t, err)
+	assert.NotContains(t, string(data), "date:")
+}
+
 func TestNewWithSlug(t *testing.T) {
 	root := copyTestdata(t)
 	out, err := runNew(t, root, "", "--slug", "myslug")

@@ -462,9 +462,11 @@ func (s *OSStore) pathFor(entry Entry) (rel, abs string) {
 // frontmatterToMeta converts the on-disk frontmatter into the public
 // Meta. Body hashtags are merged into Meta.Tags; Meta.UpdatedAt is set
 // from the file ModTime; Meta.CreatedAt falls back to the filename date when
-// the frontmatter has no date.
+// the frontmatter has no date. DateExplicit reflects whether the source was
+// the frontmatter (true) or the filename fallback (false).
 func frontmatterToMeta(fm frontmatter, r fileRef, modTime time.Time, body []byte) Meta {
 	created := fm.Date
+	dateExplicit := !fm.Date.IsZero()
 	if created.IsZero() {
 		if t, err := time.Parse(DateFormat, r.date); err == nil {
 			created = t
@@ -480,22 +482,26 @@ func frontmatterToMeta(fm frontmatter, r fileRef, modTime time.Time, body []byte
 	}
 
 	return Meta{
-		Title:       fm.Title,
-		Slug:        slug,
-		Type:        noteType,
-		CreatedAt:   created,
-		UpdatedAt:   modTime,
-		Tags:        computeMergedTags(fm.Tags, normalizeHashtags(ExtractHashtags(body))),
-		Aliases:     append([]string(nil), fm.Aliases...),
-		Description: fm.Description,
-		Public:      fm.Public,
-		Extra:       extraFromYAML(fm.Extra),
+		Title:        fm.Title,
+		Slug:         slug,
+		Type:         noteType,
+		CreatedAt:    created,
+		DateExplicit: dateExplicit,
+		UpdatedAt:    modTime,
+		Tags:         computeMergedTags(fm.Tags, normalizeHashtags(ExtractHashtags(body))),
+		Aliases:      append([]string(nil), fm.Aliases...),
+		Description:  fm.Description,
+		Public:       fm.Public,
+		Extra:        extraFromYAML(fm.Extra),
 	}
 }
 
 // metaToFrontmatter converts Meta into the on-disk frontmatter. Body
 // hashtags are *not* stripped from Meta.Tags — they round-trip through the
-// frontmatter alongside the originals. UpdatedAt is never written.
+// frontmatter alongside the originals. UpdatedAt is never written. The
+// "date" field is only emitted when Meta.DateExplicit is true; auto-
+// defaulted dates stay implicit and consumers reconstruct them from the
+// filename per SCHEMA.md.
 func metaToFrontmatter(m Meta) frontmatter {
 	var aliases []string
 	if len(m.Aliases) > 0 {
@@ -505,11 +511,15 @@ func metaToFrontmatter(m Meta) frontmatter {
 	if len(m.Tags) > 0 {
 		tags = append([]string(nil), m.Tags...)
 	}
+	var date time.Time
+	if m.DateExplicit {
+		date = m.CreatedAt
+	}
 	return frontmatter{
 		Title:       m.Title,
 		Slug:        m.Slug,
 		Type:        m.Type,
-		Date:        m.CreatedAt,
+		Date:        date,
 		Tags:        tags,
 		Aliases:     aliases,
 		Description: m.Description,

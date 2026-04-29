@@ -120,6 +120,9 @@ func TestUpdateDateMovesFile(t *testing.T) {
 	if _, err := os.Stat(filepath.Join(root, "2026/01/20260106_8823_999.md")); !os.IsNotExist(err) {
 		t.Errorf("old file should be gone, err=%v", err)
 	}
+	data, err := os.ReadFile(want)
+	require.NoError(t, err)
+	assert.Contains(t, string(data), "date: 2026-03-01")
 }
 
 func TestUpdateDateInvalidFormat(t *testing.T) {

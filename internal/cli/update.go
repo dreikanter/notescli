@@ -97,6 +97,7 @@ var updateCmd = &cobra.Command{
 		}
 		if cmd.Flags().Changed("date") {
 			entry.Meta.CreatedAt = newDate
+			entry.Meta.DateExplicit = true
 		}
 
 		saved, err := store.Put(entry)
