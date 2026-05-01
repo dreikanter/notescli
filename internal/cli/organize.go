@@ -19,6 +19,12 @@ type organizeMove struct {
 	reason  string
 }
 
+type organizeConflict struct {
+	dstRel string
+	srcs   []string
+	reason string
+}
+
 var organizeCmd = &cobra.Command{
 	Use:   "organize",
 	Short: "Organize notes by year and tags from frontmatter",
@@ -42,9 +48,14 @@ func organizeRunE(cmd *cobra.Command, _ []string) error {
 		return err
 	}
 
-	moves, err := planOrganize(root)
+	moves, conflicts, err := planOrganize(root)
 	if err != nil {
 		return err
+	}
+
+	if len(conflicts) > 0 {
+		printConflicts(cmd.OutOrStdout(), conflicts)
+		return fmt.Errorf("found %d conflict(s), aborting", len(conflicts))
 	}
 
 	if len(moves) == 0 {
@@ -62,7 +73,7 @@ func organizeRunE(cmd *cobra.Command, _ []string) error {
 	return executeMoves(root, moves, cmd.OutOrStdout())
 }
 
-func planOrganize(root string) ([]organizeMove, error) {
+func planOrganize(root string) ([]organizeMove, []organizeConflict, error) {
 	var moves []organizeMove
 
 	err := filepath.Walk(root, func(path string, info os.FileInfo, err error) error {
@@ -96,14 +107,16 @@ func planOrganize(root string) ([]organizeMove, error) {
 	})
 
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	sort.Slice(moves, func(i, j int) bool {
 		return moves[i].srcRel < moves[j].srcRel
 	})
 
-	return moves, nil
+	conflicts := detectConflicts(root, moves)
+
+	return moves, conflicts, nil
 }
 
 func planSingleFile(root, relPath string) (*organizeMove, error) {
@@ -126,6 +139,50 @@ func planSingleFile(root, relPath string) (*organizeMove, error) {
 		dstRel: dstRel,
 		reason: reason,
 	}, nil
+}
+
+func detectConflicts(root string, moves []organizeMove) []organizeConflict {
+	var conflicts []organizeConflict
+
+	dstToSrcs := make(map[string][]string)
+	for _, m := range moves {
+		dstToSrcs[m.dstRel] = append(dstToSrcs[m.dstRel], m.srcRel)
+	}
+
+	for dstRel, srcs := range dstToSrcs {
+		if len(srcs) > 1 {
+			conflicts = append(conflicts, organizeConflict{
+				dstRel: dstRel,
+				srcs:   srcs,
+				reason: "multiple sources map to same destination",
+			})
+			continue
+		}
+
+		dstAbs := filepath.Join(root, dstRel)
+		if _, err := os.Stat(dstAbs); err == nil {
+			srcRel := srcs[0]
+			srcAbs := filepath.Join(root, srcRel)
+
+			srcInfo, srcErr := os.Stat(srcAbs)
+			dstInfo, dstErr := os.Stat(dstAbs)
+			if srcErr == nil && dstErr == nil && os.SameFile(srcInfo, dstInfo) {
+				continue
+			}
+
+			conflicts = append(conflicts, organizeConflict{
+				dstRel: dstRel,
+				srcs:   srcs,
+				reason: "destination already exists",
+			})
+		}
+	}
+
+	sort.Slice(conflicts, func(i, j int) bool {
+		return conflicts[i].dstRel < conflicts[j].dstRel
+	})
+
+	return conflicts
 }
 
 func computeDestination(srcRel string, date time.Time, tags []string) (string, string) {
@@ -169,6 +226,20 @@ func printPlan(out io.Writer, moves []organizeMove) {
 	for _, m := range moves {
 		padding := strings.Repeat(" ", maxSrcLen-len(m.srcRel))
 		fmt.Fprintf(out, "  %s%s -> %s (%s)\n", m.srcRel, padding, m.dstRel, m.reason)
+	}
+}
+
+func printConflicts(out io.Writer, conflicts []organizeConflict) {
+	fmt.Fprintf(out, "Conflicts detected (%d):\n\n", len(conflicts))
+
+	for i, c := range conflicts {
+		fmt.Fprintf(out, "  Conflict %d: %s\n", i+1, c.dstRel)
+		fmt.Fprintf(out, "    Reason: %s\n", c.reason)
+		fmt.Fprintf(out, "    Sources:\n")
+		for _, src := range c.srcs {
+			fmt.Fprintf(out, "      - %s\n", src)
+		}
+		fmt.Fprintln(out)
 	}
 }
 

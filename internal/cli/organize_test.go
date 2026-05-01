@@ -159,6 +159,93 @@ func TestOrganizeNoFiles(t *testing.T) {
 	assert.Contains(t, out, "No files to organize")
 }
 
+func TestOrganizeConflictExistingFile(t *testing.T) {
+	tmpDir, err := os.MkdirTemp("", "organize-conflict-*")
+	require.NoError(t, err)
+	defer os.RemoveAll(tmpDir)
+
+	note1 := `---
+date: 2024-05-15
+tags: [work]
+---
+
+# Note 1
+`
+	err = os.WriteFile(filepath.Join(tmpDir, "note1.md"), []byte(note1), 0o644)
+	require.NoError(t, err)
+
+	existingDir := filepath.Join(tmpDir, "2024", "work")
+	err = os.MkdirAll(existingDir, 0o755)
+	require.NoError(t, err)
+
+	existingNote := `---
+date: 2024-01-01
+tags: [old]
+---
+
+# Existing Note
+`
+	err = os.WriteFile(filepath.Join(existingDir, "note1.md"), []byte(existingNote), 0o644)
+	require.NoError(t, err)
+
+	out, err := runOrganize(t, tmpDir)
+	require.Error(t, err)
+	assert.Contains(t, out, "Conflicts detected")
+	assert.Contains(t, out, "2024/work/note1.md")
+	assert.Contains(t, out, "destination already exists")
+	assert.Contains(t, out, "note1.md")
+
+	_, err = os.Stat(filepath.Join(tmpDir, "note1.md"))
+	require.NoError(t, err, "original file should not be moved when conflict detected")
+
+	_, err = os.Stat(filepath.Join(existingDir, "note1.md"))
+	require.NoError(t, err, "existing file should not be modified")
+}
+
+func TestOrganizeConflictMultipleSources(t *testing.T) {
+	tmpDir, err := os.MkdirTemp("", "organize-conflict-multi-*")
+	require.NoError(t, err)
+	defer os.RemoveAll(tmpDir)
+
+	note1 := `---
+date: 2024-05-15
+tags: [work]
+---
+
+# Note 1
+`
+	err = os.WriteFile(filepath.Join(tmpDir, "note1.md"), []byte(note1), 0o644)
+	require.NoError(t, err)
+
+	subDir := filepath.Join(tmpDir, "subdir")
+	err = os.Mkdir(subDir, 0o755)
+	require.NoError(t, err)
+
+	note2 := `---
+date: 2024-06-20
+tags: [work]
+---
+
+# Note 2 (same filename)
+`
+	err = os.WriteFile(filepath.Join(subDir, "note1.md"), []byte(note2), 0o644)
+	require.NoError(t, err)
+
+	out, err := runOrganize(t, tmpDir)
+	require.Error(t, err)
+	assert.Contains(t, out, "Conflicts detected")
+	assert.Contains(t, out, "2024/work/note1.md")
+	assert.Contains(t, out, "multiple sources map to same destination")
+	assert.Contains(t, out, "note1.md")
+	assert.Contains(t, out, "subdir/note1.md")
+
+	_, err = os.Stat(filepath.Join(tmpDir, "note1.md"))
+	require.NoError(t, err, "original note1 should not be moved")
+
+	_, err = os.Stat(filepath.Join(subDir, "note1.md"))
+	require.NoError(t, err, "subdir/note1 should not be moved")
+}
+
 func TestComputeDestination(t *testing.T) {
 	tests := []struct {
 		name       string
