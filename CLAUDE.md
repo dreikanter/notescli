@@ -15,10 +15,10 @@ Version is set at build time via git tags and `-ldflags`. The `Version` var in
 `internal/cli/root.go` defaults to `"dev"` and is overridden by `make install`
 / `make build` using `git describe --tags`.
 
-On PR merge, GitHub Actions (`.github/workflows/tag.yml`) reads the topmost
-`## [X.Y.Z]` heading from `CHANGELOG.md` and pushes `vX.Y.Z` as a git tag. The
-CHANGELOG is the source of truth for the version — bump major/minor/patch by
-writing the desired heading in the PR.
+Releases are created by dedicated release PRs. Regular PRs do not bump the
+version number. On release PR merge, GitHub Actions (`.github/workflows/tag.yml`)
+reads the topmost numeric `## [X.Y.Z]` heading from `CHANGELOG.md` and pushes
+`vX.Y.Z` as a git tag when that heading changed.
 
 After merging a PR, reinstall locally:
 
@@ -43,25 +43,27 @@ messages, code comments, issue comments, or anywhere else in the repository.
 
 ## Changelog
 
-Update `CHANGELOG.md` in every PR with an entry for the version that PR will
-create. The topmost `## [X.Y.Z]` heading determines the git tag pushed on
-merge.
-
-To find the next version, check the top of `CHANGELOG.md` and bump the patch
-number (or bump major/minor deliberately). Example: if the top entry is
-`## [0.3.18]`, the next PR's heading is `## [0.3.19]`.
+Use `CHANGELOG.md` as the source of truth for release notes.
 
 Rules:
-- One entry per PR — do not bundle multiple PRs into one entry
-- Use a version higher than the current top entry; any untagged version works
-- Reference the PR number (`[#N]`) in the entry and add its link at the bottom
+- Keep an `## [Unreleased]` section at the top.
+- PRs with user-visible changes should add an entry under `Unreleased`.
+- Internal-only PRs may skip the changelog.
+- Do not create a new version heading in regular PRs.
+- A release PR converts `Unreleased` into `## [X.Y.Z] - YYYY-MM-DD` and adds a
+  fresh empty `## [Unreleased]` section above it.
+- One release may include multiple PRs.
+- Reference PR numbers (`[#N]`) in changelog bullets when known and add links at
+  the bottom.
+- It is acceptable to open a PR with an `Unreleased` entry that does not yet
+  include its PR number; add the PR reference in a follow-up commit after GitHub
+  assigns the number when the entry should reference the PR.
 
-Workflow: the PR number is assigned on creation, so add the CHANGELOG entry as
-a follow-up commit on the same branch:
-1. Open the PR without the CHANGELOG entry.
-2. Note the assigned PR number.
-3. Add the CHANGELOG entry referencing that number in its own atomic commit.
-4. Push; the PR updates in place.
+Version bump guidance:
+- Patch: fixes, docs, small behavior improvements, and internal changes worth
+  releasing.
+- Minor: new commands, flags, public APIs, or meaningful new behavior.
+- Major: breaking CLI, config, schema, or Go API changes.
 
 ## Pull Requests
 

@@ -14,19 +14,42 @@ jobs:
     steps:
       - uses: actions/checkout@v6
         with:
+          ref: main
           fetch-depth: 0
-      - name: Tag from CHANGELOG
+      - name: Tag from CHANGELOG when version changed
         run: |
-          VERSION=$(grep -m1 -oE '^## \[[0-9]+\.[0-9]+\.[0-9]+\]' CHANGELOG.md | tr -d '[]' | awk '{print $2}')
+          set -euo pipefail
+
+          version_from_ref() {
+            git show "$1:CHANGELOG.md" |
+              grep -m1 -oE '^## \[[0-9]+\.[0-9]+\.[0-9]+\]' |
+              tr -d '[]' |
+              awk '{print $2}'
+          }
+
+          VERSION=$(version_from_ref HEAD || true)
+          PREV_REF="${{ github.event.pull_request.base.sha }}"
+          if ! git rev-parse -q --verify "$PREV_REF^{commit}" >/dev/null; then
+            PREV_REF="HEAD^1"
+          fi
+          PREV_VERSION=$(version_from_ref "$PREV_REF" || true)
+
           if [ -z "$VERSION" ]; then
             echo "No version heading found in CHANGELOG.md" >&2
             exit 1
           fi
+
+          if [ "$VERSION" = "$PREV_VERSION" ]; then
+            echo "Topmost CHANGELOG version unchanged ($VERSION); skipping"
+            exit 0
+          fi
+
           NEXT="v$VERSION"
           if git rev-parse -q --verify "refs/tags/$NEXT" >/dev/null; then
             echo "Tag $NEXT already exists; skipping"
             exit 0
           fi
+
           git tag "$NEXT"
           git push origin "$NEXT"
           echo "Tagged $NEXT"
