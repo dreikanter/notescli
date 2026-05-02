@@ -1,5 +1,11 @@
 # Changelog
 
+## [Unreleased]
+
+### Changed
+
+- Adopt an Unreleased-first changelog and release-PR versioning workflow so multiple PRs can be bundled into one release.
+
 ## [0.3.30]
 
 ### Changed
