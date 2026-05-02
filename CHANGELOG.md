@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.3.30]
+
+### Changed
+
+- Rename the Go module path from `github.com/dreikanter/notesctl` to `github.com/dreikanter/notes` to match the renamed GitHub repo. Update internal imports, `Makefile` LDFLAGS, README / CLAUDE / SCHEMA wording, and a few in-code comments. The CLI binary, command name, and `NOTES_PATH` env var are unchanged. Downstream consumers (`npub`, `nview`) must update their imports to the new path ([#270]).
+
+[#270]: https://github.com/dreikanter/notes/pull/270
+
 ## [0.3.29]
 
 ### Added
