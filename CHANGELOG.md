@@ -4,7 +4,9 @@
 
 ### Changed
 
-- Adopt an Unreleased-first changelog and release-PR versioning workflow so multiple PRs can be bundled into one release.
+- Adopt an Unreleased-first changelog and release-PR versioning workflow so multiple PRs can be bundled into one release ([#271]).
+
+[#271]: https://github.com/dreikanter/notes/pull/271
 
 ## [0.3.30]
 
