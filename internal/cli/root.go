@@ -30,6 +30,7 @@ func init() {
 		}
 	}
 	rootCmd.Version = Version
+	rootCmd.SetVersionTemplate("{{.Name}} {{.Version}}\n")
 	rootCmd.PersistentFlags().StringVar(&notesPath, "path", "", "path to notes store (default: $NOTES_PATH)")
 }
 

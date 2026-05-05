@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+### Fixed
+
+- `notes --version` no longer prints a redundant `version v...`; the output is now `notes vX.Y.Z`.
+
 ### Changed
 
 - Adopt an Unreleased-first changelog and release-PR versioning workflow so multiple PRs can be bundled into one release ([#271]).
